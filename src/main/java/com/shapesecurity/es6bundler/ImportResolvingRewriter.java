@@ -1,0 +1,112 @@
+package com.shapesecurity.es6bundler;
+
+
+import com.shapesecurity.es6bundler.loader.FileSystemResolver;
+import com.shapesecurity.functional.data.ImmutableList;
+import com.shapesecurity.shift.ast.ExportAllFrom;
+import com.shapesecurity.shift.ast.ExportDeclaration;
+import com.shapesecurity.shift.ast.ExportFrom;
+import com.shapesecurity.shift.ast.Import;
+import com.shapesecurity.shift.ast.ImportDeclaration;
+import com.shapesecurity.shift.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.ast.ImportNamespace;
+import com.shapesecurity.shift.ast.Module;
+import com.shapesecurity.shift.ast.Statement;
+import com.shapesecurity.es6bundler.loader.IResolver;
+
+import java.nio.file.Path;
+
+
+/**
+ * Rewrites all of the import paths to the appropriately resolve paths.
+ */
+public class ImportResolvingRewriter {
+	private final IResolver resolver;
+
+	/**
+	 * By default use the standard file system resolver that simply converts relative paths to
+	 * absolute paths
+	 */
+	public ImportResolvingRewriter() {
+		this(new FileSystemResolver());
+	}
+
+	/**
+	 * Create a new rewriter with the provided resolver.
+	 * @param resolver used to resolve each import path.
+	 */
+	public ImportResolvingRewriter(IResolver resolver) {
+		this.resolver = resolver;
+	}
+
+	private String resolvePath(Path root, String path) {
+		return this.resolver.resolve(root, path);
+
+	}
+
+	/**
+	 * Rewrites the module
+	 * @param module the module to rewrite
+	 * @param path represents the path to the current module being rewritten
+	 * @return
+	 */
+	public Module rewrite(Module module, Path path) {
+		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
+			module.getItems().bind(x -> rewritePaths(x, path));
+
+		return new Module(module.directives, items);
+	}
+
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewritePaths(
+			ImportDeclarationExportDeclarationStatement statement, Path path) {
+		if (statement instanceof ImportDeclaration)
+			return rewriteImportDeclaration((ImportDeclaration) statement, path);
+		else if (statement instanceof ExportDeclaration)
+			return rewriteExportDeclaration((ExportDeclaration) statement, path);
+		else
+			return ImmutableList.from((Statement) statement); // do not transform other statements
+	}
+
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportDeclaration(
+			ImportDeclaration declaration, Path path) {
+		if (declaration instanceof Import)
+			return rewriteImport((Import) declaration, path);
+		else if (declaration instanceof ImportNamespace)
+			return rewriteImportNamespace((ImportNamespace) declaration, path);
+		else
+			return ImmutableList.nil(); // this should never happen!
+	}
+
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImport(
+			Import imp, Path path) {
+		return ImmutableList.from(new Import(imp.getDefaultBinding(), imp.getNamedImports(),
+			resolvePath(path, imp.getModuleSpecifier())));
+	}
+
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportNamespace(
+			ImportNamespace imp, Path path) {
+		return ImmutableList.from(new ImportNamespace(imp.getDefaultBinding(), imp.getNamespaceBinding(),
+			resolvePath(path, imp.getModuleSpecifier())));
+	}
+
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportDeclaration(
+			ExportDeclaration declaration, Path path) {
+		if (declaration instanceof ExportAllFrom)
+			return rewriteExportAllFrom((ExportAllFrom) declaration, path);
+		else if (declaration instanceof ExportFrom)
+			return rewriteExportFrom((ExportFrom) declaration, path);
+		else
+			return ImmutableList.from(declaration);
+	}
+
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportAllFrom(
+			ExportAllFrom exp, Path path) {
+		return ImmutableList.from(new ExportAllFrom(resolvePath(path, exp.getModuleSpecifier())));
+	}
+
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(
+			ExportFrom exp, Path path) {
+		ExportFrom newExp = new ExportFrom(exp.getNamedExports(), exp.getModuleSpecifier().map(x -> resolvePath(path, x)));
+		return ImmutableList.from(newExp);
+	}
+}
