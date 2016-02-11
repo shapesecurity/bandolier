@@ -3,14 +3,33 @@
 ES6-Bundler bundles modules with dependencies specified using ES6 import/export statements 
 as a single script that can run in an pre-ES6 JavaScript environment.
 
+## Installation
+
+Add as a dependency via maven:
+
+```xml
+<!-- todo -->
+```
+
 ## Usage
 
-The entry point is `Bundler.bundleString` for bundling a module represented as a string or
-`Bundler.bundle` for a module represented as a path to the module.
+Call the static `bundle` method:
 
-The bundler can be parameterized by a `IResourceLoader` (which tells the bundler how to load a resource
-referred to by some path) and an `IResolver` (which tells the bundler where to actually look for a
-resource referenced by some path).
+```java
+String result = Bundler.bundle("/path/to/file.js");
+```
+
+Alternatively, if you have the file's contents handy you can use `bundleString`:
+
+```java
+String result = Bundler.bundleString("import { x } from \"foo\"; console.log(x);");
+```
+
+Both `bundle` and `bundleString` can be parameterized by an `IResourceLoader` (which tells the 
+bundler how to load a resource referred to by some path) and an `IResolver` (which tells the 
+bundler where to actually look for a resource referenced by some path). By default 
+`FileSystemResolver` and `FileLoader` are used. Also available are a `NodeResolver` that follows
+node module resolving semantics and `ClassResourceLoader` for loading resources inside of jars.
 
 ## Contributing
 
