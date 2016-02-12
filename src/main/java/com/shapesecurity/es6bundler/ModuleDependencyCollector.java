@@ -52,10 +52,11 @@ public class ModuleDependencyCollector extends MonoidalReducer<ImmutableList<Str
 	@Override
 	public ImmutableList<String> reduceExportFrom(@NotNull ExportFrom node, @NotNull ImmutableList<ImmutableList<String>> namedExports) {
 		Maybe<String> specifier = node.getModuleSpecifier();
-		if (specifier.isJust())
+		if (specifier.isJust()) {
 			return ImmutableList.from(specifier.just());
-		else
+		} else {
 			return ImmutableList.nil();
+		}
 	}
 
 	@NotNull

@@ -68,21 +68,23 @@ public class ImportExportTransformer {
 
 	static private ImmutableList<Statement> transformImportDeclarationExportDeclarationStatement(
 		ImportDeclarationExportDeclarationStatement statement) {
-		if (statement instanceof ImportDeclaration)
+		if (statement instanceof ImportDeclaration) {
 			return transformImportDeclaration((ImportDeclaration) statement);
-		else if (statement instanceof ExportDeclaration)
+		} else if (statement instanceof ExportDeclaration) {
 			return transformExportDeclaration((ExportDeclaration) statement);
-		else
+		} else {
 			return ImmutableList.from((Statement) statement); // do not transform other statements
+		}
 	}
 
 	static private ImmutableList<Statement> transformImportDeclaration(ImportDeclaration declaration) {
-		if (declaration instanceof Import)
+		if (declaration instanceof Import) {
 			return transformImport((Import) declaration);
-		else if (declaration instanceof ImportNamespace)
+		} else if (declaration instanceof ImportNamespace) {
 			return transformImportNamespace((ImportNamespace) declaration);
-		else
+		} else {
 			return ImmutableList.nil(); //This should never happen!
+		}
 	}
 
 	static private ImmutableList<Statement> transformImport(Import statement) {
@@ -96,9 +98,10 @@ public class ImportExportTransformer {
 		ImmutableList<Statement> variableDeclarationStatements =
 			statement.getNamedImports().map(x -> (Statement) makeNamedImportStatement(resolver, x));
 
-		if (statement.getDefaultBinding().isJust())
+		if (statement.getDefaultBinding().isJust()) {
 			variableDeclarationStatements = variableDeclarationStatements.cons(
 				makeDefaultBindingStatement(resolver, statement.getDefaultBinding().just()));
+		}
 
 		return variableDeclarationStatements.cons(requireStatement);
 	}
@@ -111,37 +114,40 @@ public class ImportExportTransformer {
 		ImmutableList<Statement> variableDeclarationStatements =
 			ImmutableList.from(makeNameSpaceBindingStatement(resolver, statement.getNamespaceBinding()));
 
-		if (statement.getDefaultBinding().isJust())
+		if (statement.getDefaultBinding().isJust()) {
 			variableDeclarationStatements = variableDeclarationStatements.cons(
 				makeDefaultBindingStatement(resolver, statement.getDefaultBinding().just()));
+		}
 
 		return variableDeclarationStatements.cons(requireStatement);
 	}
 
 
 	static private ImmutableList<Statement> transformExportDeclaration(ExportDeclaration declaration) {
-		if (declaration instanceof Export)
+		if (declaration instanceof Export) {
 			return transformExport((Export) declaration);
-		else if (declaration instanceof ExportAllFrom)
+		} else if (declaration instanceof ExportAllFrom) {
 			return transformExportAllFrom((ExportAllFrom) declaration);
-		else if (declaration instanceof ExportDefault)
+		} else if (declaration instanceof ExportDefault) {
 			return transformExportDefault((ExportDefault) declaration);
-		else if (declaration instanceof ExportFrom)
+		} else if (declaration instanceof ExportFrom) {
 			return transformExportFrom((ExportFrom) declaration);
-		else
+		} else {
 			return ImmutableList.nil(); //This should never happen
+		}
 	}
 
 	static private ImmutableList<Statement> transformExport(Export statement) {
 		FunctionDeclarationClassDeclarationVariableDeclaration declaration = statement.getDeclaration();
-		if (declaration instanceof FunctionDeclaration)
+		if (declaration instanceof FunctionDeclaration) {
 			return transformExportFunctionDeclaration((FunctionDeclaration) declaration);
-		else if (declaration instanceof ClassDeclaration)
+		} else if (declaration instanceof ClassDeclaration) {
 			return transformExportClassDeclaration((ClassDeclaration) declaration);
-		else if (declaration instanceof VariableDeclaration)
+		} else if (declaration instanceof VariableDeclaration) {
 			return transformExportVariableDeclaration((VariableDeclaration) declaration);
-		else
+		} else {
 			return ImmutableList.nil(); //This should never happen
+		}
 	}
 
 	static private ImmutableList<Statement> transformExportFunctionDeclaration(FunctionDeclaration declaration) {
@@ -174,13 +180,15 @@ public class ImportExportTransformer {
 
 	static private ImmutableList<Statement> transformExportDefault(ExportDefault statement) {
 		FunctionDeclarationClassDeclarationExpression body = statement.getBody();
-		if (body instanceof FunctionDeclaration)
+		if (body instanceof FunctionDeclaration) {
 			return transformExportDefaultFunctionDeclaration((FunctionDeclaration) body);
-		else if (body instanceof ClassDeclaration)
+		} else if (body instanceof ClassDeclaration) {
 			return transformExportDefaultClassDeclaration((ClassDeclaration) body);
-		else if (body instanceof Expression)
+		} else if (body instanceof Expression) {
 			return transformExportDefaultExpression((Expression) body);
-		else return ImmutableList.nil(); //This should never happen
+		} else {
+			return ImmutableList.nil(); //This should never happen
+		}
 	}
 
 	static private ImmutableList<Statement> transformExportDefaultFunctionDeclaration(FunctionDeclaration declaration) {
@@ -193,9 +201,10 @@ public class ImportExportTransformer {
 				new AssignmentExpression(compMem, new FunctionExpression(Maybe.nothing(), false,
 					declaration.getParams(), declaration.getBody()));
 			return ImmutableList.from(new ExpressionStatement(assignmentExpression));
-		} else
+		} else {
 			return ImmutableList.from(declaration,
-				makeExportDefaultStatement(new ExportSpecifier(Maybe.nothing(), declaration.getName().getName())));
+									  makeExportDefaultStatement(new ExportSpecifier(Maybe.nothing(), declaration.getName().getName())));
+		}
 	}
 
 	static private ImmutableList<Statement> transformExportDefaultClassDeclaration(ClassDeclaration declaration) {

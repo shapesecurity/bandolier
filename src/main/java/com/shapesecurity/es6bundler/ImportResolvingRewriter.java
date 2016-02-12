@@ -66,61 +66,60 @@ public class ImportResolvingRewriter {
 	 * @return
 	 */
 	public Module rewrite(Module module, Path path) {
-		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
-			module.getItems().bind(x -> rewritePaths(x, path));
+		ImmutableList<ImportDeclarationExportDeclarationStatement> items = module.getItems().bind(x -> rewritePaths(x, path));
 
 		return new Module(module.directives, items);
 	}
 
-	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewritePaths(
-			ImportDeclarationExportDeclarationStatement statement, Path path) {
-		if (statement instanceof ImportDeclaration)
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewritePaths(ImportDeclarationExportDeclarationStatement statement, Path path) {
+		if (statement instanceof ImportDeclaration) {
 			return rewriteImportDeclaration((ImportDeclaration) statement, path);
-		else if (statement instanceof ExportDeclaration)
+		} else if (statement instanceof ExportDeclaration) {
 			return rewriteExportDeclaration((ExportDeclaration) statement, path);
-		else
+		} else {
 			return ImmutableList.from((Statement) statement); // do not transform other statements
+		}
 	}
 
-	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportDeclaration(
-			ImportDeclaration declaration, Path path) {
-		if (declaration instanceof Import)
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportDeclaration(ImportDeclaration declaration, Path path) {
+		if (declaration instanceof Import) {
 			return rewriteImport((Import) declaration, path);
-		else if (declaration instanceof ImportNamespace)
+		} else if (declaration instanceof ImportNamespace) {
 			return rewriteImportNamespace((ImportNamespace) declaration, path);
-		else
+		} else {
 			return ImmutableList.nil(); // this should never happen!
+		}
 	}
 
-	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImport(
-			Import imp, Path path) {
-		return ImmutableList.from(new Import(imp.getDefaultBinding(), imp.getNamedImports(),
-			resolvePath(path, imp.getModuleSpecifier())));
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImport(Import imp, Path path) {
+		return ImmutableList.from(
+			new Import(imp.getDefaultBinding(),
+					   imp.getNamedImports(),
+					   resolvePath(path, imp.getModuleSpecifier())));
 	}
 
-	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportNamespace(
-			ImportNamespace imp, Path path) {
-		return ImmutableList.from(new ImportNamespace(imp.getDefaultBinding(), imp.getNamespaceBinding(),
-			resolvePath(path, imp.getModuleSpecifier())));
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportNamespace(ImportNamespace imp, Path path) {
+		return ImmutableList.from(
+			new ImportNamespace(imp.getDefaultBinding(),
+								imp.getNamespaceBinding(),
+								resolvePath(path, imp.getModuleSpecifier())));
 	}
 
-	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportDeclaration(
-			ExportDeclaration declaration, Path path) {
-		if (declaration instanceof ExportAllFrom)
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportDeclaration(ExportDeclaration declaration, Path path) {
+		if (declaration instanceof ExportAllFrom) {
 			return rewriteExportAllFrom((ExportAllFrom) declaration, path);
-		else if (declaration instanceof ExportFrom)
+		} else if (declaration instanceof ExportFrom) {
 			return rewriteExportFrom((ExportFrom) declaration, path);
-		else
+		} else {
 			return ImmutableList.from(declaration);
+		}
 	}
 
-	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportAllFrom(
-			ExportAllFrom exp, Path path) {
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportAllFrom(ExportAllFrom exp, Path path) {
 		return ImmutableList.from(new ExportAllFrom(resolvePath(path, exp.getModuleSpecifier())));
 	}
 
-	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(
-			ExportFrom exp, Path path) {
+	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(ExportFrom exp, Path path) {
 		ExportFrom newExp = new ExportFrom(exp.getNamedExports(), exp.getModuleSpecifier().map(x -> resolvePath(path, x)));
 		return ImmutableList.from(newExp);
 	}
