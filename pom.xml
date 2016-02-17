@@ -4,12 +4,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.shapesecurity</groupId>
-    <artifactId>es6bundler</artifactId>
+    <artifactId>shift-bundler</artifactId>
     <version>1.0.1</version>
     <packaging>jar</packaging>
 
-    <name>ES6Bundler</name>
-    <description>bundles es6 modules</description>
+    <name>Shift Bundler</name>
+    <description>Bundles es2015 modules</description>
 
     <dependencies>
         <dependency>

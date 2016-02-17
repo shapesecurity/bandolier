@@ -1,6 +1,6 @@
-# ES6-Bundler
+# Shift-Bundler
 
-ES6-Bundler bundles modules with dependencies specified using ES6 import/export statements 
+Shift-Bundler bundles modules with dependencies specified using ES6 import/export statements 
 as a single script that can run in an pre-ES6 JavaScript environment.
 
 ## Installation
@@ -16,13 +16,13 @@ Add as a dependency via maven:
 Call the static `bundle` method:
 
 ```java
-String result = Bundler.bundle("/path/to/file.js");
+Script result = Bundler.bundle("/path/to/file.js");
 ```
 
 Alternatively, if you have the file's contents handy you can use `bundleString`:
 
 ```java
-String result = Bundler.bundleString("import { x } from \"foo\"; console.log(x);");
+Script result = Bundler.bundleString("import { x } from \"foo\"; console.log(x);");
 ```
 
 Both `bundle` and `bundleString` can be parameterized by an `IResourceLoader` (which tells the 
