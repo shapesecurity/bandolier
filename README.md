@@ -1,7 +1,7 @@
-# Shift-Bundler
+# Shift Bundler
 
-Shift-Bundler bundles modules with dependencies specified using ES6 import/export statements 
-as a single script that can run in an pre-ES6 JavaScript environment.
+The shift bundler takes modules with dependencies specified using ES6 import/export statements 
+and returns a single script that can run in an pre-ES2015 JavaScript environment.
 
 ## Installation
 
