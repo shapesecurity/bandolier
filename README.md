@@ -36,7 +36,6 @@ node module resolving semantics and `ClassResourceLoader` for loading resources 
 * Open a Github issue with a description of your desired change. If one exists already, leave 
 a message stating that you are working on it with the date you expect it to be complete.
 * Fork this repo, and clone the forked repo.
-* Install dependencies with `mvn`.
 * Build and test in your environment with `mvn compile test`.
 * Create a feature branch. Make your changes. Add tests.
 * Build and test in your environment with `mvn compile test`.
