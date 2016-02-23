@@ -5,10 +5,10 @@ and returns a single script that can run in an pre-ES2015 JavaScript environment
 
 ## Installation
 
-Add as a dependency via maven:
+Install via maven:
 
-```xml
-<!-- todo -->
+```sh
+mvn install
 ```
 
 ## Usage
