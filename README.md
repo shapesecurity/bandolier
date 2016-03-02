@@ -1,6 +1,6 @@
-# Shift Bundler
+# Bandolier
 
-The shift bundler takes modules with dependencies specified using ES6 import/export statements 
+Bandolier takes modules with dependencies specified using ES6 import/export statements 
 and returns a single script that can run in an pre-ES2015 JavaScript environment.
 
 ## Installation
