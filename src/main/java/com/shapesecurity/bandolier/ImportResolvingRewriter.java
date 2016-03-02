@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.es6bundler;
+package com.shapesecurity.bandolier;
 
 
-import com.shapesecurity.es6bundler.loader.FileSystemResolver;
+import com.shapesecurity.bandolier.loader.FileSystemResolver;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.ast.ExportAllFrom;
 import com.shapesecurity.shift.ast.ExportDeclaration;
@@ -27,7 +27,7 @@ import com.shapesecurity.shift.ast.ImportDeclarationExportDeclarationStatement;
 import com.shapesecurity.shift.ast.ImportNamespace;
 import com.shapesecurity.shift.ast.Module;
 import com.shapesecurity.shift.ast.Statement;
-import com.shapesecurity.es6bundler.loader.IResolver;
+import com.shapesecurity.bandolier.loader.IResolver;
 
 import java.nio.file.Path;
 

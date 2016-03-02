@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.es6bundler.loader;
+package com.shapesecurity.bandolier.loader;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Abstracts the concept of checking if a resource exists and loading it as a string.
- */
-public interface IResourceLoader {
+public class FileLoader implements IResourceLoader {
 	@NotNull
-	Boolean exists(@NotNull Path path);
+	@Override
+	public Boolean exists(@NotNull Path path) {
+		return Files.exists(path);
+	}
 
 	@NotNull
-	String loadResource(@NotNull Path path) throws IOException;
+	@Override
+	public String loadResource(@NotNull Path path) throws IOException {
+		return Files.readAllLines(path).toString();
+	}
 }
+

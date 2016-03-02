@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.es6bundler;
+package com.shapesecurity.bandolier;
 
-import com.shapesecurity.es6bundler.loader.FileSystemResolver;
-import com.shapesecurity.es6bundler.loader.IResourceLoader;
-import com.shapesecurity.es6bundler.loader.ModuleLoaderException;
+import com.shapesecurity.bandolier.loader.FileSystemResolver;
+import com.shapesecurity.bandolier.loader.IResourceLoader;
+import com.shapesecurity.bandolier.loader.ModuleLoaderException;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.ast.CallExpression;
 import com.shapesecurity.shift.ast.ExpressionStatement;
 import com.shapesecurity.shift.ast.Script;
 import com.shapesecurity.shift.ast.StaticMemberExpression;
 import com.shapesecurity.shift.codegen.CodeGen;
-import com.shapesecurity.es6bundler.loader.IResolver;
+import com.shapesecurity.bandolier.loader.IResolver;
 
 import junit.framework.TestCase;
 

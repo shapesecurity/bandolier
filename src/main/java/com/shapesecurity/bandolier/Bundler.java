@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.es6bundler;
+package com.shapesecurity.bandolier;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
@@ -60,11 +60,11 @@ import com.shapesecurity.shift.ast.operators.UnaryOperator;
 import com.shapesecurity.shift.parser.JsError;
 import com.shapesecurity.shift.parser.Parser;
 import com.shapesecurity.shift.visitor.Director;
-import com.shapesecurity.es6bundler.loader.FileLoader;
-import com.shapesecurity.es6bundler.loader.FileSystemResolver;
-import com.shapesecurity.es6bundler.loader.IResolver;
-import com.shapesecurity.es6bundler.loader.IResourceLoader;
-import com.shapesecurity.es6bundler.loader.ModuleLoaderException;
+import com.shapesecurity.bandolier.loader.FileLoader;
+import com.shapesecurity.bandolier.loader.FileSystemResolver;
+import com.shapesecurity.bandolier.loader.IResolver;
+import com.shapesecurity.bandolier.loader.IResourceLoader;
+import com.shapesecurity.bandolier.loader.ModuleLoaderException;
 
 import org.jetbrains.annotations.NotNull;
 

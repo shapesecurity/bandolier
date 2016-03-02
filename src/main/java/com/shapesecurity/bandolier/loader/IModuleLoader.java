@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.es6bundler.loader;
+package com.shapesecurity.bandolier.loader;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-public interface IResolver {
+public interface IModuleLoader {
 	/**
-	 * Given a root and a (potentially relative) path, resolves the path to an absolute path.
+	 * Loads the module located at the input path.
+	 *
+	 * @param path is the absolute path to the module to be loaded.
+	 * @return the module
 	 */
 	@NotNull
-	String resolve(@NotNull Path root, @NotNull String path);
+	String loadModule(@NotNull Path path) throws ModuleLoaderException;
 }

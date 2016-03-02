@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.es6bundler.loader;
+package com.shapesecurity.bandolier.loader;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class FileLoader implements IResourceLoader {
+public class FileSystemResolver implements IResolver {
 	@NotNull
 	@Override
-	public Boolean exists(@NotNull Path path) {
-		return Files.exists(path);
-	}
-
-	@NotNull
-	@Override
-	public String loadResource(@NotNull Path path) throws IOException {
-		return Files.readAllLines(path).toString();
+	public String resolve(@NotNull Path root, @NotNull String path) {
+		if (path.startsWith(".")) {
+			return root.resolve(path).normalize().toString();
+		}
+		return path;
 	}
 }
-

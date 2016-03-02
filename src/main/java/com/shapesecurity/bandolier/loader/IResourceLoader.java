@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.es6bundler.loader;
+package com.shapesecurity.bandolier.loader;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
-public interface IModuleLoader {
-	/**
-	 * Loads the module located at the input path.
-	 *
-	 * @param path is the absolute path to the module to be loaded.
-	 * @return the module
-	 */
+/**
+ * Abstracts the concept of checking if a resource exists and loading it as a string.
+ */
+public interface IResourceLoader {
 	@NotNull
-	String loadModule(@NotNull Path path) throws ModuleLoaderException;
+	Boolean exists(@NotNull Path path);
+
+	@NotNull
+	String loadResource(@NotNull Path path) throws IOException;
 }
