@@ -10,6 +10,38 @@
 
     <name>Bandolier</name>
     <description>Bundles es2015 modules</description>
+    <url>https://github.com/shapesecurity/bandolier</url>
+
+    <scm>
+        <connection>scm:git:git@github.com:shapesecurity/bandolier.git</connection>
+        <developerConnection>scm:git:git@github.com:shapesecurity/bandolier.git</developerConnection>
+        <url>git@github.com:shapesecurity/bandolier.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Tim Disney</name>
+            <email>tdisney@shapesecurity.com</email>
+            <organization>Shape Security</organization>
+            <organizationUrl>https://www.shapesecurity.com</organizationUrl>
+        </developer>
+
+        <developer>
+            <name>Salman Saghafi</name>
+            <email>salman@shapesecurity.com</email>
+            <organization>Shape Security</organization>
+            <organizationUrl>https://www.shapesecurity.com</organizationUrl>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
