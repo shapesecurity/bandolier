@@ -25,7 +25,7 @@ import junit.framework.TestCase;
 
 import java.nio.file.Paths;
 
-public class ImportExportPathRewriterTest extends TestCase {
+public class ImportResolvingRewriterTest extends TestCase {
 	public void testRewriteModule() throws Exception {
 		testRewrite("", "", "");
 		testRewrite("import 'dir/lib1.js'", "import 'dir/lib1.js'", "root");
