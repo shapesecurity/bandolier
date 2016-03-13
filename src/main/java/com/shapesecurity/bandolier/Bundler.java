@@ -27,6 +27,8 @@ import com.shapesecurity.shift.ast.ComputedMemberExpression;
 import com.shapesecurity.shift.ast.ConditionalExpression;
 import com.shapesecurity.shift.ast.DataProperty;
 import com.shapesecurity.shift.ast.Directive;
+import com.shapesecurity.shift.ast.ExportAllFrom;
+import com.shapesecurity.shift.ast.ExportFrom;
 import com.shapesecurity.shift.ast.ExpressionStatement;
 import com.shapesecurity.shift.ast.FormalParameters;
 import com.shapesecurity.shift.ast.FunctionBody;
@@ -34,6 +36,8 @@ import com.shapesecurity.shift.ast.FunctionDeclaration;
 import com.shapesecurity.shift.ast.FunctionExpression;
 import com.shapesecurity.shift.ast.IdentifierExpression;
 import com.shapesecurity.shift.ast.IfStatement;
+import com.shapesecurity.shift.ast.Import;
+import com.shapesecurity.shift.ast.ImportNamespace;
 import com.shapesecurity.shift.ast.LiteralBooleanExpression;
 import com.shapesecurity.shift.ast.LiteralNumericExpression;
 import com.shapesecurity.shift.ast.LiteralStringExpression;
@@ -59,7 +63,6 @@ import com.shapesecurity.shift.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.ast.operators.UnaryOperator;
 import com.shapesecurity.shift.parser.JsError;
 import com.shapesecurity.shift.parser.Parser;
-import com.shapesecurity.shift.visitor.Director;
 import com.shapesecurity.bandolier.loader.FileLoader;
 import com.shapesecurity.bandolier.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.loader.IResolver;
@@ -165,8 +168,7 @@ public class Bundler {
 
 		while (!toLoad.isEmpty()) {
 			String root = toLoad.remove();
-			String[] dependencies = getModuleDirectDependencies(loadedModules.get(root));
-			for (String dependency : dependencies) {
+			for (String dependency : collectDirectDependencies(loadedModules.get(root))) {
 				if (!loadedModules.containsKey(dependency)) {
 					try {
 						module = Parser.parseModule(loader.loadResource(Paths.get(dependency)));
@@ -183,15 +185,19 @@ public class Bundler {
 		return loadedModules;
 	}
 
-	/**
-	 * Returns a list of modules that are directly imported by the input module.
-	 *
-	 * @param module is the input module.
-	 * @return a list of imported modules.
-	 */
-	private static String[] getModuleDirectDependencies(Module module) {
-		ImmutableList<String> imports = Director.reduceModule(new ModuleDependencyCollector(), module);
-		return imports.toArray(new String[0]);
+	public static ImmutableList<String> collectDirectDependencies(@NotNull Module m) {
+		return m.items.bind(s -> {
+			if (s instanceof Import) {
+				return ImmutableList.list(((Import) s).getModuleSpecifier());
+			} else if (s instanceof ImportNamespace) {
+				return ImmutableList.list(((ImportNamespace) s).getModuleSpecifier());
+			} else if (s instanceof ExportAllFrom) {
+				return ImmutableList.list(((ExportAllFrom) s).getModuleSpecifier());
+			} else if (s instanceof ExportFrom) {
+				return ((ExportFrom) s).getModuleSpecifier().toList();
+			}
+			return ImmutableList.nil();
+		});
 	}
 
 	@NotNull

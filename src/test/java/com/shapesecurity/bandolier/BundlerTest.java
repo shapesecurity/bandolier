@@ -21,11 +21,14 @@ import com.shapesecurity.bandolier.loader.ModuleLoaderException;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.ast.CallExpression;
 import com.shapesecurity.shift.ast.ExpressionStatement;
+import com.shapesecurity.shift.ast.Module;
 import com.shapesecurity.shift.ast.Script;
 import com.shapesecurity.shift.ast.StaticMemberExpression;
 import com.shapesecurity.shift.codegen.CodeGen;
 import com.shapesecurity.bandolier.loader.IResolver;
 
+import com.shapesecurity.shift.parser.JsError;
+import com.shapesecurity.shift.parser.Parser;
 import junit.framework.TestCase;
 
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +37,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +48,39 @@ import javax.script.ScriptException;
 public class BundlerTest extends TestCase {
 	private TestLoader loader = new TestLoader();
 	private IResolver resolver = new FileSystemResolver();
+
+	public void testReduceImport() throws Exception {
+		testDependencyCollector("");
+		testDependencyCollector("import '../dep1.js'", "../dep1.js");
+		testDependencyCollector("import '../dep1.js'; import 'dep2.js'", "../dep1.js", "dep2.js");
+	}
+
+	public void testReduceImportNamespace() throws Exception {
+		testDependencyCollector("import * as d1 from '../dep1.js'", "../dep1.js");
+		testDependencyCollector("import * as d1 from '../dep1.js'; import * as d2 from 'dep2.js'", "../dep1.js", "dep2.js");
+	}
+
+	public void testReduceExportFrom() throws Exception {
+		testDependencyCollector("export {v} from '../dep1.js'", "../dep1.js");
+		testDependencyCollector("export {v1} from '../dep1.js'; export {v2} from 'dep2.js'", "../dep1.js", "dep2.js");
+	}
+
+	public void testReduceExportAllFrom() throws Exception {
+		testDependencyCollector("export * from '../dep1.js'", "../dep1.js");
+		testDependencyCollector("export * from '../dep1.js'; export * from 'dep2.js'", "../dep1.js", "dep2.js");
+	}
+
+	private static void testDependencyCollector(String code, String... dependencies) throws JsError {
+		Module module = Parser.parseModule(code);
+		ImmutableList<String> deps = Bundler.collectDirectDependencies(module);
+		ImmutableList<String> expected = ImmutableList.from(dependencies);
+
+		if (!deps.equals(expected)) {
+			System.out.println(Arrays.toString(deps.toArray(new String[deps.length])));
+			System.out.println(Arrays.toString(expected.toArray(new String[expected.length])));
+		}
+		assertEquals(deps, expected);
+	}
 
 	@Test
 	public void testBundle() throws Exception {
