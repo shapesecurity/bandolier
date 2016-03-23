@@ -15,6 +15,11 @@
  */
 package com.shapesecurity.bandolier;
 
+import com.shapesecurity.bandolier.loader.FileLoader;
+import com.shapesecurity.bandolier.loader.FileSystemResolver;
+import com.shapesecurity.bandolier.loader.IResolver;
+import com.shapesecurity.bandolier.loader.IResourceLoader;
+import com.shapesecurity.bandolier.loader.ModuleLoaderException;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.ast.ArrayExpression;
@@ -29,6 +34,7 @@ import com.shapesecurity.shift.ast.DataProperty;
 import com.shapesecurity.shift.ast.Directive;
 import com.shapesecurity.shift.ast.ExportAllFrom;
 import com.shapesecurity.shift.ast.ExportFrom;
+import com.shapesecurity.shift.ast.Expression;
 import com.shapesecurity.shift.ast.ExpressionStatement;
 import com.shapesecurity.shift.ast.FormalParameters;
 import com.shapesecurity.shift.ast.FunctionBody;
@@ -63,11 +69,6 @@ import com.shapesecurity.shift.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.ast.operators.UnaryOperator;
 import com.shapesecurity.shift.parser.JsError;
 import com.shapesecurity.shift.parser.Parser;
-import com.shapesecurity.bandolier.loader.FileLoader;
-import com.shapesecurity.bandolier.loader.FileSystemResolver;
-import com.shapesecurity.bandolier.loader.IResolver;
-import com.shapesecurity.bandolier.loader.IResourceLoader;
-import com.shapesecurity.bandolier.loader.ModuleLoaderException;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -398,7 +399,9 @@ public class Bundler {
 		return new ExpressionStatement(assignment);
 	}
 
-	// resolved.call(module$.exports,module$,module$.exports,dirname,file);
+	// top-level this bindings in a module are undefined
+	// https://tc39.github.io/ecma262/#sec-module-environment-records-getthisbinding
+	// resolved.call(null ,module$,module$.exports,dirname,file);
 	private static ExpressionStatement resolvedCall() {
 		IdentifierExpression resolvedIden = new IdentifierExpression("resolved");
 		StaticMemberExpression resolvedCall = new StaticMemberExpression("call", resolvedIden);
@@ -406,9 +409,10 @@ public class Bundler {
 		StaticMemberExpression moduleExports = new StaticMemberExpression("exports", moduleIden);
 		IdentifierExpression dirnameIden = new IdentifierExpression("dirname");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
+		Expression undef = new UnaryExpression(UnaryOperator.Void, new LiteralNumericExpression(0.0));
 
 		ImmutableList<SpreadElementExpression> callParams =
-			ImmutableList.from(moduleExports, moduleIden, moduleExports, dirnameIden, fileIden);
+			ImmutableList.from(undef, moduleIden, moduleExports, dirnameIden, fileIden);
 		CallExpression callExpression = new CallExpression(resolvedCall, callParams);
 		return new ExpressionStatement(callExpression);
 	}
