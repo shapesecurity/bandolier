@@ -104,6 +104,8 @@ public class BundlerTest extends TestCase {
 		testResult("/root/importExportDefault.js", 142.0);
 		testResult("/root/importAll.js", 142.0);
 		testResult("/root/importDefaultAndName.js", 142.0);
+
+		testResult("/root/thisIsUndefined.js", null);
 	}
 
 	private void testResult(String filePath, Object result) throws ModuleLoaderException, ScriptException {
@@ -183,6 +185,8 @@ public class BundlerTest extends TestCase {
 			modules.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;");
 			modules.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;");
 			modules.put("/root/importDefaultAndName.js", "import d, { v } from '/root/exportDefaultAndName.js'; export var result = d + v;");
+
+			modules.put("/root/thisIsUndefined.js", "export var result = this;");
 		}
 
 		@NotNull
