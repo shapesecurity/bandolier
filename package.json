@@ -1,0 +1,23 @@
+{
+  "name": "bandolier",
+  "version": "1.0.2",
+  "description": "Bundles es2015 modules",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "mvn assembly:assembly -DdescriptorId=jar-with-dependencies",
+    "preinstall": "npm run build",
+    "install": "cp target/bandolier-$npm_package_version-jar-with-dependencies.jar bin/bandolier.jar"
+  },
+  "bin": "bin/bandolier.sh",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shapesecurity/bandolier.git"
+  },
+  "author": "Shape Security",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/shapesecurity/bandolier/issues"
+  },
+  "homepage": "https://github.com/shapesecurity/bandolier#readme"
+}
