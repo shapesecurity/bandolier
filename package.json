@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "mvn assembly:assembly -DdescriptorId=jar-with-dependencies",
-    "preinstall": "npm run build",
-    "install": "cp target/bandolier-$npm_package_version-jar-with-dependencies.jar bin/bandolier.jar"
+    "prepublish": "npm run build",
+    "publish": "cp -v target/bandolier-*-jar-with-dependencies.jar bin/bandolier.jar"
   },
   "bin": "bin/bandolier.sh",
   "repository": {
