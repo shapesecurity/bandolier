@@ -108,7 +108,7 @@ public class BundlerTest extends TestCase {
 		testResult("/root/thisIsUndefined.js", null);
 	}
 
-	private void testResult(String filePath, Object result) throws ModuleLoaderException, ScriptException {
+	private Object runInNashorn(String filePath) throws Exception {
 		Script script = Bundler.bundle(Paths.get(filePath), resolver, loader);
 
 		ExpressionStatement statement = (ExpressionStatement) script.getStatements().maybeHead().just();
@@ -118,12 +118,24 @@ public class BundlerTest extends TestCase {
 		script = new Script(script.getDirectives(), ImmutableList.from(new ExpressionStatement(memberExpression)));
 		String newProgramText = CodeGen.codeGen(script, true);
 
+		ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+
 		try {
-			ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-			assertEquals(result, engine.eval(newProgramText));
+			return engine.eval(newProgramText);
 		} catch (ScriptException e) {
 			System.out.println(newProgramText);
 			throw e;
+		}
+	}
+
+	private void testResult(String filePath, Object expected) throws Exception {
+		Object result = runInNashorn(filePath);
+		if (result instanceof Double) {
+			assertEquals((Double) expected, (Double) result, 0.0);
+		} else if (result instanceof Integer) {
+			assertEquals(((Double) expected).intValue(), (int) result);
+		} else {
+			assertEquals(expected, result);
 		}
 	}
 
