@@ -111,11 +111,11 @@ public class BundlerTest extends TestCase {
 	private Object runInNashorn(String filePath) throws Exception {
 		Script script = Bundler.bundle(Paths.get(filePath), resolver, loader);
 
-		ExpressionStatement statement = (ExpressionStatement) script.getStatements().maybeHead().just();
+		ExpressionStatement statement = (ExpressionStatement) script.getStatements().maybeHead().fromJust();
 		CallExpression callExpression = (CallExpression) statement.getExpression();
 		StaticMemberExpression memberExpression = new StaticMemberExpression("result", callExpression);
 
-		script = new Script(script.getDirectives(), ImmutableList.from(new ExpressionStatement(memberExpression)));
+		script = new Script(script.getDirectives(), ImmutableList.of(new ExpressionStatement(memberExpression)));
 		String newProgramText = CodeGen.codeGen(script, true);
 
 		ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");

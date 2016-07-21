@@ -77,7 +77,7 @@ public class ImportResolvingRewriter {
 		} else if (statement instanceof ExportDeclaration) {
 			return rewriteExportDeclaration((ExportDeclaration) statement, path);
 		} else {
-			return ImmutableList.from((Statement) statement); // do not transform other statements
+			return ImmutableList.of((Statement) statement); // do not transform other statements
 		}
 	}
 
@@ -87,19 +87,19 @@ public class ImportResolvingRewriter {
 		} else if (declaration instanceof ImportNamespace) {
 			return rewriteImportNamespace((ImportNamespace) declaration, path);
 		} else {
-			return ImmutableList.nil(); // this should never happen!
+			return ImmutableList.empty(); // this should never happen!
 		}
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImport(Import imp, Path path) {
-		return ImmutableList.from(
+		return ImmutableList.of(
 			new Import(imp.getDefaultBinding(),
 					   imp.getNamedImports(),
 					   resolvePath(path, imp.getModuleSpecifier())));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportNamespace(ImportNamespace imp, Path path) {
-		return ImmutableList.from(
+		return ImmutableList.of(
 			new ImportNamespace(imp.getDefaultBinding(),
 								imp.getNamespaceBinding(),
 								resolvePath(path, imp.getModuleSpecifier())));
@@ -111,16 +111,16 @@ public class ImportResolvingRewriter {
 		} else if (declaration instanceof ExportFrom) {
 			return rewriteExportFrom((ExportFrom) declaration, path);
 		} else {
-			return ImmutableList.from(declaration);
+			return ImmutableList.of(declaration);
 		}
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportAllFrom(ExportAllFrom exp, Path path) {
-		return ImmutableList.from(new ExportAllFrom(resolvePath(path, exp.getModuleSpecifier())));
+		return ImmutableList.of(new ExportAllFrom(resolvePath(path, exp.getModuleSpecifier())));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(ExportFrom exp, Path path) {
 		ExportFrom newExp = new ExportFrom(exp.getNamedExports(), exp.getModuleSpecifier().map(x -> resolvePath(path, x)));
-		return ImmutableList.from(newExp);
+		return ImmutableList.of(newExp);
 	}
 }
