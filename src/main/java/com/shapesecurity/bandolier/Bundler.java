@@ -140,7 +140,7 @@ public class Bundler {
 			});
 
 			ExpressionStatement bundled = bundleModules(importPathGensymMap.get(filePath.toString()), importMappedModules);
-			return new Script(ImmutableList.nil(), ImmutableList.from(bundled));
+			return new Script(ImmutableList.empty(), ImmutableList.of(bundled));
 		} catch (JsError e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -189,15 +189,15 @@ public class Bundler {
 	public static ImmutableList<String> collectDirectDependencies(@NotNull Module m) {
 		return m.items.bind(s -> {
 			if (s instanceof Import) {
-				return ImmutableList.list(((Import) s).getModuleSpecifier());
+				return ImmutableList.of(((Import) s).getModuleSpecifier());
 			} else if (s instanceof ImportNamespace) {
-				return ImmutableList.list(((ImportNamespace) s).getModuleSpecifier());
+				return ImmutableList.of(((ImportNamespace) s).getModuleSpecifier());
 			} else if (s instanceof ExportAllFrom) {
-				return ImmutableList.list(((ExportAllFrom) s).getModuleSpecifier());
+				return ImmutableList.of(((ExportAllFrom) s).getModuleSpecifier());
 			} else if (s instanceof ExportFrom) {
 				return ((ExportFrom) s).getModuleSpecifier().toList();
 			}
-			return ImmutableList.nil();
+			return ImmutableList.empty();
 		});
 	}
 
@@ -212,7 +212,7 @@ public class Bundler {
 	private static ExpressionStatement anonymousFunctionCall(String rootPath, Map<String, Module> modules) {
 		StaticMemberExpression anonymousCall =
 			new StaticMemberExpression("call", anonymousFunctionExpression(rootPath, modules));
-		ImmutableList<SpreadElementExpression> params = ImmutableList.from(new ThisExpression(), new ThisExpression());
+		ImmutableList<SpreadElementExpression> params = ImmutableList.of(new ThisExpression(), new ThisExpression());
 		CallExpression callExpression = new CallExpression(anonymousCall, params);
 
 		return new ExpressionStatement(callExpression);
@@ -221,7 +221,7 @@ public class Bundler {
 	// function(global) {...}
 	private static FunctionExpression anonymousFunctionExpression(String rootPath, Map<String, Module> modules) {
 		BindingIdentifier globalIden = new BindingIdentifier("global");
-		FormalParameters params = new FormalParameters(ImmutableList.from(globalIden), Maybe.nothing());
+		FormalParameters params = new FormalParameters(ImmutableList.of(globalIden), Maybe.empty());
 
 		LinkedList<Statement> requireStatements =
 			modules.entrySet().stream().map(x -> {
@@ -229,16 +229,16 @@ public class Bundler {
 				return requireDefineStatement(x.getKey(), (Module) reduced);
 			}).collect(Collectors.toCollection(LinkedList::new));
 		ImmutableList<Statement> statements = ImmutableList.from(requireStatements);
-		statements = statements.append(ImmutableList.from(requireCall(rootPath)));
+		statements = statements.append(ImmutableList.of(requireCall(rootPath)));
 		statements = statements.cons(requireDefineDefinition());
 		statements = statements.cons(requireResolveDefinition());
 		statements = statements.cons(initializeRequireCache());
 		statements = statements.cons(initializeRequireModules());
 		statements = statements.cons(requireFunctionDeclaration());
 
-		FunctionBody body = new FunctionBody(ImmutableList.from(new Directive("use strict")), statements);
+		FunctionBody body = new FunctionBody(ImmutableList.of(new Directive("use strict")), statements);
 
-		return new FunctionExpression(Maybe.nothing(), false, params, body);
+		return new FunctionExpression(Maybe.empty(), false, params, body);
 	}
 
 	//function require(file,parentModule){ ... }
@@ -247,9 +247,9 @@ public class Bundler {
 		BindingIdentifier fileParamIden = new BindingIdentifier("file");
 		BindingIdentifier parentModuleIden = new BindingIdentifier("parentModule");
 
-		FormalParameters params = new FormalParameters(ImmutableList.from(fileParamIden, parentModuleIden), Maybe.nothing());
+		FormalParameters params = new FormalParameters(ImmutableList.of(fileParamIden, parentModuleIden), Maybe.empty());
 
-		ImmutableList<Statement> statements = ImmutableList.nil();
+		ImmutableList<Statement> statements = ImmutableList.empty();
 		statements = statements.cons(returnRequire());
 		statements = statements.cons(moduleLoaded());
 		statements = statements.cons(resolvedCall());
@@ -261,14 +261,14 @@ public class Bundler {
 		statements = statements.cons(resolvedDeclaration());
 		statements = statements.cons(checkCacheIf());
 
-		FunctionBody body = new FunctionBody(ImmutableList.nil(), statements);
+		FunctionBody body = new FunctionBody(ImmutableList.empty(), statements);
 
 		return new FunctionDeclaration(requireIden, false, params, body);
 	}
 
 	//if({}.hasOwnProperty.call(require.cache,file)) return require.cache[file];
 	private static IfStatement checkCacheIf() {
-		ObjectExpression objectExpression = new ObjectExpression(ImmutableList.nil());
+		ObjectExpression objectExpression = new ObjectExpression(ImmutableList.empty());
 		StaticMemberExpression objHasOwnProp = new StaticMemberExpression("hasOwnProperty", objectExpression);
 		StaticMemberExpression objHasOwnPropCall = new StaticMemberExpression("call", objHasOwnProp);
 
@@ -277,12 +277,12 @@ public class Bundler {
 		IdentifierExpression fileIden = new IdentifierExpression("file");
 		ComputedMemberExpression requireCacheFile = new ComputedMemberExpression(fileIden, requireCache);
 
-		ImmutableList<SpreadElementExpression> callParams = ImmutableList.from(requireCache, fileIden);
+		ImmutableList<SpreadElementExpression> callParams = ImmutableList.of(requireCache, fileIden);
 		CallExpression callExpression = new CallExpression(objHasOwnPropCall, callParams);
 
-		ReturnStatement returnStatement = new ReturnStatement(Maybe.just(requireCacheFile));
+		ReturnStatement returnStatement = new ReturnStatement(Maybe.of(requireCacheFile));
 
-		return new IfStatement(callExpression, returnStatement, Maybe.nothing());
+		return new IfStatement(callExpression, returnStatement, Maybe.empty());
 	}
 
 	//var resolved=require.resolve(file);
@@ -290,12 +290,12 @@ public class Bundler {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
 		StaticMemberExpression requireResolve = new StaticMemberExpression("resolve", requireIden);
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		ImmutableList<SpreadElementExpression> callParams = ImmutableList.from(fileIden);
+		ImmutableList<SpreadElementExpression> callParams = ImmutableList.of(fileIden);
 		CallExpression callExpression = new CallExpression(requireResolve, callParams);
 
 		BindingIdentifier resolvedIden = new BindingIdentifier("resolved");
-		VariableDeclarator resolvedDecl = new VariableDeclarator(resolvedIden, Maybe.just(callExpression));
-		ImmutableList<VariableDeclarator> declarators = ImmutableList.from(resolvedDecl);
+		VariableDeclarator resolvedDecl = new VariableDeclarator(resolvedIden, Maybe.of(callExpression));
+		ImmutableList<VariableDeclarator> declarators = ImmutableList.of(resolvedDecl);
 
 		VariableDeclaration declaration = new VariableDeclaration(VariableDeclarationKind.Var, declarators);
 
@@ -309,14 +309,14 @@ public class Bundler {
 		BinaryExpression errorExpression = new BinaryExpression(BinaryOperator.Plus, errorMsg, fileIden);
 
 		IdentifierExpression errorIden = new IdentifierExpression("Error");
-		ImmutableList<SpreadElementExpression> errorParams = ImmutableList.from(errorExpression);
+		ImmutableList<SpreadElementExpression> errorParams = ImmutableList.of(errorExpression);
 		NewExpression newExpression = new NewExpression(errorIden, errorParams);
 		ThrowStatement throwStatement = new ThrowStatement(newExpression);
 
 		IdentifierExpression resolvedIden = new IdentifierExpression("resolved");
 		UnaryExpression testExpression = new UnaryExpression(UnaryOperator.LogicalNot, resolvedIden);
 
-		return new IfStatement(testExpression, throwStatement, Maybe.nothing());
+		return new IfStatement(testExpression, throwStatement, Maybe.empty());
 	}
 
 	//var module$={
@@ -333,16 +333,16 @@ public class Bundler {
 		DataProperty idProp = new DataProperty(new IdentifierExpression("file"), new StaticPropertyName("id"));
 		DataProperty requireProp = new DataProperty(new IdentifierExpression("require"), new StaticPropertyName("require"));
 		DataProperty fileNameProp = new DataProperty(new IdentifierExpression("file"), new StaticPropertyName("filename"));
-		DataProperty exportsProp = new DataProperty(new ObjectExpression(ImmutableList.nil()), new StaticPropertyName("exports"));
+		DataProperty exportsProp = new DataProperty(new ObjectExpression(ImmutableList.empty()), new StaticPropertyName("exports"));
 		DataProperty loadedProperty = new DataProperty(new LiteralBooleanExpression(false), new StaticPropertyName("loaded"));
 		DataProperty parentProp = new DataProperty(new IdentifierExpression("parentModule"), new StaticPropertyName("parent"));
-		DataProperty childrenProp = new DataProperty(new ArrayExpression(ImmutableList.nil()), new StaticPropertyName("children"));
+		DataProperty childrenProp = new DataProperty(new ArrayExpression(ImmutableList.empty()), new StaticPropertyName("children"));
 		ImmutableList<ObjectProperty> properties =
-			ImmutableList.from(idProp, requireProp, fileNameProp, exportsProp, loadedProperty, parentProp, childrenProp);
+			ImmutableList.of(idProp, requireProp, fileNameProp, exportsProp, loadedProperty, parentProp, childrenProp);
 		ObjectExpression object = new ObjectExpression(properties);
 
-		VariableDeclarator declarator = new VariableDeclarator(moduleIden, Maybe.just(object));
-		ImmutableList<VariableDeclarator> declarators = ImmutableList.from(declarator);
+		VariableDeclarator declarator = new VariableDeclarator(moduleIden, Maybe.of(object));
+		ImmutableList<VariableDeclarator> declarators = ImmutableList.of(declarator);
 
 		VariableDeclaration declaration = new VariableDeclaration(VariableDeclarationKind.Var, declarators);
 		return new VariableDeclarationStatement(declaration);
@@ -355,11 +355,11 @@ public class Bundler {
 		StaticMemberExpression parentModuleChildren = new StaticMemberExpression("children", parentModuleIden);
 		StaticMemberExpression parentModuleChildrenPush = new StaticMemberExpression("push", parentModuleChildren);
 
-		ImmutableList<SpreadElementExpression> callParams = ImmutableList.from(moduleIden);
+		ImmutableList<SpreadElementExpression> callParams = ImmutableList.of(moduleIden);
 		CallExpression callExpression = new CallExpression(parentModuleChildrenPush, callParams);
 		ExpressionStatement callStatement = new ExpressionStatement(callExpression);
 
-		return new IfStatement(parentModuleIden, callStatement, Maybe.nothing());
+		return new IfStatement(parentModuleIden, callStatement, Maybe.empty());
 	}
 
 	// var dirname=file.slice(0,file.lastIndexOf("/")+1);
@@ -367,19 +367,19 @@ public class Bundler {
 		IdentifierExpression fileIden = new IdentifierExpression("file");
 		StaticMemberExpression fileLastIndOf = new StaticMemberExpression("lastIndexOf", fileIden);
 		LiteralStringExpression slashStr = new LiteralStringExpression("/");
-		ImmutableList<SpreadElementExpression> lastIndOfParams = ImmutableList.from(slashStr);
+		ImmutableList<SpreadElementExpression> lastIndOfParams = ImmutableList.of(slashStr);
 		CallExpression lastIndOfCall = new CallExpression(fileLastIndOf, lastIndOfParams);
 
 		BinaryExpression sliceSecondParam =
 			new BinaryExpression(BinaryOperator.Plus, lastIndOfCall, new LiteralNumericExpression(1.0));
 		ImmutableList<SpreadElementExpression> sliceParams =
-			ImmutableList.from(new LiteralNumericExpression(0.0), sliceSecondParam);
+			ImmutableList.of(new LiteralNumericExpression(0.0), sliceSecondParam);
 		StaticMemberExpression fileSlice = new StaticMemberExpression("slice", fileIden);
 		CallExpression fileSliceCall = new CallExpression(fileSlice, sliceParams);
 
 		BindingIdentifier dirnameIden = new BindingIdentifier("dirname");
-		VariableDeclarator declarator = new VariableDeclarator(dirnameIden, Maybe.just(fileSliceCall));
-		ImmutableList<VariableDeclarator> declarators = ImmutableList.from(declarator);
+		VariableDeclarator declarator = new VariableDeclarator(dirnameIden, Maybe.of(fileSliceCall));
+		ImmutableList<VariableDeclarator> declarators = ImmutableList.of(declarator);
 
 		VariableDeclaration declaration = new VariableDeclaration(VariableDeclarationKind.Var, declarators);
 
@@ -412,7 +412,7 @@ public class Bundler {
 		Expression undef = new UnaryExpression(UnaryOperator.Void, new LiteralNumericExpression(0.0));
 
 		ImmutableList<SpreadElementExpression> callParams =
-			ImmutableList.from(undef, moduleIden, moduleExports, dirnameIden, fileIden);
+			ImmutableList.of(undef, moduleIden, moduleExports, dirnameIden, fileIden);
 		CallExpression callExpression = new CallExpression(resolvedCall, callParams);
 		return new ExpressionStatement(callExpression);
 	}
@@ -436,7 +436,7 @@ public class Bundler {
 		StaticMemberExpression moduleExports = new StaticMemberExpression("exports", moduleIden);
 
 		AssignmentExpression assignment = new AssignmentExpression(requireCacheFile, moduleExports);
-		return new ReturnStatement(Maybe.just(assignment));
+		return new ReturnStatement(Maybe.of(assignment));
 	}
 
 	// require.modules={};
@@ -444,7 +444,7 @@ public class Bundler {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
 		StaticMemberExpression requireModules = new StaticMemberExpression("modules", requireIden);
 		AssignmentExpression assignment =
-			new AssignmentExpression(requireModules, new ObjectExpression(ImmutableList.nil()));
+			new AssignmentExpression(requireModules, new ObjectExpression(ImmutableList.empty()));
 
 		return new ExpressionStatement(assignment);
 	}
@@ -454,7 +454,7 @@ public class Bundler {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
 		StaticMemberExpression requireModules = new StaticMemberExpression("cache", requireIden);
 		AssignmentExpression assignment =
-			new AssignmentExpression(requireModules, new ObjectExpression(ImmutableList.nil()));
+			new AssignmentExpression(requireModules, new ObjectExpression(ImmutableList.empty()));
 
 		return new ExpressionStatement(assignment);
 	}
@@ -467,15 +467,15 @@ public class Bundler {
 		StaticMemberExpression requireResolve = new StaticMemberExpression("resolve", requireIden);
 
 		BindingIdentifier fileBindingIden = new BindingIdentifier("file");
-		FormalParameters anonFunctionParam = new FormalParameters(ImmutableList.from(fileBindingIden), Maybe.nothing());
+		FormalParameters anonFunctionParam = new FormalParameters(ImmutableList.of(fileBindingIden), Maybe.empty());
 
 		StaticMemberExpression hasOwnProp =
-			new StaticMemberExpression("hasOwnProperty", new ObjectExpression(ImmutableList.nil()));
+			new StaticMemberExpression("hasOwnProperty", new ObjectExpression(ImmutableList.empty()));
 		StaticMemberExpression hasOwnPropCall = new StaticMemberExpression("call", hasOwnProp);
 
 		StaticMemberExpression requireModules = new StaticMemberExpression("modules", requireIden);
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		ImmutableList<SpreadElementExpression> hasOwnPropCallParams = ImmutableList.from(requireModules, fileIden);
+		ImmutableList<SpreadElementExpression> hasOwnPropCallParams = ImmutableList.of(requireModules, fileIden);
 		CallExpression hasOwnPropCallCall = new CallExpression(hasOwnPropCall, hasOwnPropCallParams);
 		ComputedMemberExpression requireModulesFile = new ComputedMemberExpression(fileIden, requireModules);
 
@@ -483,11 +483,11 @@ public class Bundler {
 			new ConditionalExpression(hasOwnPropCallCall, requireModulesFile,
 				new UnaryExpression(UnaryOperator.Void, new LiteralNumericExpression(0.0)));
 
-		ReturnStatement returnStatement = new ReturnStatement(Maybe.just(conditionalExpression));
-		FunctionBody anonFunctionBody = new FunctionBody(ImmutableList.nil(), ImmutableList.from(returnStatement));
+		ReturnStatement returnStatement = new ReturnStatement(Maybe.of(conditionalExpression));
+		FunctionBody anonFunctionBody = new FunctionBody(ImmutableList.empty(), ImmutableList.of(returnStatement));
 
 		FunctionExpression anonFunction =
-			new FunctionExpression(Maybe.nothing(), false, anonFunctionParam, anonFunctionBody);
+			new FunctionExpression(Maybe.empty(), false, anonFunctionParam, anonFunctionBody);
 
 		AssignmentExpression assignment = new AssignmentExpression(requireResolve, anonFunction);
 		return new ExpressionStatement(assignment);
@@ -503,7 +503,7 @@ public class Bundler {
 		BindingIdentifier fileBindingIden = new BindingIdentifier("file");
 		BindingIdentifier fnBindingIden = new BindingIdentifier("fn");
 		FormalParameters anonFunctionParam =
-			new FormalParameters(ImmutableList.from(fileBindingIden, fnBindingIden), Maybe.nothing());
+			new FormalParameters(ImmutableList.of(fileBindingIden, fnBindingIden), Maybe.empty());
 
 		StaticMemberExpression requireModules = new StaticMemberExpression("modules", requireIden);
 		IdentifierExpression fileIden = new IdentifierExpression("file");
@@ -513,10 +513,10 @@ public class Bundler {
 		AssignmentExpression innerAssignment = new AssignmentExpression(requireModulesFile, fnIden);
 		ExpressionStatement innerStatement = new ExpressionStatement(innerAssignment);
 		FunctionBody anonFunctionBody =
-			new FunctionBody(ImmutableList.nil(), ImmutableList.from(innerStatement));
+			new FunctionBody(ImmutableList.empty(), ImmutableList.of(innerStatement));
 
 		FunctionExpression anonFunction =
-			new FunctionExpression(Maybe.nothing(), false, anonFunctionParam, anonFunctionBody);
+			new FunctionExpression(Maybe.empty(), false, anonFunctionParam, anonFunctionBody);
 
 		AssignmentExpression assignment = new AssignmentExpression(requireDefine, anonFunction);
 		return new ExpressionStatement(assignment);
@@ -525,9 +525,9 @@ public class Bundler {
 	// return require("/path/to/module.js");
 	private static ReturnStatement requireCall(String filePath) {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		ImmutableList<SpreadElementExpression> requireParams = ImmutableList.from(new LiteralStringExpression(filePath));
+		ImmutableList<SpreadElementExpression> requireParams = ImmutableList.of(new LiteralStringExpression(filePath));
 		CallExpression callExpression = new CallExpression(requireIden, requireParams);
-		return new ReturnStatement(Maybe.just(callExpression));
+		return new ReturnStatement(Maybe.of(callExpression));
 	}
 
 	// require.define("/path/to/module.js",function(module,exports,__dirname,__filename){
@@ -540,16 +540,16 @@ public class Bundler {
 		BindingBindingWithDefault filenameParam = new BindingIdentifier("__filename");
 
 		ImmutableList<BindingBindingWithDefault> paramsList =
-			ImmutableList.list(moduleParam, exportsParam, dirnameParam, filenameParam);
+			ImmutableList.of(moduleParam, exportsParam, dirnameParam, filenameParam);
 
-		FormalParameters params = new FormalParameters(paramsList, Maybe.nothing());
+		FormalParameters params = new FormalParameters(paramsList, Maybe.empty());
 
 		ImmutableList<Directive> directives = module.getDirectives();
 		ImmutableList<Statement> items = module.getItems().map(x -> (Statement) x);
 
 		FunctionBody body = new FunctionBody(directives, items);
 
-		FunctionExpression function = new FunctionExpression(Maybe.nothing(), false, params, body);
+		FunctionExpression function = new FunctionExpression(Maybe.empty(), false, params, body);
 
 		LiteralStringExpression moduleExpression = new LiteralStringExpression(moduleName);
 
@@ -557,7 +557,7 @@ public class Bundler {
 		IdentifierExpression requireIdentifier = new IdentifierExpression("require");
 		StaticMemberExpression callee = new StaticMemberExpression(defineObject, requireIdentifier);
 
-		ImmutableList<SpreadElementExpression> calleeParams = ImmutableList.from(moduleExpression, function);
+		ImmutableList<SpreadElementExpression> calleeParams = ImmutableList.of(moduleExpression, function);
 
 		CallExpression callExpression = new CallExpression(callee, calleeParams);
 

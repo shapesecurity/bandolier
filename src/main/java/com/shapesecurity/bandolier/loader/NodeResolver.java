@@ -83,7 +83,7 @@ public class NodeResolver implements IResolver {
 				return resolveAsDir(toCheck).orJust(path);
 			}
 			if (f.isJust()) {
-				return f.just();
+				return f.fromJust();
 			}
 		}
 		// attempt to find the file in node_modules, fallback to
@@ -93,7 +93,7 @@ public class NodeResolver implements IResolver {
 
 	@NotNull
 	private Maybe<String> resolveNodeModules(Path cwd, @NotNull String path) {
-		if (cwd == null) { return Maybe.nothing(); }
+		if (cwd == null) { return Maybe.empty(); }
 
 		Path toCheck = cwd.resolve("node_modules").resolve(path);
 
@@ -115,13 +115,13 @@ public class NodeResolver implements IResolver {
 		String pathJson = path.toString() + ".json";
 
 		if (this.loader.exists(path) && !this.hasDirFiles(path)) {
-			return Maybe.just(path.toString());
+			return Maybe.of(path.toString());
 		} else if (this.loader.exists(Paths.get(pathJs)) && !this.hasDirFiles(Paths.get(pathJs))) {
-			return Maybe.just(pathJs);
+			return Maybe.of(pathJs);
 		} else if (this.loader.exists(Paths.get(pathJson)) && !this.hasDirFiles(Paths.get(pathJson))) {
-			return Maybe.just(pathJson);
+			return Maybe.of(pathJson);
 		}
-		return Maybe.nothing();
+		return Maybe.empty();
 
 	}
 
@@ -144,16 +144,16 @@ public class NodeResolver implements IResolver {
 				NodePackageJson packageJson = gson.fromJson(json, NodePackageJson.class);
 				return resolveAsFile(path.resolve(packageJson.main));
 			} catch (IOException e) {
-				return Maybe.nothing();
+				return Maybe.empty();
 			}
 		}
 		if (this.loader.exists(path.resolve("index.js"))) {
-			return Maybe.just(path.resolve("index.js").toString());
+			return Maybe.of(path.resolve("index.js").toString());
 		}
 		if (this.loader.exists(path.resolve("index.json"))) {
-			return Maybe.just(path.resolve("index.json").toString());
+			return Maybe.of(path.resolve("index.json").toString());
 		}
-		return Maybe.nothing();
+		return Maybe.empty();
 	}
 
 	class NodePackageJson {

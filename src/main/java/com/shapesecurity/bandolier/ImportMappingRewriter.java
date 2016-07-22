@@ -75,7 +75,7 @@ public class ImportMappingRewriter {
 		} else if (statement instanceof ExportDeclaration) {
 			return rewriteExportDeclaration((ExportDeclaration) statement);
 		} else {
-			return ImmutableList.from((Statement) statement); // do not transform other statements
+			return ImmutableList.of((Statement) statement); // do not transform other statements
 		}
 	}
 
@@ -85,17 +85,17 @@ public class ImportMappingRewriter {
 		} else if (declaration instanceof ImportNamespace) {
 			return rewriteImportNamespace((ImportNamespace) declaration);
 		} else {
-			return ImmutableList.nil(); //This should never happen!
+			return ImmutableList.empty(); //This should never happen!
 		}
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImport(Import imp) {
-		return ImmutableList.from(new Import(imp.getDefaultBinding(), imp.getNamedImports(),
+		return ImmutableList.of(new Import(imp.getDefaultBinding(), imp.getNamedImports(),
 				this.lookupMapping(imp.getModuleSpecifier())));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportNamespace(ImportNamespace imp) {
-		return ImmutableList.from(new ImportNamespace(imp.getDefaultBinding(), imp.getNamespaceBinding(),
+		return ImmutableList.of(new ImportNamespace(imp.getDefaultBinding(), imp.getNamespaceBinding(),
 				this.lookupMapping(imp.getModuleSpecifier())));
 	}
 
@@ -105,16 +105,16 @@ public class ImportMappingRewriter {
 		} else if (declaration instanceof ExportFrom) {
 			return rewriteExportFrom((ExportFrom) declaration);
 		} else {
-			return ImmutableList.from(declaration);
+			return ImmutableList.of(declaration);
 		}
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportAllFrom(ExportAllFrom exp) {
-		return ImmutableList.from(new ExportAllFrom(this.lookupMapping(exp.getModuleSpecifier())));
+		return ImmutableList.of(new ExportAllFrom(this.lookupMapping(exp.getModuleSpecifier())));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(ExportFrom exp) {
 		ExportFrom newExp = new ExportFrom(exp.getNamedExports(), exp.getModuleSpecifier().map(this.importMap::get));
-		return ImmutableList.from(newExp);
+		return ImmutableList.of(newExp);
 	}
 }
