@@ -142,7 +142,9 @@ public class NodeResolver implements IResolver {
 			try {
 				String json = this.loader.loadResource(path.resolve("package.json"));
 				NodePackageJson packageJson = gson.fromJson(json, NodePackageJson.class);
-				return resolveAsFile(path.resolve(packageJson.main));
+				if (packageJson.main != null) {
+					return resolveAsFile(path.resolve(packageJson.main));
+				}
 			} catch (IOException e) {
 				return Maybe.empty();
 			}
