@@ -40,8 +40,7 @@ public class TestUtils {
     }
 
 
-    static String bundleToString(String filePath, IResolver resolver, IResourceLoader loader) throws ModuleLoaderException {
-        Script script = bundleStandard(filePath, resolver, loader);
+    static String toString(Script script) throws ModuleLoaderException {
         ExpressionStatement statement = (ExpressionStatement) script.getStatements().maybeHead().fromJust();
         CallExpression callExpression = (CallExpression) statement.getExpression();
         StaticMemberExpression memberExpression = new StaticMemberExpression("result", callExpression);
@@ -51,15 +50,15 @@ public class TestUtils {
     }
 
     static void testSource(String filePath, String expected, IResolver resolver, IResourceLoader loader) throws ModuleLoaderException {
-        assertEquals(bundleToString(filePath, resolver, loader), expected);
+        assertEquals(toString(bundleStandard(filePath, resolver, loader)), expected);
     }
 
     static void testTreeSource(String filePath, String expected, IResolver resolver, IResourceLoader loader) throws ModuleLoaderException {
-        assertEquals(bundleTree(filePath, resolver, loader), expected);
+        assertEquals(toString(bundleTree(filePath, resolver, loader)), expected);
     }
 
     static Object runInNashorn(String filePath, IResolver resolver, IResourceLoader loader) throws Exception {
-        String newProgramText = bundleToString(filePath, resolver, loader);
+        String newProgramText = toString(bundleStandard(filePath, resolver, loader));
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
 
         try {
