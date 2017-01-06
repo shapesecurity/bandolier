@@ -8,11 +8,16 @@ import com.shapesecurity.shift.ast.Import;
 import com.shapesecurity.shift.ast.ImportDeclaration;
 import com.shapesecurity.shift.ast.ImportNamespace;
 import com.shapesecurity.shift.ast.Module;
+import com.shapesecurity.shift.scope.GlobalScope;
+import com.shapesecurity.shift.scope.ScopeAnalyzer;
+import com.shapesecurity.shift.scope.Variable;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class BandolierModule {
 	@NotNull
@@ -79,5 +84,10 @@ public class BandolierModule {
 	@NotNull
 	public String getId() {
 		return id;
+	}
+
+	public ImmutableList<Variable> topLevel() {
+		GlobalScope globalScope = ScopeAnalyzer.analyze(this.ast);
+		return globalScope.children.flatMap((scope) -> ImmutableList.from(StreamSupport.stream(scope.variables().spliterator(), false).collect(Collectors.toList())));
 	}
 }
