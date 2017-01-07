@@ -44,7 +44,7 @@ public class ImportMappingRewriter {
 	 * @param importMap maps the current import path to a new one, must contain a mapping for every
 	 *                  import in the module
 	 */
-	ImportMappingRewriter(@NotNull Map<String, String> importMap) {
+	public ImportMappingRewriter(@NotNull Map<String, String> importMap) {
 		this.importMap = importMap;
 	}
 
