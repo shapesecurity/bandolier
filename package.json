@@ -1,6 +1,6 @@
 {
   "name": "bandolier",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Bundles es2015 modules",
   "main": "index.js",
   "scripts": {
