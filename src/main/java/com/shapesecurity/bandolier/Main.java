@@ -4,8 +4,8 @@ import com.shapesecurity.bandolier.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.loader.FileLoader;
 import com.shapesecurity.bandolier.loader.IResourceLoader;
 import com.shapesecurity.bandolier.loader.NodeResolver;
-import com.shapesecurity.shift.ast.Script;
-import com.shapesecurity.shift.codegen.CodeGen;
+import com.shapesecurity.shift.es2016.ast.Script;
+import com.shapesecurity.shift.es2016.codegen.CodeGen;
 
 import java.nio.file.Paths;
 

@@ -5,47 +5,50 @@ import com.shapesecurity.bandolier.ImportExportTransformer;
 import com.shapesecurity.bandolier.ImportMappingRewriter;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.ast.ArrayExpression;
-import com.shapesecurity.shift.ast.AssignmentExpression;
-import com.shapesecurity.shift.ast.BinaryExpression;
-import com.shapesecurity.shift.ast.BindingBindingWithDefault;
-import com.shapesecurity.shift.ast.BindingIdentifier;
-import com.shapesecurity.shift.ast.CallExpression;
-import com.shapesecurity.shift.ast.ComputedMemberExpression;
-import com.shapesecurity.shift.ast.ConditionalExpression;
-import com.shapesecurity.shift.ast.DataProperty;
-import com.shapesecurity.shift.ast.Directive;
-import com.shapesecurity.shift.ast.Expression;
-import com.shapesecurity.shift.ast.ExpressionStatement;
-import com.shapesecurity.shift.ast.FormalParameters;
-import com.shapesecurity.shift.ast.FunctionBody;
-import com.shapesecurity.shift.ast.FunctionDeclaration;
-import com.shapesecurity.shift.ast.FunctionExpression;
-import com.shapesecurity.shift.ast.IdentifierExpression;
-import com.shapesecurity.shift.ast.IfStatement;
-import com.shapesecurity.shift.ast.LiteralBooleanExpression;
-import com.shapesecurity.shift.ast.LiteralNumericExpression;
-import com.shapesecurity.shift.ast.LiteralStringExpression;
-import com.shapesecurity.shift.ast.Module;
-import com.shapesecurity.shift.ast.NewExpression;
-import com.shapesecurity.shift.ast.Node;
-import com.shapesecurity.shift.ast.ObjectExpression;
-import com.shapesecurity.shift.ast.ObjectProperty;
-import com.shapesecurity.shift.ast.ReturnStatement;
-import com.shapesecurity.shift.ast.Script;
-import com.shapesecurity.shift.ast.SpreadElementExpression;
-import com.shapesecurity.shift.ast.Statement;
-import com.shapesecurity.shift.ast.StaticMemberExpression;
-import com.shapesecurity.shift.ast.StaticPropertyName;
-import com.shapesecurity.shift.ast.ThisExpression;
-import com.shapesecurity.shift.ast.ThrowStatement;
-import com.shapesecurity.shift.ast.UnaryExpression;
-import com.shapesecurity.shift.ast.VariableDeclaration;
-import com.shapesecurity.shift.ast.VariableDeclarationKind;
-import com.shapesecurity.shift.ast.VariableDeclarationStatement;
-import com.shapesecurity.shift.ast.VariableDeclarator;
-import com.shapesecurity.shift.ast.operators.BinaryOperator;
-import com.shapesecurity.shift.ast.operators.UnaryOperator;
+import com.shapesecurity.shift.es2016.ast.ArrayExpression;
+import com.shapesecurity.shift.es2016.ast.AssignmentExpression;
+import com.shapesecurity.shift.es2016.ast.AssignmentTarget;
+import com.shapesecurity.shift.es2016.ast.BinaryExpression;
+import com.shapesecurity.shift.es2016.ast.BindingIdentifier;
+import com.shapesecurity.shift.es2016.ast.CallExpression;
+import com.shapesecurity.shift.es2016.ast.ComputedMemberAssignmentTarget;
+import com.shapesecurity.shift.es2016.ast.ComputedMemberExpression;
+import com.shapesecurity.shift.es2016.ast.ConditionalExpression;
+import com.shapesecurity.shift.es2016.ast.DataProperty;
+import com.shapesecurity.shift.es2016.ast.Directive;
+import com.shapesecurity.shift.es2016.ast.Expression;
+import com.shapesecurity.shift.es2016.ast.ExpressionStatement;
+import com.shapesecurity.shift.es2016.ast.FormalParameters;
+import com.shapesecurity.shift.es2016.ast.FunctionBody;
+import com.shapesecurity.shift.es2016.ast.FunctionDeclaration;
+import com.shapesecurity.shift.es2016.ast.FunctionExpression;
+import com.shapesecurity.shift.es2016.ast.IdentifierExpression;
+import com.shapesecurity.shift.es2016.ast.IfStatement;
+import com.shapesecurity.shift.es2016.ast.LiteralBooleanExpression;
+import com.shapesecurity.shift.es2016.ast.LiteralNumericExpression;
+import com.shapesecurity.shift.es2016.ast.LiteralStringExpression;
+import com.shapesecurity.shift.es2016.ast.Module;
+import com.shapesecurity.shift.es2016.ast.NewExpression;
+import com.shapesecurity.shift.es2016.ast.Node;
+import com.shapesecurity.shift.es2016.ast.ObjectExpression;
+import com.shapesecurity.shift.es2016.ast.ObjectProperty;
+import com.shapesecurity.shift.es2016.ast.Parameter;
+import com.shapesecurity.shift.es2016.ast.ReturnStatement;
+import com.shapesecurity.shift.es2016.ast.Script;
+import com.shapesecurity.shift.es2016.ast.SpreadElementExpression;
+import com.shapesecurity.shift.es2016.ast.Statement;
+import com.shapesecurity.shift.es2016.ast.StaticMemberAssignmentTarget;
+import com.shapesecurity.shift.es2016.ast.StaticMemberExpression;
+import com.shapesecurity.shift.es2016.ast.StaticPropertyName;
+import com.shapesecurity.shift.es2016.ast.ThisExpression;
+import com.shapesecurity.shift.es2016.ast.ThrowStatement;
+import com.shapesecurity.shift.es2016.ast.UnaryExpression;
+import com.shapesecurity.shift.es2016.ast.VariableDeclaration;
+import com.shapesecurity.shift.es2016.ast.VariableDeclarationKind;
+import com.shapesecurity.shift.es2016.ast.VariableDeclarationStatement;
+import com.shapesecurity.shift.es2016.ast.VariableDeclarator;
+import com.shapesecurity.shift.es2016.ast.operators.BinaryOperator;
+import com.shapesecurity.shift.es2016.ast.operators.UnaryOperator;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -78,7 +81,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	//(function(global){ ... }.call(this, this));
 	private ExpressionStatement anonymousFunctionCall(String rootPath, Map<String, Module> rewrittenModules) {
 		StaticMemberExpression anonymousCall =
-				new StaticMemberExpression("call", anonymousFunctionExpression(rootPath, rewrittenModules));
+				new StaticMemberExpression(anonymousFunctionExpression(rootPath, rewrittenModules), "call");
 		ImmutableList<SpreadElementExpression> params = ImmutableList.of(new ThisExpression(), new ThisExpression());
 		CallExpression callExpression = new CallExpression(anonymousCall, params);
 
@@ -105,7 +108,7 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		FunctionBody body = new FunctionBody(ImmutableList.of(new Directive("use strict")), statements);
 
-		return new FunctionExpression(Maybe.empty(), false, params, body);
+		return new FunctionExpression(false, Maybe.empty(), params, body);
 	}
 
 	//function require(file,parentModule){ ... }
@@ -130,19 +133,19 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		FunctionBody body = new FunctionBody(ImmutableList.empty(), statements);
 
-		return new FunctionDeclaration(requireIden, false, params, body);
+		return new FunctionDeclaration(false, requireIden, params, body);
 	}
 
 	//if({}.hasOwnProperty.call(require.cache,file)) return require.cache[file];
 	private IfStatement checkCacheIf() {
 		ObjectExpression objectExpression = new ObjectExpression(ImmutableList.empty());
-		StaticMemberExpression objHasOwnProp = new StaticMemberExpression("hasOwnProperty", objectExpression);
-		StaticMemberExpression objHasOwnPropCall = new StaticMemberExpression("call", objHasOwnProp);
+		StaticMemberExpression objHasOwnProp = new StaticMemberExpression(objectExpression, "hasOwnProperty");
+		StaticMemberExpression objHasOwnPropCall = new StaticMemberExpression(objHasOwnProp, "call");
 
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireCache = new StaticMemberExpression("cache", requireIden);
+		StaticMemberExpression requireCache = new StaticMemberExpression(requireIden, "cache");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		ComputedMemberExpression requireCacheFile = new ComputedMemberExpression(fileIden, requireCache);
+		ComputedMemberExpression requireCacheFile = new ComputedMemberExpression(requireCache, fileIden);
 
 		ImmutableList<SpreadElementExpression> callParams = ImmutableList.of(requireCache, fileIden);
 		CallExpression callExpression = new CallExpression(objHasOwnPropCall, callParams);
@@ -155,7 +158,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	//var resolved=require.resolve(file);
 	private VariableDeclarationStatement resolvedDeclaration() {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireResolve = new StaticMemberExpression("resolve", requireIden);
+		StaticMemberExpression requireResolve = new StaticMemberExpression(requireIden, "resolve");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
 		ImmutableList<SpreadElementExpression> callParams = ImmutableList.of(fileIden);
 		CallExpression callExpression = new CallExpression(requireResolve, callParams);
@@ -173,7 +176,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	private IfStatement checkResolvedIf() {
 		LiteralStringExpression errorMsg = new LiteralStringExpression("Failed to resolve module ");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		BinaryExpression errorExpression = new BinaryExpression(BinaryOperator.Plus, errorMsg, fileIden);
+		BinaryExpression errorExpression = new BinaryExpression(errorMsg, BinaryOperator.Plus, fileIden);
 
 		IdentifierExpression errorIden = new IdentifierExpression("Error");
 		ImmutableList<SpreadElementExpression> errorParams = ImmutableList.of(errorExpression);
@@ -197,13 +200,13 @@ public class StandardModuleBundler implements IModuleBundler {
 	private VariableDeclarationStatement moduleObjectDeclaration() {
 		BindingIdentifier moduleIden = new BindingIdentifier("module$");
 
-		DataProperty idProp = new DataProperty(new IdentifierExpression("file"), new StaticPropertyName("id"));
-		DataProperty requireProp = new DataProperty(new IdentifierExpression("require"), new StaticPropertyName("require"));
-		DataProperty fileNameProp = new DataProperty(new IdentifierExpression("file"), new StaticPropertyName("filename"));
-		DataProperty exportsProp = new DataProperty(new ObjectExpression(ImmutableList.empty()), new StaticPropertyName("exports"));
-		DataProperty loadedProperty = new DataProperty(new LiteralBooleanExpression(false), new StaticPropertyName("loaded"));
-		DataProperty parentProp = new DataProperty(new IdentifierExpression("parentModule"), new StaticPropertyName("parent"));
-		DataProperty childrenProp = new DataProperty(new ArrayExpression(ImmutableList.empty()), new StaticPropertyName("children"));
+		DataProperty idProp = new DataProperty(new StaticPropertyName("id"), new IdentifierExpression("file"));
+		DataProperty requireProp = new DataProperty(new StaticPropertyName("require"), new IdentifierExpression("require"));
+		DataProperty fileNameProp = new DataProperty(new StaticPropertyName("filename"), new IdentifierExpression("file"));
+		DataProperty exportsProp = new DataProperty(new StaticPropertyName("exports"), new ObjectExpression(ImmutableList.empty()));
+		DataProperty loadedProperty = new DataProperty(new StaticPropertyName("loaded"), new LiteralBooleanExpression(false));
+		DataProperty parentProp = new DataProperty(new StaticPropertyName("parent"), new IdentifierExpression("parentModule"));
+		DataProperty childrenProp = new DataProperty(new StaticPropertyName("children"), new ArrayExpression(ImmutableList.empty()));
 		ImmutableList<ObjectProperty> properties =
 				ImmutableList.of(idProp, requireProp, fileNameProp, exportsProp, loadedProperty, parentProp, childrenProp);
 		ObjectExpression object = new ObjectExpression(properties);
@@ -219,8 +222,8 @@ public class StandardModuleBundler implements IModuleBundler {
 	private IfStatement checkParentModuleIf() {
 		IdentifierExpression parentModuleIden = new IdentifierExpression("parentModule");
 		IdentifierExpression moduleIden = new IdentifierExpression("module$");
-		StaticMemberExpression parentModuleChildren = new StaticMemberExpression("children", parentModuleIden);
-		StaticMemberExpression parentModuleChildrenPush = new StaticMemberExpression("push", parentModuleChildren);
+		StaticMemberExpression parentModuleChildren = new StaticMemberExpression(parentModuleIden, "children");
+		StaticMemberExpression parentModuleChildrenPush = new StaticMemberExpression(parentModuleChildren, "push");
 
 		ImmutableList<SpreadElementExpression> callParams = ImmutableList.of(moduleIden);
 		CallExpression callExpression = new CallExpression(parentModuleChildrenPush, callParams);
@@ -232,16 +235,16 @@ public class StandardModuleBundler implements IModuleBundler {
 	// var dirname=file.slice(0,file.lastIndexOf("/")+1);
 	private VariableDeclarationStatement dirnameDeclaration() {
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		StaticMemberExpression fileLastIndOf = new StaticMemberExpression("lastIndexOf", fileIden);
+		StaticMemberExpression fileLastIndOf = new StaticMemberExpression(fileIden, "lastIndexOf");
 		LiteralStringExpression slashStr = new LiteralStringExpression("/");
 		ImmutableList<SpreadElementExpression> lastIndOfParams = ImmutableList.of(slashStr);
 		CallExpression lastIndOfCall = new CallExpression(fileLastIndOf, lastIndOfParams);
 
 		BinaryExpression sliceSecondParam =
-				new BinaryExpression(BinaryOperator.Plus, lastIndOfCall, new LiteralNumericExpression(1.0));
+				new BinaryExpression(lastIndOfCall, BinaryOperator.Plus, new LiteralNumericExpression(1.0));
 		ImmutableList<SpreadElementExpression> sliceParams =
 				ImmutableList.of(new LiteralNumericExpression(0.0), sliceSecondParam);
-		StaticMemberExpression fileSlice = new StaticMemberExpression("slice", fileIden);
+		StaticMemberExpression fileSlice = new StaticMemberExpression(fileIden, "slice");
 		CallExpression fileSliceCall = new CallExpression(fileSlice, sliceParams);
 
 		BindingIdentifier dirnameIden = new BindingIdentifier("dirname");
@@ -256,11 +259,11 @@ public class StandardModuleBundler implements IModuleBundler {
 	// require.cache[file]=module$.exports;
 	private ExpressionStatement cacheExports() {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireCache = new StaticMemberExpression("cache", requireIden);
+		StaticMemberExpression requireCache = new StaticMemberExpression(requireIden, "cache");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		ComputedMemberExpression requireCacheFile = new ComputedMemberExpression(fileIden, requireCache);
+		ComputedMemberAssignmentTarget requireCacheFile = new ComputedMemberAssignmentTarget(requireCache, fileIden);
 		IdentifierExpression moduleIden = new IdentifierExpression("module$");
-		StaticMemberExpression moduleExports = new StaticMemberExpression("exports", moduleIden);
+		StaticMemberExpression moduleExports = new StaticMemberExpression(moduleIden, "exports");
 
 		AssignmentExpression assignment = new AssignmentExpression(requireCacheFile, moduleExports);
 		return new ExpressionStatement(assignment);
@@ -271,9 +274,9 @@ public class StandardModuleBundler implements IModuleBundler {
 	// resolved.call(null ,module$,module$.exports,dirname,file);
 	private ExpressionStatement resolvedCall() {
 		IdentifierExpression resolvedIden = new IdentifierExpression("resolved");
-		StaticMemberExpression resolvedCall = new StaticMemberExpression("call", resolvedIden);
+		StaticMemberExpression resolvedCall = new StaticMemberExpression(resolvedIden, "call");
 		IdentifierExpression moduleIden = new IdentifierExpression("module$");
-		StaticMemberExpression moduleExports = new StaticMemberExpression("exports", moduleIden);
+		StaticMemberExpression moduleExports = new StaticMemberExpression(moduleIden, "exports");
 		IdentifierExpression dirnameIden = new IdentifierExpression("dirname");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
 		Expression undef = new UnaryExpression(UnaryOperator.Void, new LiteralNumericExpression(0.0));
@@ -287,7 +290,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// module$.loaded=true;
 	private ExpressionStatement moduleLoaded() {
 		IdentifierExpression moduleIden = new IdentifierExpression("module$");
-		StaticMemberExpression moduleLoaded = new StaticMemberExpression("loaded", moduleIden);
+		StaticMemberAssignmentTarget moduleLoaded = new StaticMemberAssignmentTarget(moduleIden, "loaded");
 		AssignmentExpression assignment = new AssignmentExpression(moduleLoaded, new LiteralBooleanExpression(true));
 
 		return new ExpressionStatement(assignment);
@@ -296,11 +299,11 @@ public class StandardModuleBundler implements IModuleBundler {
 	// return require.cache[file]=module$.exports;
 	private ReturnStatement returnRequire() {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireCache = new StaticMemberExpression("cache", requireIden);
+		StaticMemberExpression requireCache = new StaticMemberExpression(requireIden, "cache");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		ComputedMemberExpression requireCacheFile = new ComputedMemberExpression(fileIden, requireCache);
+		ComputedMemberAssignmentTarget requireCacheFile = new ComputedMemberAssignmentTarget(requireCache, fileIden);
 		IdentifierExpression moduleIden = new IdentifierExpression("module$");
-		StaticMemberExpression moduleExports = new StaticMemberExpression("exports", moduleIden);
+		StaticMemberExpression moduleExports = new StaticMemberExpression(moduleIden, "exports");
 
 		AssignmentExpression assignment = new AssignmentExpression(requireCacheFile, moduleExports);
 		return new ReturnStatement(Maybe.of(assignment));
@@ -309,7 +312,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// require.modules={};
 	private ExpressionStatement initializeRequireModules() {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireModules = new StaticMemberExpression("modules", requireIden);
+		StaticMemberAssignmentTarget requireModules = new StaticMemberAssignmentTarget(requireIden, "modules");
 		AssignmentExpression assignment =
 				new AssignmentExpression(requireModules, new ObjectExpression(ImmutableList.empty()));
 
@@ -319,7 +322,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// require.cache={};
 	private ExpressionStatement initializeRequireCache() {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireModules = new StaticMemberExpression("cache", requireIden);
+		StaticMemberAssignmentTarget requireModules = new StaticMemberAssignmentTarget(requireIden, "cache");
 		AssignmentExpression assignment =
 				new AssignmentExpression(requireModules, new ObjectExpression(ImmutableList.empty()));
 
@@ -331,20 +334,20 @@ public class StandardModuleBundler implements IModuleBundler {
 	// }
 	private ExpressionStatement requireResolveDefinition() {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireResolve = new StaticMemberExpression("resolve", requireIden);
+		StaticMemberAssignmentTarget requireResolve = new StaticMemberAssignmentTarget(requireIden, "resolve");
 
 		BindingIdentifier fileBindingIden = new BindingIdentifier("file");
 		FormalParameters anonFunctionParam = new FormalParameters(ImmutableList.of(fileBindingIden), Maybe.empty());
 
 		StaticMemberExpression hasOwnProp =
-				new StaticMemberExpression("hasOwnProperty", new ObjectExpression(ImmutableList.empty()));
-		StaticMemberExpression hasOwnPropCall = new StaticMemberExpression("call", hasOwnProp);
+				new StaticMemberExpression(new ObjectExpression(ImmutableList.empty()), "hasOwnProperty");
+		StaticMemberExpression hasOwnPropCall = new StaticMemberExpression(hasOwnProp, "call");
 
-		StaticMemberExpression requireModules = new StaticMemberExpression("modules", requireIden);
+		StaticMemberExpression requireModules = new StaticMemberExpression(requireIden, "modules");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
 		ImmutableList<SpreadElementExpression> hasOwnPropCallParams = ImmutableList.of(requireModules, fileIden);
 		CallExpression hasOwnPropCallCall = new CallExpression(hasOwnPropCall, hasOwnPropCallParams);
-		ComputedMemberExpression requireModulesFile = new ComputedMemberExpression(fileIden, requireModules);
+		ComputedMemberExpression requireModulesFile = new ComputedMemberExpression(requireModules, fileIden);
 
 		ConditionalExpression conditionalExpression =
 				new ConditionalExpression(hasOwnPropCallCall, requireModulesFile,
@@ -354,7 +357,7 @@ public class StandardModuleBundler implements IModuleBundler {
 		FunctionBody anonFunctionBody = new FunctionBody(ImmutableList.empty(), ImmutableList.of(returnStatement));
 
 		FunctionExpression anonFunction =
-				new FunctionExpression(Maybe.empty(), false, anonFunctionParam, anonFunctionBody);
+				new FunctionExpression(false, Maybe.empty(), anonFunctionParam, anonFunctionBody);
 
 		AssignmentExpression assignment = new AssignmentExpression(requireResolve, anonFunction);
 		return new ExpressionStatement(assignment);
@@ -365,16 +368,16 @@ public class StandardModuleBundler implements IModuleBundler {
 	// };
 	private ExpressionStatement requireDefineDefinition() {
 		IdentifierExpression requireIden = new IdentifierExpression("require");
-		StaticMemberExpression requireDefine = new StaticMemberExpression("define", requireIden);
+		StaticMemberAssignmentTarget requireDefine = new StaticMemberAssignmentTarget(requireIden, "define");
 
 		BindingIdentifier fileBindingIden = new BindingIdentifier("file");
 		BindingIdentifier fnBindingIden = new BindingIdentifier("fn");
 		FormalParameters anonFunctionParam =
 				new FormalParameters(ImmutableList.of(fileBindingIden, fnBindingIden), Maybe.empty());
 
-		StaticMemberExpression requireModules = new StaticMemberExpression("modules", requireIden);
+		StaticMemberExpression requireModules = new StaticMemberExpression(requireIden, "modules");
 		IdentifierExpression fileIden = new IdentifierExpression("file");
-		ComputedMemberExpression requireModulesFile = new ComputedMemberExpression(fileIden, requireModules);
+		AssignmentTarget requireModulesFile = new ComputedMemberAssignmentTarget(requireModules, fileIden);
 		IdentifierExpression fnIden = new IdentifierExpression("fn");
 
 		AssignmentExpression innerAssignment = new AssignmentExpression(requireModulesFile, fnIden);
@@ -383,7 +386,7 @@ public class StandardModuleBundler implements IModuleBundler {
 				new FunctionBody(ImmutableList.empty(), ImmutableList.of(innerStatement));
 
 		FunctionExpression anonFunction =
-				new FunctionExpression(Maybe.empty(), false, anonFunctionParam, anonFunctionBody);
+				new FunctionExpression(false, Maybe.empty(), anonFunctionParam, anonFunctionBody);
 
 		AssignmentExpression assignment = new AssignmentExpression(requireDefine, anonFunction);
 		return new ExpressionStatement(assignment);
@@ -401,28 +404,28 @@ public class StandardModuleBundler implements IModuleBundler {
 	//    ...
 	// });
 	private ExpressionStatement requireDefineStatement(String moduleName, Module module) {
-		BindingBindingWithDefault moduleParam = new BindingIdentifier("module");
-		BindingBindingWithDefault exportsParam = new BindingIdentifier("exports");
-		BindingBindingWithDefault dirnameParam = new BindingIdentifier("__dirname");
-		BindingBindingWithDefault filenameParam = new BindingIdentifier("__filename");
+		BindingIdentifier moduleParam = new BindingIdentifier("module");
+		BindingIdentifier exportsParam = new BindingIdentifier("exports");
+		BindingIdentifier dirnameParam = new BindingIdentifier("__dirname");
+		BindingIdentifier filenameParam = new BindingIdentifier("__filename");
 
-		ImmutableList<BindingBindingWithDefault> paramsList =
+		ImmutableList<Parameter> paramsList =
 				ImmutableList.of(moduleParam, exportsParam, dirnameParam, filenameParam);
 
 		FormalParameters params = new FormalParameters(paramsList, Maybe.empty());
 
-		ImmutableList<Directive> directives = module.getDirectives();
-		ImmutableList<Statement> items = module.getItems().map(x -> (Statement) x);
+		ImmutableList<Directive> directives = module.directives;
+		ImmutableList<Statement> items = module.items.map(x -> (Statement) x);
 
 		FunctionBody body = new FunctionBody(directives, items);
 
-		FunctionExpression function = new FunctionExpression(Maybe.empty(), false, params, body);
+		FunctionExpression function = new FunctionExpression(false, Maybe.empty(), params, body);
 
 		LiteralStringExpression moduleExpression = new LiteralStringExpression(moduleName);
 
 		String defineObject = "define";
 		IdentifierExpression requireIdentifier = new IdentifierExpression("require");
-		StaticMemberExpression callee = new StaticMemberExpression(defineObject, requireIdentifier);
+		StaticMemberExpression callee = new StaticMemberExpression(requireIdentifier, defineObject);
 
 		ImmutableList<SpreadElementExpression> calleeParams = ImmutableList.of(moduleExpression, function);
 

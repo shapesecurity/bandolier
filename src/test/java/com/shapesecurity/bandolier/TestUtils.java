@@ -5,16 +5,17 @@ import com.shapesecurity.bandolier.loader.IResolver;
 import com.shapesecurity.bandolier.loader.IResourceLoader;
 import com.shapesecurity.bandolier.loader.ModuleLoaderException;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.ast.CallExpression;
-import com.shapesecurity.shift.ast.ExpressionStatement;
-import com.shapesecurity.shift.ast.Script;
-import com.shapesecurity.shift.ast.StaticMemberExpression;
-import com.shapesecurity.shift.codegen.CodeGen;
+import com.shapesecurity.shift.es2016.ast.CallExpression;
+import com.shapesecurity.shift.es2016.ast.ExpressionStatement;
+import com.shapesecurity.shift.es2016.ast.Script;
+import com.shapesecurity.shift.es2016.ast.StaticMemberExpression;
+import com.shapesecurity.shift.es2016.codegen.CodeGen;
+
+import java.nio.file.Paths;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 
@@ -37,11 +38,11 @@ public class TestUtils {
     }
 
     static String toString(Script script) throws ModuleLoaderException {
-        ExpressionStatement statement = (ExpressionStatement) script.getStatements().maybeHead().fromJust();
-        CallExpression callExpression = (CallExpression) statement.getExpression();
-        StaticMemberExpression memberExpression = new StaticMemberExpression("result", callExpression);
+        ExpressionStatement statement = (ExpressionStatement) script.statements.maybeHead().fromJust();
+        CallExpression callExpression = (CallExpression) statement.expression;
+        StaticMemberExpression memberExpression = new StaticMemberExpression(callExpression, "result");
 
-        script = new Script(script.getDirectives(), ImmutableList.of(new ExpressionStatement(memberExpression)));
+        script = new Script(script.directives, ImmutableList.of(new ExpressionStatement(memberExpression)));
         return CodeGen.codeGen(script, true);
     }
 

@@ -17,39 +17,42 @@ package com.shapesecurity.bandolier;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.ast.AssignmentExpression;
-import com.shapesecurity.shift.ast.BindingIdentifier;
-import com.shapesecurity.shift.ast.CallExpression;
-import com.shapesecurity.shift.ast.ClassDeclaration;
-import com.shapesecurity.shift.ast.ComputedMemberExpression;
-import com.shapesecurity.shift.ast.Export;
-import com.shapesecurity.shift.ast.ExportAllFrom;
-import com.shapesecurity.shift.ast.ExportDeclaration;
-import com.shapesecurity.shift.ast.ExportDefault;
-import com.shapesecurity.shift.ast.ExportFrom;
-import com.shapesecurity.shift.ast.ExportSpecifier;
-import com.shapesecurity.shift.ast.Expression;
-import com.shapesecurity.shift.ast.ExpressionStatement;
-import com.shapesecurity.shift.ast.ForInStatement;
-import com.shapesecurity.shift.ast.FunctionDeclaration;
-import com.shapesecurity.shift.ast.FunctionDeclarationClassDeclarationExpression;
-import com.shapesecurity.shift.ast.FunctionDeclarationClassDeclarationVariableDeclaration;
-import com.shapesecurity.shift.ast.FunctionExpression;
-import com.shapesecurity.shift.ast.IdentifierExpression;
-import com.shapesecurity.shift.ast.Import;
-import com.shapesecurity.shift.ast.ImportDeclaration;
-import com.shapesecurity.shift.ast.ImportDeclarationExportDeclarationStatement;
-import com.shapesecurity.shift.ast.ImportNamespace;
-import com.shapesecurity.shift.ast.ImportSpecifier;
-import com.shapesecurity.shift.ast.LiteralStringExpression;
-import com.shapesecurity.shift.ast.Module;
-import com.shapesecurity.shift.ast.Script;
-import com.shapesecurity.shift.ast.SpreadElementExpression;
-import com.shapesecurity.shift.ast.Statement;
-import com.shapesecurity.shift.ast.VariableDeclaration;
-import com.shapesecurity.shift.ast.VariableDeclarationKind;
-import com.shapesecurity.shift.ast.VariableDeclarationStatement;
-import com.shapesecurity.shift.ast.VariableDeclarator;
+import com.shapesecurity.shift.es2016.ast.AssignmentExpression;
+import com.shapesecurity.shift.es2016.ast.BindingIdentifier;
+import com.shapesecurity.shift.es2016.ast.CallExpression;
+import com.shapesecurity.shift.es2016.ast.ClassDeclaration;
+import com.shapesecurity.shift.es2016.ast.ComputedMemberAssignmentTarget;
+import com.shapesecurity.shift.es2016.ast.ComputedMemberExpression;
+import com.shapesecurity.shift.es2016.ast.Export;
+import com.shapesecurity.shift.es2016.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2016.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ExportDefault;
+import com.shapesecurity.shift.es2016.ast.ExportFrom;
+import com.shapesecurity.shift.es2016.ast.ExportFromSpecifier;
+import com.shapesecurity.shift.es2016.ast.ExportLocalSpecifier;
+import com.shapesecurity.shift.es2016.ast.ExportLocals;
+import com.shapesecurity.shift.es2016.ast.Expression;
+import com.shapesecurity.shift.es2016.ast.ExpressionStatement;
+import com.shapesecurity.shift.es2016.ast.ForInStatement;
+import com.shapesecurity.shift.es2016.ast.FunctionDeclaration;
+import com.shapesecurity.shift.es2016.ast.FunctionDeclarationClassDeclarationExpression;
+import com.shapesecurity.shift.es2016.ast.FunctionDeclarationClassDeclarationVariableDeclaration;
+import com.shapesecurity.shift.es2016.ast.FunctionExpression;
+import com.shapesecurity.shift.es2016.ast.IdentifierExpression;
+import com.shapesecurity.shift.es2016.ast.Import;
+import com.shapesecurity.shift.es2016.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.es2016.ast.ImportNamespace;
+import com.shapesecurity.shift.es2016.ast.ImportSpecifier;
+import com.shapesecurity.shift.es2016.ast.LiteralStringExpression;
+import com.shapesecurity.shift.es2016.ast.Module;
+import com.shapesecurity.shift.es2016.ast.Script;
+import com.shapesecurity.shift.es2016.ast.SpreadElementExpression;
+import com.shapesecurity.shift.es2016.ast.Statement;
+import com.shapesecurity.shift.es2016.ast.VariableDeclaration;
+import com.shapesecurity.shift.es2016.ast.VariableDeclarationKind;
+import com.shapesecurity.shift.es2016.ast.VariableDeclarationStatement;
+import com.shapesecurity.shift.es2016.ast.VariableDeclarator;
 
 /**
  * ImportExportTransformer applies the transformations necessary for reducing a {@link Module} to a
@@ -58,7 +61,7 @@ import com.shapesecurity.shift.ast.VariableDeclarator;
 public class ImportExportTransformer {
 	static public Module transformModule(Module module) {
 		ImmutableList<Statement> statementItems =
-			module.getItems().bind(ImportExportTransformer::transformImportDeclarationExportDeclarationStatement);
+			module.items.bind(ImportExportTransformer::transformImportDeclarationExportDeclarationStatement);
 
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
 			statementItems.map(x -> (ImportDeclarationExportDeclarationStatement) x);
@@ -91,16 +94,16 @@ public class ImportExportTransformer {
 		String resolver = "__resolver";
 
 		Statement requireStatement =
-			statement.getNamedImports().isEmpty() && statement.getDefaultBinding().isNothing() ?
-				makeRequireStatement(statement.getModuleSpecifier()) :
-				makeRequireStatement(resolver, statement.getModuleSpecifier());
+			statement.namedImports.isEmpty() && statement.defaultBinding.isNothing() ?
+				makeRequireStatement(statement.moduleSpecifier) :
+				makeRequireStatement(resolver, statement.moduleSpecifier);
 
 		ImmutableList<Statement> variableDeclarationStatements =
-			statement.getNamedImports().map(x -> (Statement) makeNamedImportStatement(resolver, x));
+			statement.namedImports.map(x -> (Statement) makeNamedImportStatement(resolver, x));
 
-		if (statement.getDefaultBinding().isJust()) {
+		if (statement.defaultBinding.isJust()) {
 			variableDeclarationStatements = variableDeclarationStatements.cons(
-				makeDefaultBindingStatement(resolver, statement.getDefaultBinding().fromJust()));
+				makeDefaultBindingStatement(resolver, statement.defaultBinding.fromJust()));
 		}
 
 		return variableDeclarationStatements.cons(requireStatement);
@@ -109,14 +112,14 @@ public class ImportExportTransformer {
 	static private ImmutableList<Statement> transformImportNamespace(ImportNamespace statement) {
 		String resolver = "__resolver";
 
-		Statement requireStatement = makeRequireStatement(resolver, statement.getModuleSpecifier());
+		Statement requireStatement = makeRequireStatement(resolver, statement.moduleSpecifier);
 
 		ImmutableList<Statement> variableDeclarationStatements =
-			ImmutableList.of(makeNameSpaceBindingStatement(resolver, statement.getNamespaceBinding()));
+			ImmutableList.of(makeNameSpaceBindingStatement(resolver, statement.namespaceBinding));
 
-		if (statement.getDefaultBinding().isJust()) {
+		if (statement.defaultBinding.isJust()) {
 			variableDeclarationStatements = variableDeclarationStatements.cons(
-				makeDefaultBindingStatement(resolver, statement.getDefaultBinding().fromJust()));
+				makeDefaultBindingStatement(resolver, statement.defaultBinding.fromJust()));
 		}
 
 		return variableDeclarationStatements.cons(requireStatement);
@@ -132,13 +135,16 @@ public class ImportExportTransformer {
 			return transformExportDefault((ExportDefault) declaration);
 		} else if (declaration instanceof ExportFrom) {
 			return transformExportFrom((ExportFrom) declaration);
+		} else if (declaration instanceof ExportLocals) {
+			return transformExportLocals((ExportLocals) declaration);
 		} else {
 			return ImmutableList.empty(); //This should never happen
 		}
 	}
 
+
 	static private ImmutableList<Statement> transformExport(Export statement) {
-		FunctionDeclarationClassDeclarationVariableDeclaration declaration = statement.getDeclaration();
+		FunctionDeclarationClassDeclarationVariableDeclaration declaration = statement.declaration;
 		if (declaration instanceof FunctionDeclaration) {
 			return transformExportFunctionDeclaration((FunctionDeclaration) declaration);
 		} else if (declaration instanceof ClassDeclaration) {
@@ -152,19 +158,19 @@ public class ImportExportTransformer {
 
 	static private ImmutableList<Statement> transformExportFunctionDeclaration(FunctionDeclaration declaration) {
 		return ImmutableList.of(declaration,
-			makeNamedExportStatement(new ExportSpecifier(Maybe.empty(), declaration.getName().getName())));
+			makeNamedExportStatement(new ExportLocalSpecifier(new IdentifierExpression(declaration.name.name), Maybe.empty())));
 	}
 
 	static private ImmutableList<Statement> transformExportClassDeclaration(ClassDeclaration declaration) {
 		return ImmutableList.of(declaration,
-			makeNamedExportStatement(new ExportSpecifier(Maybe.empty(), declaration.getName().getName())));
+			makeNamedExportStatement(new ExportLocalSpecifier(new IdentifierExpression(declaration.name.name), Maybe.empty())));
 	}
 
 	static private ImmutableList<Statement> transformExportVariableDeclaration(VariableDeclaration declaration) {
 		ImmutableList<Statement> exportStatements =
 			declaration.declarators.map(x -> {
-				BindingIdentifier temp = (BindingIdentifier) x.getBinding();
-				return makeNamedExportStatement(new ExportSpecifier(Maybe.empty(), temp.getName()));
+				BindingIdentifier temp = (BindingIdentifier) x.binding;
+				return makeNamedExportStatement(new ExportLocalSpecifier(new IdentifierExpression(temp.name), Maybe.empty()));
 			});
 		return exportStatements.cons(new VariableDeclarationStatement(declaration));
 	}
@@ -172,14 +178,14 @@ public class ImportExportTransformer {
 	static private ImmutableList<Statement> transformExportAllFrom(ExportAllFrom statement) {
 		String resolver = "__resolver";
 
-		Statement requireStatement = makeRequireStatement(resolver, statement.getModuleSpecifier());
+		Statement requireStatement = makeRequireStatement(resolver, statement.moduleSpecifier);
 		Statement enumerateExports = makeEnumerateExports(resolver);
 
 		return ImmutableList.of(requireStatement, enumerateExports);
 	}
 
 	static private ImmutableList<Statement> transformExportDefault(ExportDefault statement) {
-		FunctionDeclarationClassDeclarationExpression body = statement.getBody();
+		FunctionDeclarationClassDeclarationExpression body = statement.body;
 		if (body instanceof FunctionDeclaration) {
 			return transformExportDefaultFunctionDeclaration((FunctionDeclaration) body);
 		} else if (body instanceof ClassDeclaration) {
@@ -192,52 +198,52 @@ public class ImportExportTransformer {
 	}
 
 	static private ImmutableList<Statement> transformExportDefaultFunctionDeclaration(FunctionDeclaration declaration) {
-		String functionName = declaration.getName().getName();
+		String functionName = declaration.name.name;
 		if (functionName.equals("*default*")) {
 			IdentifierExpression exportsIden = new IdentifierExpression("exports");
-			ComputedMemberExpression compMem = new ComputedMemberExpression(new LiteralStringExpression("default"), exportsIden);
+			ComputedMemberAssignmentTarget compMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression("default"));
 
 			AssignmentExpression assignmentExpression =
-				new AssignmentExpression(compMem, new FunctionExpression(Maybe.empty(), false,
-					declaration.getParams(), declaration.getBody()));
+				new AssignmentExpression(compMem, new FunctionExpression(false, Maybe.empty(),
+					declaration.params, declaration.body));
 			return ImmutableList.of(new ExpressionStatement(assignmentExpression));
 		} else {
 			return ImmutableList.of(declaration,
-									  makeExportDefaultStatement(new ExportSpecifier(Maybe.empty(), declaration.getName().getName())));
+									  makeExportDefaultStatement(new ExportLocalSpecifier(new IdentifierExpression(declaration.name.name), Maybe.empty())));
 		}
 	}
 
 	static private ImmutableList<Statement> transformExportDefaultClassDeclaration(ClassDeclaration declaration) {
 		return ImmutableList.of(declaration,
-			makeExportDefaultStatement(new ExportSpecifier(Maybe.empty(), declaration.getName().getName())));
+			makeExportDefaultStatement(new ExportLocalSpecifier(new IdentifierExpression(declaration.name.name), Maybe.empty())));
 	}
 
 	static private ImmutableList<Statement> transformExportDefaultExpression(Expression expression) {
 		IdentifierExpression exportsIden = new IdentifierExpression("exports");
-		ComputedMemberExpression staticMem = new ComputedMemberExpression(new LiteralStringExpression("default"), exportsIden);
+		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression("default"));
 
 		AssignmentExpression assignmentExpression =
 			new AssignmentExpression(staticMem, expression);
 		return ImmutableList.of(new ExpressionStatement(assignmentExpression));
 	}
 
+	static private ImmutableList<Statement> transformExportLocals(ExportLocals declaration) {
+		return declaration.namedExports.map(x -> (Statement) makeNamedExportStatement(x));
+	}
+
 	static private ImmutableList<Statement> transformExportFrom(ExportFrom statement) {
 		String resolver = "__resolver";
 
-		Maybe<String> moduleSpecifier = statement.getModuleSpecifier();
-		ImmutableList<Statement> statements = moduleSpecifier.isJust() ?
-			statement.getNamedExports().map(x -> (Statement) makeNamedExportStatement(resolver, x)) :
-			statement.getNamedExports().map(x -> (Statement) makeNamedExportStatement(x));
+		String moduleSpecifier = statement.moduleSpecifier;
+		ImmutableList<Statement> statements = statement.namedExports.map(x -> (Statement) makeNamedExportStatement(resolver, x));
 
-		return moduleSpecifier.isJust() ?
-			statements.cons(makeRequireStatement(resolver, moduleSpecifier.fromJust())) :
-			statements;
+		return statements.cons(makeRequireStatement(resolver, moduleSpecifier));
 	}
 
 	// e.g., exports.x = x;
-	static private ExpressionStatement makeNamedExportStatement(ExportSpecifier specifier) {
+	static private ExpressionStatement makeNamedExportStatement(ExportLocalSpecifier specifier) {
 		IdentifierExpression exportsIden = new IdentifierExpression("exports");
-		ComputedMemberExpression staticMem = new ComputedMemberExpression(new LiteralStringExpression(specifier.getExportedName()), exportsIden);
+		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression(specifier.name.name));
 
 		IdentifierExpression exportVar = makeExportVar(specifier);
 
@@ -247,9 +253,9 @@ public class ImportExportTransformer {
 	}
 
 	// e.g., exports.default = x;
-	static private ExpressionStatement makeExportDefaultStatement(ExportSpecifier specifier) {
+	static private ExpressionStatement makeExportDefaultStatement(ExportLocalSpecifier specifier) {
 		IdentifierExpression exportsIden = new IdentifierExpression("exports");
-		ComputedMemberExpression staticMem = new ComputedMemberExpression(new LiteralStringExpression("default"), exportsIden);
+		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression("default"));
 
 		IdentifierExpression exportVar = makeExportVar(specifier);
 
@@ -259,9 +265,9 @@ public class ImportExportTransformer {
 	}
 
 	// e.g., exports.x = __resolver.x
-	static private ExpressionStatement makeNamedExportStatement(String resolver, ExportSpecifier specifier) {
+	static private ExpressionStatement makeNamedExportStatement(String resolver, ExportFromSpecifier specifier) {
 		IdentifierExpression exportsIden = new IdentifierExpression("exports");
-		ComputedMemberExpression staticMem = new ComputedMemberExpression(new LiteralStringExpression(specifier.getExportedName()), exportsIden);
+		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression(specifier.name));
 
 		ComputedMemberExpression exportVar = makeExportVar(resolver, specifier);
 
@@ -271,17 +277,17 @@ public class ImportExportTransformer {
 	}
 
 	// e.g., __resolver.x
-	static private ComputedMemberExpression makeExportVar(String resolver, ExportSpecifier specifier) {
-		String property = specifier.getName().isJust() ? specifier.getName().fromJust() : specifier.getExportedName();
+	static private ComputedMemberExpression makeExportVar(String resolver, ExportFromSpecifier specifier) {
+		String property = specifier.exportedName.isJust() ? specifier.exportedName.fromJust() : specifier.name;
 
-		return new ComputedMemberExpression(new LiteralStringExpression(property), new IdentifierExpression(resolver));
+		return new ComputedMemberExpression(new IdentifierExpression(resolver), new LiteralStringExpression(property));
 	}
 
 	// e.g., x
-	static private IdentifierExpression makeExportVar(ExportSpecifier specifier) {
-		return specifier.getName().isJust() ?
-			new IdentifierExpression(specifier.getName().fromJust()) :
-			new IdentifierExpression(specifier.getExportedName());
+	static private IdentifierExpression makeExportVar(ExportLocalSpecifier specifier) {
+		return specifier.exportedName.isJust() ?
+			new IdentifierExpression(specifier.exportedName.fromJust()) :
+			new IdentifierExpression(specifier.name.name);
 	}
 
 	// e.g., require('lib');
@@ -318,7 +324,7 @@ public class ImportExportTransformer {
 	// e.g., d = _resolver.default;
 	static private VariableDeclarationStatement makeDefaultBindingStatement(String resolver, BindingIdentifier binding) {
 		IdentifierExpression resolverIden = new IdentifierExpression(resolver);
-		ComputedMemberExpression staticMem = new ComputedMemberExpression(new LiteralStringExpression("default"), resolverIden);
+		ComputedMemberExpression staticMem = new ComputedMemberExpression(resolverIden, new LiteralStringExpression("default"));
 
 		ImmutableList<VariableDeclarator> declarators =
 			ImmutableList.of(new VariableDeclarator(binding, Maybe.of(staticMem)));
@@ -344,12 +350,12 @@ public class ImportExportTransformer {
 	// e.g., x = __resolver.y or x = __resolver.x
 	static private VariableDeclarationStatement makeNamedImportStatement(String resolver, ImportSpecifier specifier) {
 		IdentifierExpression resolverIden = new IdentifierExpression(resolver);
-		ComputedMemberExpression staticMem = specifier.getName().isJust() ?
-			new ComputedMemberExpression(new LiteralStringExpression(specifier.getName().fromJust()), resolverIden) :
-			new ComputedMemberExpression(new LiteralStringExpression(specifier.getBinding().getName()), resolverIden);
+		ComputedMemberExpression staticMem = specifier.name.isJust() ?
+			new ComputedMemberExpression(resolverIden, new LiteralStringExpression(specifier.name.fromJust())) :
+			new ComputedMemberExpression(resolverIden, new LiteralStringExpression(specifier.binding.name));
 
 		ImmutableList<VariableDeclarator> declarators =
-			ImmutableList.of(new VariableDeclarator(specifier.getBinding(), Maybe.of(staticMem)));
+			ImmutableList.of(new VariableDeclarator(specifier.binding, Maybe.of(staticMem)));
 
 		VariableDeclaration declaration = new VariableDeclaration(VariableDeclarationKind.Var, declarators);
 
@@ -366,9 +372,9 @@ public class ImportExportTransformer {
 
 		IdentifierExpression itemIdenExp = new IdentifierExpression("i");
 		IdentifierExpression exportsIden = new IdentifierExpression("exports");
-		ComputedMemberExpression exportsItem = new ComputedMemberExpression(itemIdenExp, exportsIden);
+		ComputedMemberAssignmentTarget exportsItem = new ComputedMemberAssignmentTarget(exportsIden, itemIdenExp);
 
-		ComputedMemberExpression resolverItem = new ComputedMemberExpression(itemIdenExp, resolverIden);
+		ComputedMemberExpression resolverItem = new ComputedMemberExpression(resolverIden, itemIdenExp);
 
 		AssignmentExpression assignment = new AssignmentExpression(exportsItem, resolverItem);
 

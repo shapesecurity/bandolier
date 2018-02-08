@@ -22,10 +22,10 @@ import com.shapesecurity.bandolier.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.loader.IResolver;
 import com.shapesecurity.bandolier.loader.IResourceLoader;
 import com.shapesecurity.bandolier.loader.ModuleLoaderException;
-import com.shapesecurity.shift.ast.Module;
-import com.shapesecurity.shift.ast.Script;
-import com.shapesecurity.shift.parser.JsError;
-import com.shapesecurity.shift.parser.Parser;
+import com.shapesecurity.shift.es2016.ast.Module;
+import com.shapesecurity.shift.es2016.ast.Script;
+import com.shapesecurity.shift.es2016.parser.JsError;
+import com.shapesecurity.shift.es2016.parser.Parser;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +44,8 @@ public class Bundler {
 	 * @return a bundled script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundle(@NotNull Path filePath) throws ModuleLoaderException {
+	public static @NotNull
+	Script bundle(@NotNull Path filePath) throws ModuleLoaderException {
 		return bundle(filePath, new FileSystemResolver(), new FileLoader(), new StandardModuleBundler());
 	}
 

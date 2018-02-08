@@ -1,7 +1,7 @@
 package com.shapesecurity.bandolier.bundlers;
 
 import com.shapesecurity.bandolier.BandolierModule;
-import com.shapesecurity.shift.ast.Script;
+import com.shapesecurity.shift.es2016.ast.Script;
 
 import org.jetbrains.annotations.NotNull;
 
