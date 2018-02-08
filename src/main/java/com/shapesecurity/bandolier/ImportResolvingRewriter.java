@@ -17,17 +17,17 @@ package com.shapesecurity.bandolier;
 
 
 import com.shapesecurity.bandolier.loader.FileSystemResolver;
-import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.ast.ExportAllFrom;
-import com.shapesecurity.shift.ast.ExportDeclaration;
-import com.shapesecurity.shift.ast.ExportFrom;
-import com.shapesecurity.shift.ast.Import;
-import com.shapesecurity.shift.ast.ImportDeclaration;
-import com.shapesecurity.shift.ast.ImportDeclarationExportDeclarationStatement;
-import com.shapesecurity.shift.ast.ImportNamespace;
-import com.shapesecurity.shift.ast.Module;
-import com.shapesecurity.shift.ast.Statement;
 import com.shapesecurity.bandolier.loader.IResolver;
+import com.shapesecurity.functional.data.ImmutableList;
+import com.shapesecurity.shift.es2016.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2016.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ExportFrom;
+import com.shapesecurity.shift.es2016.ast.Import;
+import com.shapesecurity.shift.es2016.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.es2016.ast.ImportNamespace;
+import com.shapesecurity.shift.es2016.ast.Module;
+import com.shapesecurity.shift.es2016.ast.Statement;
 
 import java.nio.file.Path;
 
@@ -66,7 +66,7 @@ public class ImportResolvingRewriter {
 	 * @return
 	 */
 	public Module rewrite(Module module, Path path) {
-		ImmutableList<ImportDeclarationExportDeclarationStatement> items = module.getItems().bind(x -> rewritePaths(x, path));
+		ImmutableList<ImportDeclarationExportDeclarationStatement> items = module.items.bind(x -> rewritePaths(x, path));
 
 		return new Module(module.directives, items);
 	}
@@ -93,16 +93,16 @@ public class ImportResolvingRewriter {
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImport(Import imp, Path path) {
 		return ImmutableList.of(
-			new Import(imp.getDefaultBinding(),
-					   imp.getNamedImports(),
-					   resolvePath(path, imp.getModuleSpecifier())));
+			new Import(imp.defaultBinding,
+					   imp.namedImports,
+					   resolvePath(path, imp.moduleSpecifier)));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportNamespace(ImportNamespace imp, Path path) {
 		return ImmutableList.of(
-			new ImportNamespace(imp.getDefaultBinding(),
-								imp.getNamespaceBinding(),
-								resolvePath(path, imp.getModuleSpecifier())));
+			new ImportNamespace(imp.defaultBinding,
+								imp.namespaceBinding,
+								resolvePath(path, imp.moduleSpecifier)));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportDeclaration(ExportDeclaration declaration, Path path) {
@@ -116,11 +116,11 @@ public class ImportResolvingRewriter {
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportAllFrom(ExportAllFrom exp, Path path) {
-		return ImmutableList.of(new ExportAllFrom(resolvePath(path, exp.getModuleSpecifier())));
+		return ImmutableList.of(new ExportAllFrom(resolvePath(path, exp.moduleSpecifier)));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(ExportFrom exp, Path path) {
-		ExportFrom newExp = new ExportFrom(exp.getNamedExports(), exp.getModuleSpecifier().map(x -> resolvePath(path, x)));
+		ExportFrom newExp = new ExportFrom(exp.namedExports, resolvePath(path, exp.moduleSpecifier));
 		return ImmutableList.of(newExp);
 	}
 }

@@ -16,10 +16,10 @@
 package com.shapesecurity.bandolier;
 
 import com.shapesecurity.bandolier.loader.FileSystemResolver;
-import com.shapesecurity.shift.ast.Module;
-import com.shapesecurity.shift.codegen.CodeGen;
-import com.shapesecurity.shift.parser.JsError;
-import com.shapesecurity.shift.parser.Parser;
+import com.shapesecurity.shift.es2016.ast.Module;
+import com.shapesecurity.shift.es2016.codegen.CodeGen;
+import com.shapesecurity.shift.es2016.parser.JsError;
+import com.shapesecurity.shift.es2016.parser.Parser;
 
 import junit.framework.TestCase;
 

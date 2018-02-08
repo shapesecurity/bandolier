@@ -1,13 +1,13 @@
 package com.shapesecurity.bandolier;
 
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.ast.ExportAllFrom;
-import com.shapesecurity.shift.ast.ExportDeclaration;
-import com.shapesecurity.shift.ast.ExportFrom;
-import com.shapesecurity.shift.ast.Import;
-import com.shapesecurity.shift.ast.ImportDeclaration;
-import com.shapesecurity.shift.ast.ImportNamespace;
-import com.shapesecurity.shift.ast.Module;
+import com.shapesecurity.shift.es2016.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2016.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ExportFrom;
+import com.shapesecurity.shift.es2016.ast.Import;
+import com.shapesecurity.shift.es2016.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ImportNamespace;
+import com.shapesecurity.shift.es2016.ast.Module;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -46,15 +46,15 @@ public class BandolierModule {
 		return this.ast.items.bind(s -> {
 			if (s instanceof ImportDeclaration) {
 				if (s instanceof Import) {
-					return ImmutableList.of(((Import) s).getModuleSpecifier());
+					return ImmutableList.of(((Import) s).moduleSpecifier);
 				} else if (s instanceof ImportNamespace) {
-					return ImmutableList.of(((ImportNamespace) s).getModuleSpecifier());
+					return ImmutableList.of(((ImportNamespace) s).moduleSpecifier);
 				}
 			} else if (s instanceof ExportDeclaration) {
 				if (s instanceof ExportAllFrom) {
-					return ImmutableList.of(((ExportAllFrom) s).getModuleSpecifier());
+					return ImmutableList.of(((ExportAllFrom) s).moduleSpecifier);
 				} else if (s instanceof ExportFrom) {
-					return ((ExportFrom) s).getModuleSpecifier().toList();
+					return ImmutableList.of(((ExportFrom) s).moduleSpecifier);
 				}
 			}
 			return ImmutableList.empty();

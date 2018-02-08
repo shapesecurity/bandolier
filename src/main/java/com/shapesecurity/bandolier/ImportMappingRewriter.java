@@ -16,15 +16,14 @@
 package com.shapesecurity.bandolier;
 
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.ast.ExportAllFrom;
-import com.shapesecurity.shift.ast.ExportDeclaration;
-import com.shapesecurity.shift.ast.ExportFrom;
-import com.shapesecurity.shift.ast.Import;
-import com.shapesecurity.shift.ast.ImportDeclaration;
-import com.shapesecurity.shift.ast.ImportDeclarationExportDeclarationStatement;
-import com.shapesecurity.shift.ast.ImportNamespace;
-import com.shapesecurity.shift.ast.Module;
-import com.shapesecurity.shift.ast.Statement;
+import com.shapesecurity.shift.es2016.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2016.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ExportFrom;
+import com.shapesecurity.shift.es2016.ast.Import;
+import com.shapesecurity.shift.es2016.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2016.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.es2016.ast.ImportNamespace;
+import com.shapesecurity.shift.es2016.ast.Module;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +55,7 @@ public class ImportMappingRewriter {
 	@NotNull
 	public Module rewrite(@NotNull Module module) {
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
-				module.getItems().bind(x -> rewritePaths(x));
+				module.items.bind(x -> rewritePaths(x));
 
 		return new Module(module.directives, items);
 	}
@@ -75,7 +74,7 @@ public class ImportMappingRewriter {
 		} else if (statement instanceof ExportDeclaration) {
 			return rewriteExportDeclaration((ExportDeclaration) statement);
 		} else {
-			return ImmutableList.of((Statement) statement); // do not transform other statements
+			return ImmutableList.of(statement); // do not transform other statements
 		}
 	}
 
@@ -90,13 +89,13 @@ public class ImportMappingRewriter {
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImport(Import imp) {
-		return ImmutableList.of(new Import(imp.getDefaultBinding(), imp.getNamedImports(),
-				this.lookupMapping(imp.getModuleSpecifier())));
+		return ImmutableList.of(new Import(imp.defaultBinding, imp.namedImports,
+				this.lookupMapping(imp.moduleSpecifier)));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteImportNamespace(ImportNamespace imp) {
-		return ImmutableList.of(new ImportNamespace(imp.getDefaultBinding(), imp.getNamespaceBinding(),
-				this.lookupMapping(imp.getModuleSpecifier())));
+		return ImmutableList.of(new ImportNamespace(imp.defaultBinding, imp.namespaceBinding,
+				this.lookupMapping(imp.moduleSpecifier)));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportDeclaration(ExportDeclaration declaration) {
@@ -110,11 +109,11 @@ public class ImportMappingRewriter {
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportAllFrom(ExportAllFrom exp) {
-		return ImmutableList.of(new ExportAllFrom(this.lookupMapping(exp.getModuleSpecifier())));
+		return ImmutableList.of(new ExportAllFrom(this.lookupMapping(exp.moduleSpecifier)));
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(ExportFrom exp) {
-		ExportFrom newExp = new ExportFrom(exp.getNamedExports(), exp.getModuleSpecifier().map(this.importMap::get));
+		ExportFrom newExp = new ExportFrom(exp.namedExports, importMap.get(exp.moduleSpecifier));
 		return ImmutableList.of(newExp);
 	}
 }
