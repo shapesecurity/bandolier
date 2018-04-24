@@ -38,7 +38,10 @@ public class ImportExportTransformerTest extends TestCase {
 			"export * from 'm'");
 		testTransformer("var __resolver = require('m', module); exports['x'] = __resolver['x']",
 			"export {x} from 'm'");
+		testTransformer("var __resolver = require('m', module); exports['y'] = __resolver['x']",
+			"export {x as y} from 'm'");
 		testTransformer("exports['x'] = x", "export {x}");
+		testTransformer("exports['y'] = x", "export {x as y}");
 		testTransformer("var x = 0; exports['x'] = x", "export var x = 0");
 		testTransformer("function f(){} exports['f'] = f", "export function f(){}");
 		testTransformer("class C{} exports['C'] = C", "export class C{}");
