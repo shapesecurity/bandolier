@@ -243,7 +243,7 @@ public class ImportExportTransformer {
 	// e.g., exports.x = x;
 	static private ExpressionStatement makeNamedExportStatement(ExportLocalSpecifier specifier) {
 		IdentifierExpression exportsIden = new IdentifierExpression("exports");
-		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression(specifier.name.name));
+		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression(specifier.exportedName.orJust(specifier.name.name)));
 
 		IdentifierExpression exportVar = makeExportVar(specifier);
 
@@ -267,7 +267,7 @@ public class ImportExportTransformer {
 	// e.g., exports.x = __resolver.x
 	static private ExpressionStatement makeNamedExportStatement(String resolver, ExportFromSpecifier specifier) {
 		IdentifierExpression exportsIden = new IdentifierExpression("exports");
-		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression(specifier.name));
+		ComputedMemberAssignmentTarget staticMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression(specifier.exportedName.orJust(specifier.name)));
 
 		ComputedMemberExpression exportVar = makeExportVar(resolver, specifier);
 
@@ -278,16 +278,14 @@ public class ImportExportTransformer {
 
 	// e.g., __resolver.x
 	static private ComputedMemberExpression makeExportVar(String resolver, ExportFromSpecifier specifier) {
-		String property = specifier.exportedName.isJust() ? specifier.exportedName.fromJust() : specifier.name;
+		String property = specifier.name;
 
 		return new ComputedMemberExpression(new IdentifierExpression(resolver), new LiteralStringExpression(property));
 	}
 
 	// e.g., x
 	static private IdentifierExpression makeExportVar(ExportLocalSpecifier specifier) {
-		return specifier.exportedName.isJust() ?
-			new IdentifierExpression(specifier.exportedName.fromJust()) :
-			new IdentifierExpression(specifier.name.name);
+		return new IdentifierExpression(specifier.name.name);
 	}
 
 	// e.g., require('lib');
