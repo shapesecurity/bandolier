@@ -109,7 +109,15 @@ public class Bundler {
 			for (String dependency : loadedModules.get(root).getDependencies()) {
 				if (!loadedModules.containsKey(dependency)) {
 					try {
-						module = Parser.parseModule(loader.loadResource(Paths.get(dependency)));
+						switch (getFileExtension(dependency)) {
+							case "json":
+								module = Parser.parseModule("export default (" + loader.loadResource(Paths.get(dependency)) + ");");
+								break;
+							case "js":
+							case "esm":
+							default:
+								module = Parser.parseModule(loader.loadResource(Paths.get(dependency)));
+						}
 					} catch (IOException | JsError e) {
 						throw new ModuleLoaderException(dependency, e);
 					}
@@ -121,5 +129,11 @@ public class Bundler {
 		}
 
 		return loadedModules;
+	}
+
+	private static String getFileExtension(@NotNull String filename) {
+		int i = filename.lastIndexOf('.');
+		if (i < 0) return "";
+		return filename.substring(i + 1);
 	}
 }

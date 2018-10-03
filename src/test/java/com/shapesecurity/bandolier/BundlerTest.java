@@ -94,6 +94,10 @@ public class BundlerTest extends TestCase {
 		modules.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;");
 		modules.put("/root/importDefaultAndName.js", "import d, { v } from '/root/exportDefaultAndName.js'; export var result = d + v;");
 
+		modules.put("/root/loadJson.js", "import json from './json.json'; export var result = json.value;");
+		modules.put("/root/loadJson.esm", "export { result } from './loadJson.js';");
+		modules.put("/root/json.json", "{ \"value\": 1, \"otherValue\": 2 }");
+
 		modules.put("/root/thisIsUndefined.js", "export var result = this;");
 		loader = new TestLoader(modules);
 	}
@@ -117,6 +121,10 @@ public class BundlerTest extends TestCase {
 	public void testReduceExportAllFrom() throws Exception {
 		testDependencyCollector("export * from '../dep1.js'", "../dep1.js");
 		testDependencyCollector("export * from '../dep1.js'; export * from 'dep2.js'", "../dep1.js", "dep2.js");
+	}
+
+	public void testLoadJsonDependency() throws Exception {
+		testDependencyCollector("import json from '/json.json'", "/json.json");
 	}
 
 	private static void testDependencyCollector(String code, String... dependencies) throws JsError {
@@ -153,6 +161,9 @@ public class BundlerTest extends TestCase {
 		testResult("/root/importExportDefault.js", 142.0, resolver, loader);
 		testResult("/root/importAll.js", 142.0, resolver, loader);
 		testResult("/root/importDefaultAndName.js", 142.0, resolver, loader);
+
+		testResult("/root/loadJson.js", 1.0, resolver, loader);
+		testResult("/root/loadJson.esm", 1.0, resolver, loader);
 
 		testResult("/root/thisIsUndefined.js", null, resolver, loader);
 	}
