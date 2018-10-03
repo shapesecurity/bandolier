@@ -131,7 +131,7 @@ public class Bundler {
 		return loadedModules;
 	}
 
-	private static String getFileExtension(@NotNull String filename) {
+	private static @NotNull String getFileExtension(@NotNull String filename) {
 		int i = filename.lastIndexOf('.');
 		if (i < 0) return "";
 		return filename.substring(i + 1);
