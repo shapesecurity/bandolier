@@ -23,18 +23,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 
-public class FileLoader extends CachedResourceLoader {
+public abstract class CachedResourceLoader implements IResourceLoader {
+
+	private HashMap<Path, String> cachedFiles = new HashMap<>();
+
+	public abstract Boolean existsBackend(@NotNull Path path);
+
+	public abstract String loadResourceBackend(@NotNull Path path) throws IOException;
 
 	@NotNull
 	@Override
-	public Boolean existsBackend(@NotNull Path path) {
-		return Files.exists(path);
+	public final Boolean exists(@NotNull Path path) {
+		return cachedFiles.containsKey(path) || this.existsBackend(path);
 	}
 
 	@NotNull
 	@Override
-	public String loadResourceBackend(@NotNull Path path) throws IOException {
-		return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+	public final String loadResource(@NotNull Path path) throws IOException {
+		if (cachedFiles.containsKey(path)) {
+			return cachedFiles.get(path);
+		}
+		String resource = this.loadResourceBackend(path);
+		cachedFiles.put(path, resource);
+		return resource;
 	}
 }
 

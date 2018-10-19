@@ -24,8 +24,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 
-public class ClassResourceLoader implements IResourceLoader {
+public class ClassResourceLoader extends CachedResourceLoader {
 
 	private final Class klass;
 
@@ -35,13 +36,13 @@ public class ClassResourceLoader implements IResourceLoader {
 
 	@NotNull
 	@Override
-	public Boolean exists(@NotNull Path path) {
+	public Boolean existsBackend(@NotNull Path path) {
 		return this.getStream(path.toString()) != null;
 	}
 
 	@NotNull
 	@Override
-	public String loadResource(@NotNull Path path) throws IOException {
+	public String loadResourceBackend(@NotNull Path path) throws IOException {
 		InputStream stream = this.getStream(path.toString());
 		if (stream == null) {
 			throw new IOException("Cannot load resource: " + path.toString());
