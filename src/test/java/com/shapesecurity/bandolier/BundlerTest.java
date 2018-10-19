@@ -52,10 +52,6 @@ public class BundlerTest extends TestCase {
 		modules.put("/root/lib1/js7.js", "import {c} from './js8.js'; export var b = 10 + c");
 		modules.put("/root/lib1/js8.js", "export var c = 100");
 
-		modules.put("/root/lib1/js6.js", "import {b} from './js7.js'; export var result = 32 + b");
-		modules.put("/root/lib1/js7.js", "import {c} from './js8.js'; export var b = 10 + c");
-		modules.put("/root/lib1/js8.js", "export var c = 100");
-
 		modules.put("/root/lib1/js9.js", "import {b} from './js10.js'; export var result = 22 + b");
 		modules.put("/root/lib1/js10.js", "import {c} from './js11.js'; export var b = 10 + c");
 		modules.put("/root/lib1/js11.js", "import {d} from './js12.js'; export var c = 10 + d");
@@ -90,7 +86,6 @@ public class BundlerTest extends TestCase {
 		modules.put("/root/exportDefault.js", "export default 100");
 		modules.put("/root/exportDefaultAndName.js", "export default 100; var v = 42; export { v };");
 
-		modules.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;");
 		modules.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;");
 		modules.put("/root/importDefaultAndName.js", "import d, { v } from '/root/exportDefaultAndName.js'; export var result = d + v;");
 
@@ -137,6 +132,73 @@ public class BundlerTest extends TestCase {
 			System.out.println(Arrays.toString(expected.toArray(new String[expected.length])));
 		}
 		assertEquals(deps, expected);
+	}
+
+	public void testDeterminism() throws Exception {
+		Map<String, String> modules = new HashMap<>();
+		modules.put("/js1.js", "import {b} from './js2.js'; import {c} from './js3.js'; export var result = 'a' + b + c");
+		modules.put("/js2.js", "import {d} from './js4.js'; export var b = 'b' + d");
+		modules.put("/js3.js", "import {d} from './js4.js'; export var c = 'c' + d");
+		modules.put("/js4.js", "export var d = 'd'");
+		TestLoader localLoader = new TestLoader(modules);
+
+		String actual = TestUtils.toString(TestUtils.bundleStandard("/js1.js", resolver, localLoader));
+
+		String expected = "(function(global){\n" +
+			"\"use strict\";\n" +
+			"function require(file,parentModule){\n" +
+			"if({\n" +
+			"}.hasOwnProperty.call(require.cache,file))return require.cache[file];\n" +
+			"var resolved=require.resolve(file);\n" +
+			"if(!resolved)throw new Error(\"Failed to resolve module \"+file);\n" +
+			"var module$={\n" +
+			"id:file,require:require,filename:file,exports:{\n" +
+			"},loaded:false,parent:parentModule,children:[]};\n" +
+			"if(parentModule)parentModule.children.push(module$);\n" +
+			"var dirname=file.slice(0,file.lastIndexOf(\"/\")+1);\n" +
+			"require.cache[file]=module$.exports;\n" +
+			"resolved.call(void 0,module$,module$.exports,dirname,file);\n" +
+			"module$.loaded=true;\n" +
+			"return require.cache[file]=module$.exports;\n" +
+			"}require.modules={\n" +
+			"};\n" +
+			"require.cache={\n" +
+			"};\n" +
+			"require.resolve=function(file){\n" +
+			"return{\n" +
+			"}.hasOwnProperty.call(require.modules,file)?require.modules[file]:void 0;\n" +
+			"};\n" +
+			"require.define=function(file,fn){\n" +
+			"require.modules[file]=fn;\n" +
+			"};\n" +
+			"require.define(\"1\",function(module,exports,__dirname,__filename){\n" +
+			"var __resolver=require(\"2\",module);\n" +
+			"var b=__resolver[\"b\"];\n" +
+			"var __resolver=require(\"3\",module);\n" +
+			"var c=__resolver[\"c\"];\n" +
+			"var result=\"a\"+b+c;\n" +
+			"exports[\"result\"]=result;\n" +
+			"});\n" +
+			"require.define(\"2\",function(module,exports,__dirname,__filename){\n" +
+			"var __resolver=require(\"4\",module);\n" +
+			"var d=__resolver[\"d\"];\n" +
+			"var b=\"b\"+d;\n" +
+			"exports[\"b\"]=b;\n" +
+			"});\n" +
+			"require.define(\"3\",function(module,exports,__dirname,__filename){\n" +
+			"var __resolver=require(\"4\",module);\n" +
+			"var d=__resolver[\"d\"];\n" +
+			"var c=\"c\"+d;\n" +
+			"exports[\"c\"]=c;\n" +
+			"});\n" +
+			"require.define(\"4\",function(module,exports,__dirname,__filename){\n" +
+			"var d=\"d\";\n" +
+			"exports[\"d\"]=d;\n" +
+			"});\n" +
+			"return require(\"1\");\n" +
+			"}.call(this,this).result);\n";
+
+		assertEquals(expected, actual);
 	}
 
 	@Test

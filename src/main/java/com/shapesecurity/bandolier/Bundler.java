@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -69,7 +69,8 @@ public class Bundler {
 
 	/**
 	 * Bundles the module provided as a string and along with its dependencies and returns the resulting
-	 * Script.
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved.
 	 * @param mod the string of the module
 	 * @param filePath path to the module
 	 * @param resolver how to resolve paths
@@ -97,7 +98,7 @@ public class Bundler {
 	private static @NotNull Map<String, BandolierModule> loadDependencies(@NotNull Module module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
 		throws ModuleLoaderException {
 
-		Map<String, BandolierModule> loadedModules = new HashMap<>();
+		Map<String, BandolierModule> loadedModules = new LinkedHashMap<>();
 		LinkedList<String> toLoad = new LinkedList<>();
 		ImportResolvingRewriter rewriter = new ImportResolvingRewriter(resolver);
 		Module rewritten = rewriter.rewrite(module, filePath.getParent());
