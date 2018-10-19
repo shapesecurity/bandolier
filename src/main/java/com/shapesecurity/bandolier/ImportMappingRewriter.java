@@ -15,6 +15,7 @@
  */
 package com.shapesecurity.bandolier;
 
+import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2016.ast.ExportAllFrom;
 import com.shapesecurity.shift.es2016.ast.ExportDeclaration;
@@ -27,8 +28,6 @@ import com.shapesecurity.shift.es2016.ast.Module;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-
 /**
  * Rewrites imports based on a provided mapping from old paths to new ones.
  */
@@ -36,14 +35,14 @@ public class ImportMappingRewriter {
 
 
 	@NotNull
-	private final Map<String, String> importMap;
+	private final HashTable<String, String> importMap;
 
 	/**
 	 * Rewrites imports based on the provided mapping
 	 * @param importMap maps the current import path to a new one, must contain a mapping for every
 	 *                  import in the module
 	 */
-	public ImportMappingRewriter(@NotNull Map<String, String> importMap) {
+	public ImportMappingRewriter(@NotNull HashTable<String, String> importMap) {
 		this.importMap = importMap;
 	}
 
@@ -64,7 +63,7 @@ public class ImportMappingRewriter {
 	private String lookupMapping(@NotNull String path) {
 		assert this.importMap.containsKey(path);
 
-		return this.importMap.get(path);
+		return this.importMap.get(path).fromJust();
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewritePaths(
@@ -113,7 +112,7 @@ public class ImportMappingRewriter {
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewriteExportFrom(ExportFrom exp) {
-		ExportFrom newExp = new ExportFrom(exp.namedExports, importMap.get(exp.moduleSpecifier));
+		ExportFrom newExp = new ExportFrom(exp.namedExports, importMap.get(exp.moduleSpecifier).fromJust());
 		return ImmutableList.of(newExp);
 	}
 }

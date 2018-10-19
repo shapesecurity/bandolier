@@ -1,6 +1,8 @@
 package com.shapesecurity.bandolier;
 
 import com.shapesecurity.bandolier.loader.IResourceLoader;
+import com.shapesecurity.functional.data.HashTable;
+import com.shapesecurity.functional.data.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -9,9 +11,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TestLoader implements IResourceLoader {
-    private Map<String, String> modules = new HashMap<>();
+    private final HashTable<String, String> modules;
 
-    public TestLoader(Map<String, String> modules) {
+    public TestLoader(HashTable<String, String> modules) {
         this.modules = modules;
     }
 
@@ -23,10 +25,10 @@ public class TestLoader implements IResourceLoader {
 
     @NotNull
     @Override
-    public String loadResource(@NotNull Path path) throws IOException {
-        String code = modules.get(path.toString());
-        if (code == null) throw new AssertionError(path);
-        return code;
+    public String loadResource(@NotNull Path path) {
+        Maybe<String> code = modules.get(path.toString());
+        if (code.isNothing()) throw new AssertionError(path);
+        return code.fromJust();
     }
 }
 

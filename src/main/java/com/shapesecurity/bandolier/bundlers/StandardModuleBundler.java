@@ -3,6 +3,8 @@ package com.shapesecurity.bandolier.bundlers;
 import com.shapesecurity.bandolier.BandolierModule;
 import com.shapesecurity.bandolier.ImportExportTransformer;
 import com.shapesecurity.bandolier.ImportMappingRewriter;
+import com.shapesecurity.functional.Pair;
+import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es2016.ast.ArrayExpression;
@@ -29,7 +31,6 @@ import com.shapesecurity.shift.es2016.ast.LiteralNumericExpression;
 import com.shapesecurity.shift.es2016.ast.LiteralStringExpression;
 import com.shapesecurity.shift.es2016.ast.Module;
 import com.shapesecurity.shift.es2016.ast.NewExpression;
-import com.shapesecurity.shift.es2016.ast.Node;
 import com.shapesecurity.shift.es2016.ast.ObjectExpression;
 import com.shapesecurity.shift.es2016.ast.ObjectProperty;
 import com.shapesecurity.shift.es2016.ast.Parameter;
@@ -52,36 +53,31 @@ import com.shapesecurity.shift.es2016.ast.operators.UnaryOperator;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 public class StandardModuleBundler implements IModuleBundler {
 
-	private final Map<String, String> pathMapping = new HashMap<>();
+	private HashTable<String, String> pathMapping;
 
 	// This function is only guaranteed to be deterministic if the provided `modules` map has deterministic ordering
 	@NotNull
 	@Override
-	public Script bundleEntrypoint(String entry, Map<String, BandolierModule> modules) {
+	public Script bundleEntrypoint(String entry, HashTable<String, BandolierModule> modules) {
 		// rather than bundle with absolute paths (a potential information leak) create a mapping
 		// of absolute paths to a unique name
-		Integer moduleCount = 0;
-		for (String absPath : modules.keySet()) {
-			this.pathMapping.put(absPath, (++moduleCount).toString());
+		int moduleCount = 0;
+		HashTable<String, String> localPathMapping = HashTable.emptyUsingEquality();
+		for (Pair<String, BandolierModule> pair : modules) {
+			localPathMapping = localPathMapping.put(pair.left, Integer.toString(++moduleCount));
 		}
+		this.pathMapping = localPathMapping;
 
 		ImportMappingRewriter importMappingRewriter = new ImportMappingRewriter(this.pathMapping);
-		LinkedHashMap<String, Module> rewrittenModules = new LinkedHashMap<>();
-		modules.forEach((absPath, m) -> rewrittenModules.put(this.pathMapping.get(absPath), importMappingRewriter.rewrite(m.getAst())));
-		ExpressionStatement bundled = anonymousFunctionCall(this.pathMapping.get(entry), rewrittenModules);
+		HashTable<String, Module> rewrittenModules = modules.foldLeft((acc, pair) -> acc.put(this.pathMapping.get(pair.left).fromJust(), importMappingRewriter.rewrite(pair.right.getAst())), HashTable.emptyUsingEquality());
+		ExpressionStatement bundled = anonymousFunctionCall(this.pathMapping.get(entry).fromJust(), rewrittenModules);
 		return new Script(ImmutableList.empty(), ImmutableList.of(bundled));
 	}
 
 	//(function(global){ ... }.call(this, this));
-	private ExpressionStatement anonymousFunctionCall(String rootPath, LinkedHashMap<String, Module> rewrittenModules) {
+	private ExpressionStatement anonymousFunctionCall(String rootPath, HashTable<String, Module> rewrittenModules) {
 		StaticMemberExpression anonymousCall =
 				new StaticMemberExpression(anonymousFunctionExpression(rootPath, rewrittenModules), "call");
 		ImmutableList<SpreadElementExpression> params = ImmutableList.of(new ThisExpression(), new ThisExpression());
@@ -91,16 +87,14 @@ public class StandardModuleBundler implements IModuleBundler {
 	}
 
 	// function(global) {...}
-	private FunctionExpression anonymousFunctionExpression(String rootPath, LinkedHashMap<String, Module> rewrittenModules) {
+	private FunctionExpression anonymousFunctionExpression(String rootPath, HashTable<String, Module> rewrittenModules) {
 		BindingIdentifier globalIden = new BindingIdentifier("global");
 		FormalParameters params = new FormalParameters(ImmutableList.of(globalIden), Maybe.empty());
-
-		LinkedList<Statement> requireStatements =
-				rewrittenModules.entrySet().stream().map(x -> {
-					Node reduced = ImportExportTransformer.transformModule(x.getValue());
-					return requireDefineStatement(x.getKey(), (Module) reduced);
-				}).collect(Collectors.toCollection(LinkedList::new));
-		ImmutableList<Statement> statements = ImmutableList.from(requireStatements);
+		ImmutableList<Statement> statements =
+				rewrittenModules.foldRight((pair, acc) -> {
+					Module reduced = ImportExportTransformer.transformModule(pair.right);
+					return acc.cons(requireDefineStatement(pair.left, reduced));
+				}, ImmutableList.empty());
 		statements = statements.append(ImmutableList.of(requireCall(rootPath)));
 		statements = statements.cons(requireDefineDefinition());
 		statements = statements.cons(requireResolveDefinition());

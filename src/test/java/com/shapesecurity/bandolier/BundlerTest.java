@@ -17,6 +17,7 @@ package com.shapesecurity.bandolier;
 
 import com.shapesecurity.bandolier.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.loader.IResolver;
+import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2016.ast.Module;
 import com.shapesecurity.shift.es2016.parser.JsError;
@@ -26,10 +27,6 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.shapesecurity.bandolier.TestUtils.testResult;
 
 public class BundlerTest extends TestCase {
@@ -37,63 +34,64 @@ public class BundlerTest extends TestCase {
 	private static IResolver resolver = new FileSystemResolver();
 
 	static {
-		Map<String, String> modules = new HashMap<>();
+		HashTable<String, String> modules = HashTable.emptyUsingEquality();
 
-		modules.put("/root/lib1/js0.js", "var test = 0");
+		modules = modules.put("/root/lib1/js0.js", "var test = 0")
 
-		modules.put("/root/lib1/js1.js", "import {b} from '/root/lib1/js2.js'; export var result = 42 + b");
-		modules.put("/root/lib1/js2.js", "export var b = 100");
-		modules.put("/root/lib1/js3.js", "import {b} from './js2.js'; export var result = 42 + b");
+				.put("/root/lib1/js1.js", "import {b} from '/root/lib1/js2.js'; export var result = 42 + b")
+				.put("/root/lib1/js2.js", "export var b = 100")
+				.put("/root/lib1/js3.js", "import {b} from './js2.js'; export var result = 42 + b")
+				.put("/root/lib1/js4.js", "import {b} from '../js5.js'; export var result = 42 + b")
 
-		modules.put("/root/lib1/js4.js", "import {b} from '../js5.js'; export var result = 42 + b");
-		modules.put("/root/js5.js", "export var b = 100");
+				.put("/root/js5.js", "export var b = 100")
 
-		modules.put("/root/lib1/js6.js", "import {b} from './js7.js'; export var result = 32 + b");
-		modules.put("/root/lib1/js7.js", "import {c} from './js8.js'; export var b = 10 + c");
-		modules.put("/root/lib1/js8.js", "export var c = 100");
+				.put("/root/lib1/js6.js", "import {b} from './js7.js'; export var result = 32 + b")
+				.put("/root/lib1/js7.js", "import {c} from './js8.js'; export var b = 10 + c")
+				.put("/root/lib1/js8.js", "export var c = 100")
 
-		modules.put("/root/lib1/js9.js", "import {b} from './js10.js'; export var result = 22 + b");
-		modules.put("/root/lib1/js10.js", "import {c} from './js11.js'; export var b = 10 + c");
-		modules.put("/root/lib1/js11.js", "import {d} from './js12.js'; export var c = 10 + d");
-		modules.put("/root/lib1/js12.js", "export var d = 100");
+				.put("/root/lib1/js9.js", "import {b} from './js10.js'; export var result = 22 + b")
+				.put("/root/lib1/js10.js", "import {c} from './js11.js'; export var b = 10 + c")
+				.put("/root/lib1/js11.js", "import {d} from './js12.js'; export var c = 10 + d")
+				.put("/root/lib1/js12.js", "export var d = 100")
 
-		modules.put("/root/lib1/even.js", "import {odd} from './odd.js'; export function even(n) { return n == 0 || odd(n-1) }");
-		modules.put("/root/lib1/odd.js", "import {even} from './even.js'; export function odd(n) { return n !== 0 || even(n-1) }");
-		modules.put("/root/is_even.js", "import {even} from './lib1/even.js'; export var result = even(10);");
+				.put("/root/lib1/even.js", "import {odd} from './odd.js'; export function even(n) { return n == 0 || odd(n-1) }")
+				.put("/root/lib1/odd.js", "import {even} from './even.js'; export function odd(n) { return n !== 0 || even(n-1) }")
+				.put("/root/is_even.js", "import {even} from './lib1/even.js'; export var result = even(10);")
 
-		modules.put("/root/lib1/js13.js", "import {b} from '../lib2/js14.js'; import {c} from '../lib2/js15.js'; " +
-				"export var result = b + c");
-		modules.put("/root/lib2/js14.js", "export var b = 42");
-		modules.put("/root/lib2/js15.js", "export var c = 100");
+				.put("/root/lib1/js13.js", "import {b} from '../lib2/js14.js'; import {c} from '../lib2/js15.js'; " +
+				"export var result = b + c")
+				.put("/root/lib2/js14.js", "export var b = 42")
+				.put("/root/lib2/js15.js", "export var c = 100")
 
-		modules.put("/root/importExport.js", "import {v} from '/root/export.js'; export var result = v + 42");
-		modules.put("/root/importExportAllFrom.js", "import {v} from '/root/exportAllFrom.js'; export var result = v + 42");
-		modules.put("/root/importExportFrom.js", "import {v} from '/root/exportFrom.js'; export var result = v + 42");
-		modules.put("/root/importExportVar.js", "import {v} from '/root/exportVar.js'; export var result = v + 42");
-		modules.put("/root/importExportFunction.js", "import {fn} from '/root/exportFunction.js'; export var result = fn(42.1)");
-		modules.put("/root/importExportAnon.js", "import fn from '/root/exportAnon.js'; export var result = fn(42.1)");
-		modules.put("/root/importExportDefaultFunction.js", "import fn from '/root/exportDefaultFunction.js'; export var result = fn(42.1)");
-		modules.put("/root/importExportDefault.js", "import v from '/root/exportDefault.js'; export var result = v + 42");
+				.put("/root/importExport.js", "import {v} from '/root/export.js'; export var result = v + 42")
+				.put("/root/importExportAllFrom.js", "import {v} from '/root/exportAllFrom.js'; export var result = v + 42")
+				.put("/root/importExportFrom.js", "import {v} from '/root/exportFrom.js'; export var result = v + 42")
+				.put("/root/importExportVar.js", "import {v} from '/root/exportVar.js'; export var result = v + 42")
+				.put("/root/importExportFunction.js", "import {fn} from '/root/exportFunction.js'; export var result = fn(42.1)")
+				.put("/root/importExportAnon.js", "import fn from '/root/exportAnon.js'; export var result = fn(42.1)")
+				.put("/root/importExportDefaultFunction.js", "import fn from '/root/exportDefaultFunction.js'; export var result = fn(42.1)")
+				.put("/root/importExportDefault.js", "import v from '/root/exportDefault.js'; export var result = v + 42")
 
-		modules.put("/root/export.js", "var v = 100; export {v}");
-		modules.put("/root/exportAllFrom.js", "export * from '/root/export.js'");
-		modules.put("/root/exportFrom.js", "export {v} from '/root/export.js'");
-		modules.put("/root/exportVar.js", "export var v = 100");
-		modules.put("/root/exportFunction.js", "export function fn(x){return 99.9 + x}");
-		modules.put("/root/exportAnon.js", "export default function(x){return 99.9 + x}");
-		modules.put("/root/exportDefaultFunction.js", "export default function fn(x){ return 99.9 + x }");
-		// modules.put("/root/exportDefaultClass.js", "export default class C{}"); Not dealing with ES6 features for now...
-		modules.put("/root/exportDefault.js", "export default 100");
-		modules.put("/root/exportDefaultAndName.js", "export default 100; var v = 42; export { v };");
+				.put("/root/export.js", "var v = 100; export {v}")
+				.put("/root/exportAllFrom.js", "export * from '/root/export.js'")
+				.put("/root/exportFrom.js", "export {v} from '/root/export.js'")
+				.put("/root/exportVar.js", "export var v = 100")
+				.put("/root/exportFunction.js", "export function fn(x){return 99.9 + x}")
+				.put("/root/exportAnon.js", "export default function(x){return 99.9 + x}")
+				.put("/root/exportDefaultFunction.js", "export default function fn(x){ return 99.9 + x }")
+		// 		.put("/root/exportDefaultClass.js", "export default class C{}"); Not dealing with ES6 features for now...
+				.put("/root/exportDefault.js", "export default 100")
+				.put("/root/exportDefaultAndName.js", "export default 100; var v = 42; export { v };")
 
-		modules.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;");
-		modules.put("/root/importDefaultAndName.js", "import d, { v } from '/root/exportDefaultAndName.js'; export var result = d + v;");
+				.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;")
+				.put("/root/importAll.js", "import * as mod from '/root/export.js'; export var result = mod.v + 42;")
+				.put("/root/importDefaultAndName.js", "import d, { v } from '/root/exportDefaultAndName.js'; export var result = d + v;")
 
-		modules.put("/root/loadJson.js", "import json from './json.json'; export var result = json.value;");
-		modules.put("/root/loadJson.esm", "export { result } from './loadJson.js';");
-		modules.put("/root/json.json", "{ \"value\": 1, \"otherValue\": 2 }");
+				.put("/root/loadJson.js", "import json from './json.json'; export var result = json.value;")
+				.put("/root/loadJson.esm", "export { result } from './loadJson.js';")
+				.put("/root/json.json", "{ \"value\": 1, \"otherValue\": 2 }")
 
-		modules.put("/root/thisIsUndefined.js", "export var result = this;");
+				.put("/root/thisIsUndefined.js", "export var result = this;");
 		loader = new TestLoader(modules);
 	}
 
@@ -122,24 +120,34 @@ public class BundlerTest extends TestCase {
 		testDependencyCollector("import json from '/json.json'", "/json.json");
 	}
 
+	private static String listToString(ImmutableList<String> list) {
+		return list.foldLeft((acc, str) -> {
+			if (acc.length() == 0) {
+				return str;
+			} else {
+				return acc + ", " + str;
+			}
+		}, "");
+	}
+
 	private static void testDependencyCollector(String code, String... dependencies) throws JsError {
 		Module module = Parser.parseModule(code);
 		ImmutableList<String> deps = new BandolierModule("main.js", module).getDependencies();
 		ImmutableList<String> expected = ImmutableList.from(dependencies);
 
 		if (!deps.equals(expected)) {
-			System.out.println(Arrays.toString(deps.toArray(new String[deps.length])));
-			System.out.println(Arrays.toString(expected.toArray(new String[expected.length])));
+			System.out.println(listToString(deps));
+			System.out.println(listToString(expected));
 		}
 		assertEquals(deps, expected);
 	}
 
 	public void testDeterminism() throws Exception {
-		Map<String, String> modules = new HashMap<>();
-		modules.put("/js1.js", "import {b} from './js2.js'; import {c} from './js3.js'; export var result = 'a' + b + c");
-		modules.put("/js2.js", "import {d} from './js4.js'; export var b = 'b' + d");
-		modules.put("/js3.js", "import {d} from './js4.js'; export var c = 'c' + d");
-		modules.put("/js4.js", "export var d = 'd'");
+		HashTable<String, String> modules = HashTable.emptyUsingEquality();
+		modules = modules.put("/js1.js", "import {b} from './js2.js'; import {c} from './js3.js'; export var result = 'a' + b + c")
+			.put("/js2.js", "import {d} from './js4.js'; export var b = 'b' + d")
+			.put("/js3.js", "import {d} from './js4.js'; export var c = 'c' + d")
+			.put("/js4.js", "export var d = 'd'");
 		TestLoader localLoader = new TestLoader(modules);
 
 		String actual = TestUtils.toString(TestUtils.bundleStandard("/js1.js", resolver, localLoader));
