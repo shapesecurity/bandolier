@@ -88,30 +88,6 @@ public class Bundler {
 	}
 
 	/**
-	 * Returns a list of raw string module specifiers for a given module.
-	 * @param module module to interpret
-	 * @return list of dependent module specifiers.
-	 */
-	private static @NotNull ImmutableList<String> getModuleDependencies(@NotNull Module module) {
-		return module.items.bind(s -> {
-			if (s instanceof ImportDeclaration) {
-				if (s instanceof Import) {
-					return ImmutableList.of(((Import) s).moduleSpecifier);
-				} else if (s instanceof ImportNamespace) {
-					return ImmutableList.of(((ImportNamespace) s).moduleSpecifier);
-				}
-			} else if (s instanceof ExportDeclaration) {
-				if (s instanceof ExportAllFrom) {
-					return ImmutableList.of(((ExportAllFrom) s).moduleSpecifier);
-				} else if (s instanceof ExportFrom) {
-					return ImmutableList.of(((ExportFrom) s).moduleSpecifier);
-				}
-			}
-			return ImmutableList.empty();
-		});
-	}
-
-	/**
 	 * Recursively loads all the modules referenced by the input module.
 	 *
 	 * @param filePath is the path to the input module.
@@ -132,7 +108,7 @@ public class Bundler {
 
 		while (!toLoad.isEmpty()) {
 			String root = toLoad.remove();
-			for (String dependency : getModuleDependencies(loadedModules.get(root))) {
+			for (String dependency : ModuleHelper.getModuleDependencies(loadedModules.get(root))) {
 				if (!loadedModules.containsKey(dependency)) {
 					try {
 						switch (getFileExtension(dependency)) {
