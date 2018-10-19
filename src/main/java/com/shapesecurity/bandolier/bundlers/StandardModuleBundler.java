@@ -53,6 +53,7 @@ import com.shapesecurity.shift.es2016.ast.operators.UnaryOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,6 +62,7 @@ public class StandardModuleBundler implements IModuleBundler {
 
 	private final Map<String, String> pathMapping = new HashMap<>();
 
+	// This function is only guaranteed to be deterministic if the provided `modules` map has deterministic ordering
 	@NotNull
 	@Override
 	public Script bundleEntrypoint(String entry, Map<String, BandolierModule> modules) {
@@ -72,14 +74,14 @@ public class StandardModuleBundler implements IModuleBundler {
 		}
 
 		ImportMappingRewriter importMappingRewriter = new ImportMappingRewriter(this.pathMapping);
-		Map<String, Module> rewrittenModules = new HashMap<>();
+		LinkedHashMap<String, Module> rewrittenModules = new LinkedHashMap<>();
 		modules.forEach((absPath, m) -> rewrittenModules.put(this.pathMapping.get(absPath), importMappingRewriter.rewrite(m.getAst())));
 		ExpressionStatement bundled = anonymousFunctionCall(this.pathMapping.get(entry), rewrittenModules);
 		return new Script(ImmutableList.empty(), ImmutableList.of(bundled));
 	}
 
 	//(function(global){ ... }.call(this, this));
-	private ExpressionStatement anonymousFunctionCall(String rootPath, Map<String, Module> rewrittenModules) {
+	private ExpressionStatement anonymousFunctionCall(String rootPath, LinkedHashMap<String, Module> rewrittenModules) {
 		StaticMemberExpression anonymousCall =
 				new StaticMemberExpression(anonymousFunctionExpression(rootPath, rewrittenModules), "call");
 		ImmutableList<SpreadElementExpression> params = ImmutableList.of(new ThisExpression(), new ThisExpression());
@@ -89,7 +91,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	}
 
 	// function(global) {...}
-	private FunctionExpression anonymousFunctionExpression(String rootPath, Map<String, Module> rewrittenModules) {
+	private FunctionExpression anonymousFunctionExpression(String rootPath, LinkedHashMap<String, Module> rewrittenModules) {
 		BindingIdentifier globalIden = new BindingIdentifier("global");
 		FormalParameters params = new FormalParameters(ImmutableList.of(globalIden), Maybe.empty());
 
