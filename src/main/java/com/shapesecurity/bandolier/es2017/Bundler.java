@@ -15,8 +15,9 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
+import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
 import com.shapesecurity.bandolier.es2017.bundlers.IModuleBundler;
-import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
+import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.FileLoader;
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
@@ -24,8 +25,11 @@ import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.shift.es2017.ast.*;
 import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
+import com.shapesecurity.functional.Pair;
+import com.shapesecurity.functional.data.ImmutableList;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -44,9 +48,8 @@ public class Bundler {
 	 * @return a bundled script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull
-	Script bundle(@NotNull Path filePath) throws ModuleLoaderException {
-		return bundle(filePath, new FileSystemResolver(), new FileLoader(), new StandardModuleBundler());
+	public static @NotNull Script bundle(@NotNull BundlerOptions options, @NotNull Path filePath) throws ModuleLoaderException {
+		return bundle(options, filePath, new FileSystemResolver(), new FileLoader(), new PiercedModuleBundler());
 	}
 
 	/**
@@ -59,9 +62,9 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	public static @NotNull Script bundle(@NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	public static @NotNull Script bundle(@NotNull BundlerOptions options, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundleString(loader.loadResource(filePath), filePath, resolver, loader, bundler);
+			return bundleString(options, loader.loadResource(filePath), filePath, resolver, loader, bundler);
 		} catch (IOException e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -78,14 +81,12 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleString(@NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
-		Module parsed;
+	public static @NotNull Script bundleString(@NotNull BundlerOptions options, @NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			parsed = Parser.parseModule(source);
-		} catch (JsError e) {
+			return bundler.bundleEntrypoint(options, filePath.toString(), loadDependencies(Parser.parseModule(source), filePath, resolver, loader));
+		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
-		return bundleModule(parsed, filePath, resolver, loader, bundler);
 	}
 
 	/**
@@ -99,9 +100,56 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleModule(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	public static @NotNull Script bundleModule(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundler.bundleEntrypoint(filePath.toString(), loadDependencies(mod, filePath, resolver, loader));
+			return bundler.bundleEntrypoint(options, filePath.toString(), loadDependencies(mod, filePath, resolver, loader));
+		} catch (Exception e) {
+			throw new ModuleLoaderException(filePath.toString(), e);
+		}
+	}
+
+	/**
+	 * Bundles the module at the specified path using the default resolver and loaders
+	 * @param filePath path to the module
+	 * @return a bundled script with early errors
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Path filePath) throws ModuleLoaderException {
+		return bundleWithEarlyErrors(options, filePath, new FileSystemResolver(), new FileLoader(), new PiercedModuleBundler());
+	}
+
+	/**
+	 * Bundles the module specified by the given path and its dependencies and returns the resulting
+	 * Script.
+	 *
+	 * @param filePath is the path to the input entry point module.
+	 * @param resolver how to resolve the path
+	 * @param loader   how to load modules
+	 * @return the resulting script with early errors
+	 * @throws ModuleLoaderException when the module fails to load
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		try {
+			return bundleStringWithEarlyErrors(options, loader.loadResource(filePath), filePath, resolver, loader, bundler);
+		} catch (IOException e) {
+			throw new ModuleLoaderException(filePath.toString(), e);
+		}
+	}
+
+	/**
+	 * Bundles the module provided as a string and along with its dependencies and returns the resulting
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved.
+	 * @param mod the string of the module
+	 * @param filePath path to the module
+	 * @param resolver how to resolve paths
+	 * @param loader how to load modules
+	 * @return the resulting script with early errors
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@NotNull BundlerOptions options, @NotNull String mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		try {
+			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toString(), loadDependencies(Parser.parseModule(mod), filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}

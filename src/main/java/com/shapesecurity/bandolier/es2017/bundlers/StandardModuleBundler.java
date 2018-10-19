@@ -2,6 +2,7 @@ package com.shapesecurity.bandolier.es2017.bundlers;
 
 import com.shapesecurity.bandolier.es2017.ImportExportTransformer;
 import com.shapesecurity.bandolier.es2017.ImportMappingRewriter;
+import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es2017.ast.*;
@@ -10,6 +11,8 @@ import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.es2017.ast.operators.UnaryOperator;
 
+import com.shapesecurity.shift.es2017.parser.EarlyError;
+import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -25,7 +28,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// This function is only guaranteed to be deterministic if the provided `modules` map has deterministic ordering
 	@NotNull
 	@Override
-	public Script bundleEntrypoint(String entry, Map<String, Module> modules) {
+	public Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, Module> modules) {
 		// rather than bundle with absolute paths (a potential information leak) create a mapping
 		// of absolute paths to a unique name
 		Integer moduleCount = 0;
@@ -38,6 +41,11 @@ public class StandardModuleBundler implements IModuleBundler {
 		modules.forEach((absPath, m) -> rewrittenModules.put(this.pathMapping.get(absPath), importMappingRewriter.rewrite(m)));
 		ExpressionStatement bundled = anonymousFunctionCall(this.pathMapping.get(entry), rewrittenModules);
 		return new Script(ImmutableList.empty(), ImmutableList.of(bundled));
+	}
+
+	@Override
+	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, Module> modules) {
+		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
 	}
 
 	//(function(global){ ... }.call(this, this));

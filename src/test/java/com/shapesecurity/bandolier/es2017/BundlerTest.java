@@ -17,6 +17,7 @@ package com.shapesecurity.bandolier.es2017;
 
 import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
+import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Module;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.shapesecurity.bandolier.es2017.TestUtils.testResult;
+import static com.shapesecurity.bandolier.es2017.TestUtils.testResultPierced;
 
 public class BundlerTest extends TestCase {
 	private static TestLoader loader;
@@ -101,6 +103,12 @@ public class BundlerTest extends TestCase {
 		modules.put("/root/json.json", "{ \"value\": 1, \"otherValue\": 2 }");
 
 		modules.put("/root/thisIsUndefined.js", "export var result = this;");
+		modules.put("/root/circular1.js", "import circ2 from '/root/circular1_dep.js'; export var result = circ2 + 5;");
+		modules.put("/root/circular1_dep.js", "export default 7; import {result as circ1} from '/root/circular1.js';");
+		modules.put("/root/circular2.js", "export default 7; import {result as circ1} from '/root/circular2_dep.js'; export var result = 7 + circ1;");
+		modules.put("/root/circular2_dep.js", "import circ2 from '/root/circular2.js'; export var result = circ2 + 5;");
+		modules.put("/root/renaming.js", "import {x, setX} from '/root/renaming_dep.js'; var tempX = x; setX(10);export var result = tempX + x;");
+		modules.put("/root/renaming_dep.js", "export var x = 5; export function setX(y) { x = y; }");
 		loader = new TestLoader(modules);
 	}
 
@@ -149,68 +157,97 @@ public class BundlerTest extends TestCase {
 		modules.put("/js4.js", "export var d = 'd'");
 		TestLoader localLoader = new TestLoader(modules);
 
-		String actual = TestUtils.toString(TestUtils.bundleStandard("/js1.js", resolver, localLoader));
+		String actualPierced = TestUtils.toString(TestUtils.bundlePierced(BundlerOptions.SPEC_OPTIONS, "/js1.js", resolver, localLoader));
+		String actualPiercedDangerously = TestUtils.toString(TestUtils.bundlePierced(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), "/js1.js", resolver, localLoader));
+		String actualStandard = TestUtils.toString(TestUtils.bundleStandard(BundlerOptions.SPEC_OPTIONS, "/js1.js", resolver, localLoader));
 
-		String expected = "(function(global){\n" +
-			"\"use strict\";\n" +
-			"function require(file,parentModule){\n" +
-			"if({\n" +
-			"}.hasOwnProperty.call(require.cache,file))return require.cache[file];\n" +
-			"var resolved=require.resolve(file);\n" +
-			"if(!resolved)throw new Error(\"Failed to resolve module \"+file);\n" +
-			"var module$={\n" +
-			"id:file,require:require,filename:file,exports:{\n" +
-			"},loaded:false,parent:parentModule,children:[]};\n" +
-			"if(parentModule)parentModule.children.push(module$);\n" +
-			"var dirname=file.slice(0,file.lastIndexOf(\"/\")+1);\n" +
-			"require.cache[file]=module$.exports;\n" +
-			"resolved.call(void 0,module$,module$.exports,dirname,file);\n" +
-			"module$.loaded=true;\n" +
-			"return require.cache[file]=module$.exports;\n" +
-			"}require.modules={\n" +
-			"};\n" +
-			"require.cache={\n" +
-			"};\n" +
-			"require.resolve=function(file){\n" +
-			"return{\n" +
-			"}.hasOwnProperty.call(require.modules,file)?require.modules[file]:void 0;\n" +
-			"};\n" +
-			"require.define=function(file,fn){\n" +
-			"require.modules[file]=fn;\n" +
-			"};\n" +
-			"require.define(\"1\",function(module,exports,__dirname,__filename){\n" +
-			"var __resolver=require(\"2\",module);\n" +
-			"var b=__resolver[\"b\"];\n" +
-			"var __resolver=require(\"3\",module);\n" +
-			"var c=__resolver[\"c\"];\n" +
-			"var result=\"a\"+b+c;\n" +
-			"exports[\"result\"]=result;\n" +
-			"});\n" +
-			"require.define(\"2\",function(module,exports,__dirname,__filename){\n" +
-			"var __resolver=require(\"4\",module);\n" +
-			"var d=__resolver[\"d\"];\n" +
-			"var b=\"b\"+d;\n" +
-			"exports[\"b\"]=b;\n" +
-			"});\n" +
-			"require.define(\"3\",function(module,exports,__dirname,__filename){\n" +
-			"var __resolver=require(\"4\",module);\n" +
-			"var d=__resolver[\"d\"];\n" +
-			"var c=\"c\"+d;\n" +
-			"exports[\"c\"]=c;\n" +
-			"});\n" +
-			"require.define(\"4\",function(module,exports,__dirname,__filename){\n" +
-			"var d=\"d\";\n" +
-			"exports[\"d\"]=d;\n" +
-			"});\n" +
-			"return require(\"1\");\n" +
-			"}.call(this,this).result);\n";
+		String expectedPierced = "(function(t){\n" +
+				"\"use strict\";\n" +
+				"var d=\"d\";\n" +
+				"var c=\"c\"+d;\n" +
+				"var b=\"b\"+d;\n" +
+				"var result=\"a\"+b+c;\n" +
+				"var o={\n" +
+				"__proto__:null,result:result};\n" +
+				"if(t.Symbol)t.Object.defineProperty(o,t.Symbol.toStringTag,{\n" +
+				"value:\"Module\"});\n" +
+				"o=t.Object.freeze(o);\n" +
+				"return o;\n" +
+				"}(this));\n";
 
-		assertEquals(expected, actual);
+		String expectedPiercedDangerously = "(function(t){\n" +
+				"\"use strict\";\n" +
+				"var d=\"d\";\n" +
+				"var c=\"c\"+d;\n" +
+				"var b=\"b\"+d;\n" +
+				"var result=\"a\"+b+c;\n" +
+				"var o={\n" +
+				"__proto__:null,result:result};\n" +
+				"return o;\n" +
+				"}(this));\n";
+
+		String expectedStandard = "(function(global){\n" +
+				"\"use strict\";\n" +
+				"function require(file,parentModule){\n" +
+				"if({\n" +
+				"}.hasOwnProperty.call(require.cache,file))return require.cache[file];\n" +
+				"var resolved=require.resolve(file);\n" +
+				"if(!resolved)throw new Error(\"Failed to resolve module \"+file);\n" +
+				"var module$={\n" +
+				"id:file,require:require,filename:file,exports:{\n" +
+				"},loaded:false,parent:parentModule,children:[]};\n" +
+				"if(parentModule)parentModule.children.push(module$);\n" +
+				"var dirname=file.slice(0,file.lastIndexOf(\"/\")+1);\n" +
+				"require.cache[file]=module$.exports;\n" +
+				"resolved.call(void 0,module$,module$.exports,dirname,file);\n" +
+				"module$.loaded=true;\n" +
+				"return require.cache[file]=module$.exports;\n" +
+				"}require.modules={\n" +
+				"};\n" +
+				"require.cache={\n" +
+				"};\n" +
+				"require.resolve=function(file){\n" +
+				"return{\n" +
+				"}.hasOwnProperty.call(require.modules,file)?require.modules[file]:void 0;\n" +
+				"};\n" +
+				"require.define=function(file,fn){\n" +
+				"require.modules[file]=fn;\n" +
+				"};\n" +
+				"require.define(\"1\",function(module,exports,__dirname,__filename){\n" +
+				"var __resolver=require(\"2\",module);\n" +
+				"var b=__resolver[\"b\"];\n" +
+				"var __resolver=require(\"3\",module);\n" +
+				"var c=__resolver[\"c\"];\n" +
+				"var result=\"a\"+b+c;\n" +
+				"exports[\"result\"]=result;\n" +
+				"});\n" +
+				"require.define(\"2\",function(module,exports,__dirname,__filename){\n" +
+				"var __resolver=require(\"4\",module);\n" +
+				"var d=__resolver[\"d\"];\n" +
+				"var b=\"b\"+d;\n" +
+				"exports[\"b\"]=b;\n" +
+				"});\n" +
+				"require.define(\"3\",function(module,exports,__dirname,__filename){\n" +
+				"var __resolver=require(\"4\",module);\n" +
+				"var d=__resolver[\"d\"];\n" +
+				"var c=\"c\"+d;\n" +
+				"exports[\"c\"]=c;\n" +
+				"});\n" +
+				"require.define(\"4\",function(module,exports,__dirname,__filename){\n" +
+				"var d=\"d\";\n" +
+				"exports[\"d\"]=d;\n" +
+				"});\n" +
+				"return require(\"1\");\n" +
+				"}.call(this,this));\n";
+
+		assertEquals(expectedPierced, actualPierced);
+		assertEquals(expectedPiercedDangerously, actualPiercedDangerously);
+		assertEquals(expectedStandard, actualStandard);
 	}
 
 	@Test
 	public void testBundle() throws Exception {
-		testResult("/root/lib1/js0.js", null, resolver, loader); // the bundler is innocent!
+		//testResult("/root/lib1/js0.js", null, resolver, loader); // the bundler is innocent!
 		testResult("/root/lib1/js1.js", 142.0, resolver, loader); // simple import
 		testResult("/root/lib1/js3.js", 142.0, resolver, loader); // simple import / current dir
 		testResult("/root/lib1/js4.js", 142.0, resolver, loader); // simple import / parent dir
@@ -235,6 +272,9 @@ public class BundlerTest extends TestCase {
 		testResult("/root/loadJson.esm", 1.0, resolver, loader);
 
 		testResult("/root/thisIsUndefined.js", null, resolver, loader);
+		testResultPierced("/root/circular1.js", 12.0, resolver, loader);
+		testResultPierced("/root/circular2.js", Double.NaN, resolver, loader);
+		testResultPierced("/root/renaming.js", 15.0, resolver, loader);
 	}
 
 	@Test
