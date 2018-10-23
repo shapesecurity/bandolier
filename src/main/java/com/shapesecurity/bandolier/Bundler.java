@@ -22,8 +22,9 @@ import com.shapesecurity.bandolier.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.loader.IResolver;
 import com.shapesecurity.bandolier.loader.IResourceLoader;
 import com.shapesecurity.bandolier.loader.ModuleLoaderException;
+import com.shapesecurity.functional.data.ImmutableList;
+import com.shapesecurity.shift.es2016.ast.*;
 import com.shapesecurity.shift.es2016.ast.Module;
-import com.shapesecurity.shift.es2016.ast.Script;
 import com.shapesecurity.shift.es2016.parser.JsError;
 import com.shapesecurity.shift.es2016.parser.Parser;
 
@@ -95,19 +96,19 @@ public class Bundler {
 	 * @return is a map from module names (path to modules) to the loaded modules.
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	private static @NotNull Map<String, BandolierModule> loadDependencies(@NotNull Module module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
+	private static @NotNull Map<String, Module> loadDependencies(@NotNull Module module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
 		throws ModuleLoaderException {
 
-		Map<String, BandolierModule> loadedModules = new LinkedHashMap<>();
+		Map<String, Module> loadedModules = new LinkedHashMap<>();
 		LinkedList<String> toLoad = new LinkedList<>();
 		ImportResolvingRewriter rewriter = new ImportResolvingRewriter(resolver);
 		Module rewritten = rewriter.rewrite(module, filePath.getParent());
-		loadedModules.put(filePath.toString(), new BandolierModule(filePath.toString(), rewritten));
+		loadedModules.put(filePath.toString(), rewritten);
 		toLoad.add(filePath.toString());
 
 		while (!toLoad.isEmpty()) {
 			String root = toLoad.remove();
-			for (String dependency : loadedModules.get(root).getDependencies()) {
+			for (String dependency : ModuleHelper.getModuleDependencies(loadedModules.get(root))) {
 				if (!loadedModules.containsKey(dependency)) {
 					try {
 						switch (getFileExtension(dependency)) {
@@ -123,7 +124,7 @@ public class Bundler {
 						throw new ModuleLoaderException(dependency, e);
 					}
 					rewritten = rewriter.rewrite(module, Paths.get(dependency).getParent());
-					loadedModules.put(dependency, new BandolierModule(dependency, rewritten));
+					loadedModules.put(dependency, rewritten);
 					toLoad.add(dependency);
 				}
 			}

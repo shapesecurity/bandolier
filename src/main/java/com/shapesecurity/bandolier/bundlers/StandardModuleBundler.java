@@ -1,6 +1,5 @@
 package com.shapesecurity.bandolier.bundlers;
 
-import com.shapesecurity.bandolier.BandolierModule;
 import com.shapesecurity.bandolier.ImportExportTransformer;
 import com.shapesecurity.bandolier.ImportMappingRewriter;
 import com.shapesecurity.functional.data.ImmutableList;
@@ -65,7 +64,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// This function is only guaranteed to be deterministic if the provided `modules` map has deterministic ordering
 	@NotNull
 	@Override
-	public Script bundleEntrypoint(String entry, Map<String, BandolierModule> modules) {
+	public Script bundleEntrypoint(String entry, Map<String, Module> modules) {
 		// rather than bundle with absolute paths (a potential information leak) create a mapping
 		// of absolute paths to a unique name
 		Integer moduleCount = 0;
@@ -75,7 +74,7 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		ImportMappingRewriter importMappingRewriter = new ImportMappingRewriter(this.pathMapping);
 		LinkedHashMap<String, Module> rewrittenModules = new LinkedHashMap<>();
-		modules.forEach((absPath, m) -> rewrittenModules.put(this.pathMapping.get(absPath), importMappingRewriter.rewrite(m.getAst())));
+		modules.forEach((absPath, m) -> rewrittenModules.put(this.pathMapping.get(absPath), importMappingRewriter.rewrite(m)));
 		ExpressionStatement bundled = anonymousFunctionCall(this.pathMapping.get(entry), rewrittenModules);
 		return new Script(ImmutableList.empty(), ImmutableList.of(bundled));
 	}

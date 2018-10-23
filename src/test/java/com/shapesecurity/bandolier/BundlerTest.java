@@ -124,7 +124,7 @@ public class BundlerTest extends TestCase {
 
 	private static void testDependencyCollector(String code, String... dependencies) throws JsError {
 		Module module = Parser.parseModule(code);
-		ImmutableList<String> deps = new BandolierModule("main.js", module).getDependencies();
+		ImmutableList<String> deps = ModuleHelper.getModuleDependencies(module);
 		ImmutableList<String> expected = ImmutableList.from(dependencies);
 
 		if (!deps.equals(expected)) {
