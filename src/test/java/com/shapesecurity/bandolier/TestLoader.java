@@ -5,10 +5,7 @@ import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.Maybe;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 
 public class TestLoader implements IResourceLoader {
     private final HashTable<String, String> modules;

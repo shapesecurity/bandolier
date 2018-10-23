@@ -16,6 +16,7 @@
 package com.shapesecurity.bandolier.loader;
 
 
+import com.shapesecurity.functional.data.HashTable;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,8 +24,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -38,8 +37,8 @@ public class NodeResolverTest {
 		@NotNull
 		@Override
 		public Boolean exists(@NotNull Path path) {
-			Map<String, Boolean> fs = new HashMap<>();
-			fs.put("/foo/bar/baz", true);
+			HashTable<String, Boolean> fs = HashTable.emptyUsingEquality();
+			fs = fs.put("/foo/bar/baz", true);
 			fs.put("/foo/bar/node_modules/f.js", true);
 			fs.put("/node_modules/g.js", true);
 
