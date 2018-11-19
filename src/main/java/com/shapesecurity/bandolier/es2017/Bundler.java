@@ -42,8 +42,6 @@ import java.util.Map;
 
 public class Bundler {
 
-
-
 	/**
 	 * Bundles the module at the specified path using the default resolver and loaders
 	 * @param options options object

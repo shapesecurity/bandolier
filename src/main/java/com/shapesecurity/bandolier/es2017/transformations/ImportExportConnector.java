@@ -287,9 +287,11 @@ public class ImportExportConnector {
 	 * @param nameGenerator guaranteed not to produce collisions, in any module.
 	 * @param modules mapping of path to modules for combination
 	 * @param originalRenamingMap a per-module renaming map that has been applied from the original modules. used to satisfy cross-module failures due to importing.
-	 * @return a complete script
+	 * @param removedImports a map of imports that were previously defined but removed through optimization -- used for consistent errors and loading.
+	 * @return a complete script and the global binding to be used in an IIFE argument
 	 */
-	public static Script combineModules(@Nonnull BundlerOptions options, @Nonnull Module entry, @Nonnull VariableNameGenerator nameGenerator, @Nonnull HashTable<String, Module> modules, @Nonnull HashTable<Module, HashTable<String, String>> originalRenamingMap) {
+	public static Pair<Script, String> combineModules(@Nonnull BundlerOptions options, @Nonnull Module entry, @Nonnull VariableNameGenerator nameGenerator, @Nonnull HashTable<String, Module> modules, @Nonnull HashTable<Module, HashTable<String, String>> originalRenamingMap, @Nonnull HashTable<String, ImmutableSet<Pair<String, String>>> removedImports) {
+		HashTable<Module, String> inverseModules = modules.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingIdentity());
 		// lookups per module
 		HashTable<Module, GlobalScope> globalScopes = modules.foldLeft((acc, pair) -> acc.put(pair.right, ScopeAnalyzer.analyze(pair.right)), HashTable.emptyUsingEquality());
 		HashTable<Module, ScopeLookup> lookups = modules.foldLeft((acc, pair) -> acc.put(pair.right, new ScopeLookup(globalScopes.get(pair.right).fromJust())), HashTable.emptyUsingEquality());
@@ -430,6 +432,15 @@ public class ImportExportConnector {
 					dependents.add(from);
 				}
 			}
+			ImmutableSet<Pair<String, String>> localRemovedImports = removedImports.get(pair.left).orJust(ImmutableSet.emptyUsingEquality());
+			for (Pair<String, String> removedImport : localRemovedImports) {
+				Module from = modules.get(removedImport.left).fromJust();
+				if (dependents == null) {
+					dependents = dependingOn.computeIfAbsent(pair.right, mod -> new LinkedList<>());
+				}
+				dependedBy.computeIfAbsent(from, mod -> new HashSet<>()).add(pair.right);
+				dependents.add(from);
+			}
 		}
 
 		// schedule all modules, see https://tc39.github.io/ecma262/#sec-innermoduleinstantiation
@@ -479,6 +490,15 @@ public class ImportExportConnector {
 
 		// process import naming
 		for (Module module : schedule) {
+
+			ImmutableSet<Pair<String, String>> localRemovedImports = removedImports.get(inverseModules.get(module).fromJust()).orJust(ImmutableSet.emptyUsingEquality());
+			for (Pair<String, String> removedImport : localRemovedImports) {
+				Module from = modules.get(removedImport.left).fromJust();
+				if (exported.get(from).fromJust().get(removedImport.right).isNothing()) {
+					throw new RuntimeException("Unresolved import: \"" + removedImport.right + "\"");
+				}
+			}
+
 			for (ImportDeclarationExportDeclarationStatement item : module.items) {
 				if (item instanceof Import) {
 					Import importItem = (Import) item;
@@ -789,7 +809,7 @@ public class ImportExportConnector {
 				))
 		));
 
-		return script;
+		return Pair.of(script, globalBinding);
 	}
 
 }

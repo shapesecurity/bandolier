@@ -24,13 +24,13 @@ public class GlobalVariableExtractor {
 
 	}
 
-	public static MultiHashTable<String, Variable> extractAllDeclaredVariables(@Nonnull Module module, @Nonnull GlobalScope globalScope, @Nonnull ScopeLookup lookup) {
+	public static MultiHashTable<String, Variable> extractAllDeclaredVariables(@Nonnull Program module, @Nonnull GlobalScope globalScope, @Nonnull ScopeLookup lookup) {
 		DeclaredVariableReducer reducer = new DeclaredVariableReducer(globalScope, lookup);
-		return Director.reduceModule(reducer, module);
+		return Director.reduceProgram(reducer, module);
 	}
 
-	public static MultiHashTable<String, Variable> extractAllDeclaredVariables(@Nonnull Module module) {
-		GlobalScope globalScope = ScopeAnalyzer.analyze(module);
+	public static MultiHashTable<String, Variable> extractAllDeclaredVariables(@Nonnull Program module) {
+		GlobalScope globalScope = module instanceof Module ? ScopeAnalyzer.analyze((Module) module) : ScopeAnalyzer.analyze((Script) module);
 		return extractAllDeclaredVariables(module, globalScope, new ScopeLookup(globalScope));
 	}
 
