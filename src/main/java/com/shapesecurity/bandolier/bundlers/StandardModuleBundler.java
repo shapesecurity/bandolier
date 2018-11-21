@@ -4,50 +4,11 @@ import com.shapesecurity.bandolier.ImportExportTransformer;
 import com.shapesecurity.bandolier.ImportMappingRewriter;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.ArrayExpression;
-import com.shapesecurity.shift.es2016.ast.AssignmentExpression;
-import com.shapesecurity.shift.es2016.ast.AssignmentTarget;
-import com.shapesecurity.shift.es2016.ast.BinaryExpression;
-import com.shapesecurity.shift.es2016.ast.BindingIdentifier;
-import com.shapesecurity.shift.es2016.ast.CallExpression;
-import com.shapesecurity.shift.es2016.ast.ComputedMemberAssignmentTarget;
-import com.shapesecurity.shift.es2016.ast.ComputedMemberExpression;
-import com.shapesecurity.shift.es2016.ast.ConditionalExpression;
-import com.shapesecurity.shift.es2016.ast.DataProperty;
-import com.shapesecurity.shift.es2016.ast.Directive;
-import com.shapesecurity.shift.es2016.ast.Expression;
-import com.shapesecurity.shift.es2016.ast.ExpressionStatement;
-import com.shapesecurity.shift.es2016.ast.FormalParameters;
-import com.shapesecurity.shift.es2016.ast.FunctionBody;
-import com.shapesecurity.shift.es2016.ast.FunctionDeclaration;
-import com.shapesecurity.shift.es2016.ast.FunctionExpression;
-import com.shapesecurity.shift.es2016.ast.IdentifierExpression;
-import com.shapesecurity.shift.es2016.ast.IfStatement;
-import com.shapesecurity.shift.es2016.ast.LiteralBooleanExpression;
-import com.shapesecurity.shift.es2016.ast.LiteralNumericExpression;
-import com.shapesecurity.shift.es2016.ast.LiteralStringExpression;
-import com.shapesecurity.shift.es2016.ast.Module;
-import com.shapesecurity.shift.es2016.ast.NewExpression;
-import com.shapesecurity.shift.es2016.ast.Node;
-import com.shapesecurity.shift.es2016.ast.ObjectExpression;
-import com.shapesecurity.shift.es2016.ast.ObjectProperty;
-import com.shapesecurity.shift.es2016.ast.Parameter;
-import com.shapesecurity.shift.es2016.ast.ReturnStatement;
-import com.shapesecurity.shift.es2016.ast.Script;
-import com.shapesecurity.shift.es2016.ast.SpreadElementExpression;
-import com.shapesecurity.shift.es2016.ast.Statement;
-import com.shapesecurity.shift.es2016.ast.StaticMemberAssignmentTarget;
-import com.shapesecurity.shift.es2016.ast.StaticMemberExpression;
-import com.shapesecurity.shift.es2016.ast.StaticPropertyName;
-import com.shapesecurity.shift.es2016.ast.ThisExpression;
-import com.shapesecurity.shift.es2016.ast.ThrowStatement;
-import com.shapesecurity.shift.es2016.ast.UnaryExpression;
-import com.shapesecurity.shift.es2016.ast.VariableDeclaration;
-import com.shapesecurity.shift.es2016.ast.VariableDeclarationKind;
-import com.shapesecurity.shift.es2016.ast.VariableDeclarationStatement;
-import com.shapesecurity.shift.es2016.ast.VariableDeclarator;
-import com.shapesecurity.shift.es2016.ast.operators.BinaryOperator;
-import com.shapesecurity.shift.es2016.ast.operators.UnaryOperator;
+import com.shapesecurity.shift.es2017.ast.*;
+
+import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.ast.operators.BinaryOperator;
+import com.shapesecurity.shift.es2017.ast.operators.UnaryOperator;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -109,7 +70,7 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		FunctionBody body = new FunctionBody(ImmutableList.of(new Directive("use strict")), statements);
 
-		return new FunctionExpression(false, Maybe.empty(), params, body);
+		return new FunctionExpression(false, false, Maybe.empty(), params, body);
 	}
 
 	//function require(file,parentModule){ ... }
@@ -134,7 +95,7 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		FunctionBody body = new FunctionBody(ImmutableList.empty(), statements);
 
-		return new FunctionDeclaration(false, requireIden, params, body);
+		return new FunctionDeclaration(false, false, requireIden, params, body);
 	}
 
 	//if({}.hasOwnProperty.call(require.cache,file)) return require.cache[file];
@@ -358,7 +319,7 @@ public class StandardModuleBundler implements IModuleBundler {
 		FunctionBody anonFunctionBody = new FunctionBody(ImmutableList.empty(), ImmutableList.of(returnStatement));
 
 		FunctionExpression anonFunction =
-				new FunctionExpression(false, Maybe.empty(), anonFunctionParam, anonFunctionBody);
+				new FunctionExpression(false, false, Maybe.empty(), anonFunctionParam, anonFunctionBody);
 
 		AssignmentExpression assignment = new AssignmentExpression(requireResolve, anonFunction);
 		return new ExpressionStatement(assignment);
@@ -387,7 +348,7 @@ public class StandardModuleBundler implements IModuleBundler {
 				new FunctionBody(ImmutableList.empty(), ImmutableList.of(innerStatement));
 
 		FunctionExpression anonFunction =
-				new FunctionExpression(false, Maybe.empty(), anonFunctionParam, anonFunctionBody);
+				new FunctionExpression(false, false, Maybe.empty(), anonFunctionParam, anonFunctionBody);
 
 		AssignmentExpression assignment = new AssignmentExpression(requireDefine, anonFunction);
 		return new ExpressionStatement(assignment);
@@ -420,7 +381,7 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		FunctionBody body = new FunctionBody(directives, items);
 
-		FunctionExpression function = new FunctionExpression(false, Maybe.empty(), params, body);
+		FunctionExpression function = new FunctionExpression(false, false, Maybe.empty(), params, body);
 
 		LiteralStringExpression moduleExpression = new LiteralStringExpression(moduleName);
 

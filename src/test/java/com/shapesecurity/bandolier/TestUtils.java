@@ -5,11 +5,11 @@ import com.shapesecurity.bandolier.loader.IResolver;
 import com.shapesecurity.bandolier.loader.IResourceLoader;
 import com.shapesecurity.bandolier.loader.ModuleLoaderException;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2016.ast.CallExpression;
-import com.shapesecurity.shift.es2016.ast.ExpressionStatement;
-import com.shapesecurity.shift.es2016.ast.Script;
-import com.shapesecurity.shift.es2016.ast.StaticMemberExpression;
-import com.shapesecurity.shift.es2016.codegen.CodeGen;
+import com.shapesecurity.shift.es2017.ast.CallExpression;
+import com.shapesecurity.shift.es2017.ast.ExpressionStatement;
+import com.shapesecurity.shift.es2017.ast.Script;
+import com.shapesecurity.shift.es2017.ast.StaticMemberExpression;
+import com.shapesecurity.shift.es2017.codegen.CodeGen;
 
 import java.nio.file.Paths;
 
