@@ -17,42 +17,42 @@ package com.shapesecurity.bandolier;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.AssignmentExpression;
-import com.shapesecurity.shift.es2016.ast.BindingIdentifier;
-import com.shapesecurity.shift.es2016.ast.CallExpression;
-import com.shapesecurity.shift.es2016.ast.ClassDeclaration;
-import com.shapesecurity.shift.es2016.ast.ComputedMemberAssignmentTarget;
-import com.shapesecurity.shift.es2016.ast.ComputedMemberExpression;
-import com.shapesecurity.shift.es2016.ast.Export;
-import com.shapesecurity.shift.es2016.ast.ExportAllFrom;
-import com.shapesecurity.shift.es2016.ast.ExportDeclaration;
-import com.shapesecurity.shift.es2016.ast.ExportDefault;
-import com.shapesecurity.shift.es2016.ast.ExportFrom;
-import com.shapesecurity.shift.es2016.ast.ExportFromSpecifier;
-import com.shapesecurity.shift.es2016.ast.ExportLocalSpecifier;
-import com.shapesecurity.shift.es2016.ast.ExportLocals;
-import com.shapesecurity.shift.es2016.ast.Expression;
-import com.shapesecurity.shift.es2016.ast.ExpressionStatement;
-import com.shapesecurity.shift.es2016.ast.ForInStatement;
-import com.shapesecurity.shift.es2016.ast.FunctionDeclaration;
-import com.shapesecurity.shift.es2016.ast.FunctionDeclarationClassDeclarationExpression;
-import com.shapesecurity.shift.es2016.ast.FunctionDeclarationClassDeclarationVariableDeclaration;
-import com.shapesecurity.shift.es2016.ast.FunctionExpression;
-import com.shapesecurity.shift.es2016.ast.IdentifierExpression;
-import com.shapesecurity.shift.es2016.ast.Import;
-import com.shapesecurity.shift.es2016.ast.ImportDeclaration;
-import com.shapesecurity.shift.es2016.ast.ImportDeclarationExportDeclarationStatement;
-import com.shapesecurity.shift.es2016.ast.ImportNamespace;
-import com.shapesecurity.shift.es2016.ast.ImportSpecifier;
-import com.shapesecurity.shift.es2016.ast.LiteralStringExpression;
-import com.shapesecurity.shift.es2016.ast.Module;
-import com.shapesecurity.shift.es2016.ast.Script;
-import com.shapesecurity.shift.es2016.ast.SpreadElementExpression;
-import com.shapesecurity.shift.es2016.ast.Statement;
-import com.shapesecurity.shift.es2016.ast.VariableDeclaration;
-import com.shapesecurity.shift.es2016.ast.VariableDeclarationKind;
-import com.shapesecurity.shift.es2016.ast.VariableDeclarationStatement;
-import com.shapesecurity.shift.es2016.ast.VariableDeclarator;
+import com.shapesecurity.shift.es2017.ast.AssignmentExpression;
+import com.shapesecurity.shift.es2017.ast.BindingIdentifier;
+import com.shapesecurity.shift.es2017.ast.CallExpression;
+import com.shapesecurity.shift.es2017.ast.ClassDeclaration;
+import com.shapesecurity.shift.es2017.ast.ComputedMemberAssignmentTarget;
+import com.shapesecurity.shift.es2017.ast.ComputedMemberExpression;
+import com.shapesecurity.shift.es2017.ast.Export;
+import com.shapesecurity.shift.es2017.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2017.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2017.ast.ExportDefault;
+import com.shapesecurity.shift.es2017.ast.ExportFrom;
+import com.shapesecurity.shift.es2017.ast.ExportFromSpecifier;
+import com.shapesecurity.shift.es2017.ast.ExportLocalSpecifier;
+import com.shapesecurity.shift.es2017.ast.ExportLocals;
+import com.shapesecurity.shift.es2017.ast.Expression;
+import com.shapesecurity.shift.es2017.ast.ExpressionStatement;
+import com.shapesecurity.shift.es2017.ast.ForInStatement;
+import com.shapesecurity.shift.es2017.ast.FunctionDeclaration;
+import com.shapesecurity.shift.es2017.ast.FunctionDeclarationClassDeclarationExpression;
+import com.shapesecurity.shift.es2017.ast.FunctionDeclarationClassDeclarationVariableDeclaration;
+import com.shapesecurity.shift.es2017.ast.FunctionExpression;
+import com.shapesecurity.shift.es2017.ast.IdentifierExpression;
+import com.shapesecurity.shift.es2017.ast.Import;
+import com.shapesecurity.shift.es2017.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.es2017.ast.ImportNamespace;
+import com.shapesecurity.shift.es2017.ast.ImportSpecifier;
+import com.shapesecurity.shift.es2017.ast.LiteralStringExpression;
+import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.ast.Script;
+import com.shapesecurity.shift.es2017.ast.SpreadElementExpression;
+import com.shapesecurity.shift.es2017.ast.Statement;
+import com.shapesecurity.shift.es2017.ast.VariableDeclaration;
+import com.shapesecurity.shift.es2017.ast.VariableDeclarationKind;
+import com.shapesecurity.shift.es2017.ast.VariableDeclarationStatement;
+import com.shapesecurity.shift.es2017.ast.VariableDeclarator;
 
 /**
  * ImportExportTransformer applies the transformations necessary for reducing a {@link Module} to a
@@ -204,7 +204,7 @@ public class ImportExportTransformer {
 			ComputedMemberAssignmentTarget compMem = new ComputedMemberAssignmentTarget(exportsIden, new LiteralStringExpression("default"));
 
 			AssignmentExpression assignmentExpression =
-				new AssignmentExpression(compMem, new FunctionExpression(false, Maybe.empty(),
+				new AssignmentExpression(compMem, new FunctionExpression(false, false, Maybe.empty(),
 					declaration.params, declaration.body));
 			return ImmutableList.of(new ExpressionStatement(assignmentExpression));
 		} else {

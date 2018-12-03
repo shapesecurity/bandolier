@@ -19,15 +19,15 @@ package com.shapesecurity.bandolier;
 import com.shapesecurity.bandolier.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.loader.IResolver;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2016.ast.ExportAllFrom;
-import com.shapesecurity.shift.es2016.ast.ExportDeclaration;
-import com.shapesecurity.shift.es2016.ast.ExportFrom;
-import com.shapesecurity.shift.es2016.ast.Import;
-import com.shapesecurity.shift.es2016.ast.ImportDeclaration;
-import com.shapesecurity.shift.es2016.ast.ImportDeclarationExportDeclarationStatement;
-import com.shapesecurity.shift.es2016.ast.ImportNamespace;
-import com.shapesecurity.shift.es2016.ast.Module;
-import com.shapesecurity.shift.es2016.ast.Statement;
+import com.shapesecurity.shift.es2017.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2017.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2017.ast.ExportFrom;
+import com.shapesecurity.shift.es2017.ast.Import;
+import com.shapesecurity.shift.es2017.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.es2017.ast.ImportNamespace;
+import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.ast.Statement;
 
 import java.nio.file.Path;
 

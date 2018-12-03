@@ -1,8 +1,8 @@
 package com.shapesecurity.bandolier;
 
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2016.ast.*;
-import com.shapesecurity.shift.es2016.ast.Module;
+import com.shapesecurity.shift.es2017.ast.*;
+import com.shapesecurity.shift.es2017.ast.Module;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ModuleHelper {

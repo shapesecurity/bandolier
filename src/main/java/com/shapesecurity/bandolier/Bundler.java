@@ -22,11 +22,10 @@ import com.shapesecurity.bandolier.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.loader.IResolver;
 import com.shapesecurity.bandolier.loader.IResourceLoader;
 import com.shapesecurity.bandolier.loader.ModuleLoaderException;
-import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2016.ast.*;
-import com.shapesecurity.shift.es2016.ast.Module;
-import com.shapesecurity.shift.es2016.parser.JsError;
-import com.shapesecurity.shift.es2016.parser.Parser;
+import com.shapesecurity.shift.es2017.ast.*;
+import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.parser.JsError;
+import com.shapesecurity.shift.es2017.parser.Parser;
 
 import org.jetbrains.annotations.NotNull;
 
