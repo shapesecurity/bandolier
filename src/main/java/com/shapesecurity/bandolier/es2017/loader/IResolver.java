@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier.loader;
+package com.shapesecurity.bandolier.es2017.loader;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- * Abstracts the concept of checking if a resource exists and loading it as a string.
- */
-public interface IResourceLoader {
+public interface IResolver {
+	/**
+	 * Given a root and a (potentially relative) path, resolves the path to an absolute path.
+	 */
 	@NotNull
-	Boolean exists(@NotNull Path path);
-
-	@NotNull
-	String loadResource(@NotNull Path path) throws IOException;
+	String resolve(@NotNull Path root, @NotNull String path);
 }

@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier.loader;
+package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-
-public interface IResolver {
-	/**
-	 * Given a root and a (potentially relative) path, resolves the path to an absolute path.
-	 */
-	@NotNull
-	String resolve(@NotNull Path root, @NotNull String path);
+public class ModuleLoaderException extends Exception {
+	public ModuleLoaderException(String module, Exception cause) {
+		super("Module Loader Exception: module " + module + " cannot be loaded: " + cause.getMessage(), cause);
+	}
 }

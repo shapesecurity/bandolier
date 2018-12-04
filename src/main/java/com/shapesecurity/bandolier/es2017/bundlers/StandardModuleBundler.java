@@ -1,7 +1,7 @@
-package com.shapesecurity.bandolier.bundlers;
+package com.shapesecurity.bandolier.es2017.bundlers;
 
-import com.shapesecurity.bandolier.ImportExportTransformer;
-import com.shapesecurity.bandolier.ImportMappingRewriter;
+import com.shapesecurity.bandolier.es2017.ImportExportTransformer;
+import com.shapesecurity.bandolier.es2017.ImportMappingRewriter;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es2017.ast.*;
