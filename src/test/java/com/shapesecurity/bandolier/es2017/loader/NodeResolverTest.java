@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier.loader;
+package com.shapesecurity.bandolier.es2017.loader;
 
 
 import org.jetbrains.annotations.NotNull;

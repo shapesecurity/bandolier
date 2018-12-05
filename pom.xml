@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.shapesecurity</groupId>
-    <artifactId>bandolier</artifactId>
-    <version>2.1.1</version>
+    <groupId>com.shapesecurity.bandolier</groupId>
+    <artifactId>es2017</artifactId>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
 
 
@@ -200,7 +200,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.shapesecurity.bandolier.Main</mainClass>
+                            <mainClass>com.shapesecurity.bandolier.es2017.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

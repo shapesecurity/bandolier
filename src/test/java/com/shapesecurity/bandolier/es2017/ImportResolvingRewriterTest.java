@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier;
+package com.shapesecurity.bandolier.es2017;
 
-import com.shapesecurity.bandolier.loader.FileSystemResolver;
+import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import com.shapesecurity.shift.es2017.parser.JsError;

@@ -1,4 +1,4 @@
-package com.shapesecurity.bandolier;
+package com.shapesecurity.bandolier.es2017;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.*;

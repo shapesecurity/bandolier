@@ -1,9 +1,9 @@
-package com.shapesecurity.bandolier;
+package com.shapesecurity.bandolier.es2017;
 
-import com.shapesecurity.bandolier.bundlers.StandardModuleBundler;
-import com.shapesecurity.bandolier.loader.FileLoader;
-import com.shapesecurity.bandolier.loader.IResourceLoader;
-import com.shapesecurity.bandolier.loader.NodeResolver;
+import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
+import com.shapesecurity.bandolier.es2017.loader.NodeResolver;
+import com.shapesecurity.bandolier.es2017.loader.FileLoader;
+import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 

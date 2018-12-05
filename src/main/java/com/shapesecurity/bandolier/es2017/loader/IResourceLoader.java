@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier.loader;
+package com.shapesecurity.bandolier.es2017.loader;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 
-public class FileLoader extends CachedResourceLoader {
+/**
+ * Abstracts the concept of checking if a resource exists and loading it as a string.
+ */
+public interface IResourceLoader {
+	@NotNull
+	Boolean exists(@NotNull Path path);
 
 	@NotNull
-	@Override
-	public Boolean existsBackend(@NotNull Path path) {
-		return Files.exists(path);
-	}
-
-	@NotNull
-	@Override
-	public String loadResourceBackend(@NotNull Path path) throws IOException {
-		return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-	}
+	String loadResource(@NotNull Path path) throws IOException;
 }
-

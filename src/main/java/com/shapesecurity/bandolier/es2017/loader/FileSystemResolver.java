@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier.loader;
+package com.shapesecurity.bandolier.es2017.loader;
 
+import org.jetbrains.annotations.NotNull;
 
-public class ModuleLoaderException extends Exception {
-	public ModuleLoaderException(String module, Exception cause) {
-		super("Module Loader Exception: module " + module + " cannot be loaded: " + cause.getMessage(), cause);
+import java.nio.file.Path;
+
+public class FileSystemResolver implements IResolver {
+	@NotNull
+	@Override
+	public String resolve(@NotNull Path root, @NotNull String path) {
+		if (path.startsWith(".")) {
+			return root.resolve(path).normalize().toString();
+		}
+		return path;
 	}
 }

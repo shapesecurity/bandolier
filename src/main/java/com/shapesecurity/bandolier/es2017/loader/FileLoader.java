@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier.loader;
+package com.shapesecurity.bandolier.es2017.loader;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class FileSystemResolver implements IResolver {
+public class FileLoader extends CachedResourceLoader {
+
 	@NotNull
 	@Override
-	public String resolve(@NotNull Path root, @NotNull String path) {
-		if (path.startsWith(".")) {
-			return root.resolve(path).normalize().toString();
-		}
-		return path;
+	public Boolean existsBackend(@NotNull Path path) {
+		return Files.exists(path);
+	}
+
+	@NotNull
+	@Override
+	public String loadResourceBackend(@NotNull Path path) throws IOException {
+		return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 	}
 }
+

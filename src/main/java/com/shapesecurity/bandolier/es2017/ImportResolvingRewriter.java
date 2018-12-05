@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.shapesecurity.bandolier;
+package com.shapesecurity.bandolier.es2017;
 
 
-import com.shapesecurity.bandolier.loader.FileSystemResolver;
-import com.shapesecurity.bandolier.loader.IResolver;
+import com.shapesecurity.bandolier.es2017.loader.IResolver;
+import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.ExportAllFrom;
 import com.shapesecurity.shift.es2017.ast.ExportDeclaration;
