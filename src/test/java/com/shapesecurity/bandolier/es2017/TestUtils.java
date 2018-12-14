@@ -37,7 +37,7 @@ public class TestUtils {
         return Bundler.bundle(Paths.get(filePath), resolver, loader, new StandardModuleBundler());
     }
 
-    static String toString(Script script) throws ModuleLoaderException {
+    public static String toString(Script script) throws ModuleLoaderException {
         ExpressionStatement statement = (ExpressionStatement) script.statements.maybeHead().fromJust();
         CallExpression callExpression = (CallExpression) statement.expression;
         StaticMemberExpression memberExpression = new StaticMemberExpression(callExpression, "result");

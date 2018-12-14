@@ -15,10 +15,12 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
+import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
 
@@ -26,6 +28,11 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -230,6 +237,24 @@ public class BundlerTest extends TestCase {
 		testResult("/root/thisIsUndefined.js", null, resolver, loader);
 	}
 
+	@Test
+	public void testBundleModule() throws Exception {
+		Path path = Paths.get("/root/lib1/js1.js");
+		String source = loader.loadResource(path);
+		Script bundled = Bundler.bundleModule(Parser.parseModule(source), path, resolver, loader, new StandardModuleBundler());
 
+		String newProgramText = TestUtils.toString(bundled);
+		ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+
+		Object result;
+		try {
+			result = engine.eval(newProgramText);
+		} catch (ScriptException e) {
+			System.out.println(newProgramText);
+			throw e;
+		}
+		System.out.println(result);
+		assertEquals(142.0, result);
+	}
 
 }

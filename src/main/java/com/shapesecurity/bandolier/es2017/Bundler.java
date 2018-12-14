@@ -68,19 +68,40 @@ public class Bundler {
 	}
 
 	/**
-	 * Bundles the module provided as a string and along with its dependencies and returns the resulting
+	 * Bundles the module provided as a string along with its dependencies and returns the resulting
 	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
 	 * of its input map, and the resolver and loader are well-behaved.
-	 * @param mod the string of the module
+	 * @param source the string of the module
 	 * @param filePath path to the module
 	 * @param resolver how to resolve paths
 	 * @param loader how to load modules
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleString(@NotNull String mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	public static @NotNull Script bundleString(@NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		Module parsed;
 		try {
-			return bundler.bundleEntrypoint(filePath.toString(), loadDependencies(Parser.parseModule(mod), filePath, resolver, loader));
+			parsed = Parser.parseModule(source);
+		} catch (JsError e) {
+			throw new ModuleLoaderException(filePath.toString(), e);
+		}
+		return bundleModule(parsed, filePath, resolver, loader, bundler);
+	}
+
+	/**
+	 * Bundles the module provided as a parsed Module along with its dependencies and returns the resulting
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved.
+	 * @param mod the module
+	 * @param filePath path to the module
+	 * @param resolver how to resolve paths
+	 * @param loader how to load modules
+	 * @return the resulting script
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Script bundleModule(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		try {
+			return bundler.bundleEntrypoint(filePath.toString(), loadDependencies(mod, filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
