@@ -1,3 +1,4 @@
 .idea
 *.iml
 target
+bin/bandolier.jar
