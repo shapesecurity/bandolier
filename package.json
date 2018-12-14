@@ -18,5 +18,6 @@
   "bugs": {
     "url": "https://github.com/shapesecurity/bandolier/issues"
   },
-  "homepage": "https://github.com/shapesecurity/bandolier#readme"
+  "homepage": "https://github.com/shapesecurity/bandolier#readme",
+  "files": ["index.js", "bin"]
 }
