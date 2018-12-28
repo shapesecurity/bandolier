@@ -32,7 +32,7 @@ public final class BundlerOptions {
 	public final boolean throwOnImportAssignment;
 
 
-	private BundlerOptions(@Nonnull ImportUnresolvedResolutionStrategy importUnresolvedResolutionStrategy, @Nonnull ExportStrategy exportStrategy, @Nonnull DangerLevel dangerLevel, boolean throwOnCircularDependency, boolean throwOnImportAssignment) {
+	public BundlerOptions(@Nonnull ImportUnresolvedResolutionStrategy importUnresolvedResolutionStrategy, @Nonnull ExportStrategy exportStrategy, @Nonnull DangerLevel dangerLevel, boolean throwOnCircularDependency, boolean throwOnImportAssignment) {
 		this.importUnresolvedResolutionStrategy = importUnresolvedResolutionStrategy;
 		this.exportStrategy = exportStrategy;
 		this.dangerLevel = dangerLevel;
@@ -43,6 +43,8 @@ public final class BundlerOptions {
 	public static final BundlerOptions NODE_OPTIONS = new BundlerOptions(ImportUnresolvedResolutionStrategy.DEFAULT_TO_UNDEFINED, ExportStrategy.ALL_GLOBALS, DangerLevel.SAFE, false, false);
 
 	public static final BundlerOptions SPEC_OPTIONS = new BundlerOptions(ImportUnresolvedResolutionStrategy.COMPILE_ERROR, ExportStrategy.EXPLICIT, DangerLevel.SAFE, false, false);
+
+	public static final BundlerOptions DEFAULT_OPTIONS = new BundlerOptions(ImportUnresolvedResolutionStrategy.COMPILE_ERROR, ExportStrategy.EXPLICIT, DangerLevel.SAFE, true, true);
 
 	public BundlerOptions withDangerLevel(@Nonnull DangerLevel dangerLevel) {
 		return new BundlerOptions(importUnresolvedResolutionStrategy, exportStrategy, dangerLevel, throwOnCircularDependency, throwOnImportAssignment);

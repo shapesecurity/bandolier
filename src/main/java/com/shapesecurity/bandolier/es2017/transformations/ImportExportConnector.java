@@ -588,7 +588,7 @@ public class ImportExportConnector {
 					} else if (options.importUnresolvedResolutionStrategy == BundlerOptions.ImportUnresolvedResolutionStrategy.THROW_ON_REFERENCE) {
 						return new CallExpression(new FunctionExpression(false, false, Maybe.empty(), new FormalParameters(ImmutableList.empty(), Maybe.empty()),
 								new FunctionBody(ImmutableList.empty(), ImmutableList.of(new ThrowStatement(
-										new NewExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "ReferenceError"), ImmutableList.empty())
+										new NewExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "ReferenceError"), ImmutableList.of(new LiteralStringExpression(((VariableReference) originalNode).name + " is not defined")))
 								)))
 						), ImmutableList.empty());
 					}
@@ -619,7 +619,7 @@ public class ImportExportConnector {
 						body = new FunctionBody(ImmutableList.empty(), ImmutableList.of(
 								new IfStatement(new BinaryExpression(new LiteralStringExpression(propertyName), BinaryOperator.In, sourceObject),
 										new ReturnStatement(Maybe.of(new IdentifierExpression(localExportEntry.right.entries().maybeHead().fromJust().right.right.name))),
-										Maybe.of(new ThrowStatement(new NewExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "ReferenceError"), ImmutableList.empty()))))
+										Maybe.of(new ThrowStatement(new NewExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "ReferenceError"), ImmutableList.of(new LiteralStringExpression(propertyName + " is not defined"))))))
 						));
 					} else {
 						Pair<Maybe<Module>, Pair<ExportDeclaration, Variable>> remoteSource = localExportEntry.right.entries().maybeHead().fromJust();
@@ -628,7 +628,7 @@ public class ImportExportConnector {
 						body = new FunctionBody(ImmutableList.empty(), ImmutableList.of(
 								new IfStatement(new BinaryExpression(new LiteralStringExpression(propertyName), BinaryOperator.In, sourceObject),
 										new ReturnStatement(Maybe.of(new StaticMemberExpression(new IdentifierExpression(moduleExportReference.get(remoteSource.left.fromJust()).fromJust()), inverseExports.get(remoteSource.left.fromJust()).fromJust().get(localExportEntry.right.entries().maybeHead().fromJust().right.right.name).fromJust()))),
-										Maybe.of(new ThrowStatement(new NewExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "ReferenceError"), ImmutableList.empty()))))
+										Maybe.of(new ThrowStatement(new NewExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "ReferenceError"), ImmutableList.of(new LiteralStringExpression(propertyName + " is not defined"))))))
 						));
 					}
 					objectProperties = objectProperties.cons(new Getter(new StaticPropertyName(propertyName), body));

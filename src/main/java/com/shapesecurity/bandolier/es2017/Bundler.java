@@ -42,8 +42,11 @@ import java.util.Map;
 
 public class Bundler {
 
+
+
 	/**
 	 * Bundles the module at the specified path using the default resolver and loaders
+	 * @param options options object
 	 * @param filePath path to the module
 	 * @return a bundled script
 	 * @throws ModuleLoaderException
@@ -53,9 +56,20 @@ public class Bundler {
 	}
 
 	/**
+	 * Bundles the module at the specified path using the default resolver and loaders, uses DEFAULT_OPTIONS.
+	 * @param filePath path to the module
+	 * @return a bundled script
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Script bundle(@NotNull Path filePath) throws ModuleLoaderException {
+		return bundle(BundlerOptions.DEFAULT_OPTIONS, filePath);
+	}
+
+	/**
 	 * Bundles the module specified by the given path and its dependencies and returns the resulting
 	 * Script.
 	 *
+	 * @param options options object
 	 * @param filePath is the path to the input entry point module.
 	 * @param resolver how to resolve the path
 	 * @param loader   how to load modules
@@ -71,9 +85,24 @@ public class Bundler {
 	}
 
 	/**
+	 * Bundles the module specified by the given path and its dependencies and returns the resulting
+	 * Script, uses DEFAULT_OPTIONS.
+	 *
+	 * @param filePath is the path to the input entry point module.
+	 * @param resolver how to resolve the path
+	 * @param loader   how to load modules
+	 * @return the resulting script
+	 * @throws ModuleLoaderException when the module fails to load
+	 */
+	public static @NotNull Script bundle(@NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		return bundle(BundlerOptions.DEFAULT_OPTIONS, filePath, resolver, loader, bundler);
+	}
+
+	/**
 	 * Bundles the module provided as a string along with its dependencies and returns the resulting
 	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
 	 * of its input map, and the resolver and loader are well-behaved.
+	 * @param options options object
 	 * @param source the string of the module
 	 * @param filePath path to the module
 	 * @param resolver how to resolve paths
@@ -90,9 +119,25 @@ public class Bundler {
 	}
 
 	/**
+	 * Bundles the module provided as a string along with its dependencies and returns the resulting
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved, uses DEFAULT_OPTIONS.
+	 * @param source the string of the module
+	 * @param filePath path to the module
+	 * @param resolver how to resolve paths
+	 * @param loader how to load modules
+	 * @return the resulting script
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Script bundleString(@NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		return bundleString(BundlerOptions.DEFAULT_OPTIONS, source, filePath, resolver, loader, bundler);
+	}
+
+	/**
 	 * Bundles the module provided as a parsed Module along with its dependencies and returns the resulting
 	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
 	 * of its input map, and the resolver and loader are well-behaved.
+	 * @param options options object
 	 * @param mod the module
 	 * @param filePath path to the module
 	 * @param resolver how to resolve paths
@@ -109,7 +154,23 @@ public class Bundler {
 	}
 
 	/**
-	 * Bundles the module at the specified path using the default resolver and loaders
+	 * Bundles the module provided as a parsed Module along with its dependencies and returns the resulting
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved, uses DEFAULT_OPTIONS.
+	 * @param mod the module
+	 * @param filePath path to the module
+	 * @param resolver how to resolve paths
+	 * @param loader how to load modules
+	 * @return the resulting script
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Script bundleModule(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		return bundleModule(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
+	}
+
+	/**
+	 * Bundles the module at the specified path using the default resolver and loaders.
+	 * @param options options object
 	 * @param filePath path to the module
 	 * @return a bundled script with early errors
 	 * @throws ModuleLoaderException
@@ -119,9 +180,20 @@ public class Bundler {
 	}
 
 	/**
+	 * Bundles the module at the specified path using the default resolver and loaders, uses DEFAULT_OPTIONS.
+	 * @param filePath path to the module
+	 * @return a bundled script with early errors
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull Path filePath) throws ModuleLoaderException {
+		return bundleWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, filePath);
+	}
+
+	/**
 	 * Bundles the module specified by the given path and its dependencies and returns the resulting
 	 * Script.
 	 *
+	 * @param options options object
 	 * @param filePath is the path to the input entry point module.
 	 * @param resolver how to resolve the path
 	 * @param loader   how to load modules
@@ -137,9 +209,24 @@ public class Bundler {
 	}
 
 	/**
+	 * Bundles the module specified by the given path and its dependencies and returns the resulting
+	 * Script, uses DEFAULT_OPTIONS.
+	 *
+	 * @param filePath is the path to the input entry point module.
+	 * @param resolver how to resolve the path
+	 * @param loader   how to load modules
+	 * @return the resulting script with early errors
+	 * @throws ModuleLoaderException when the module fails to load
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		return bundleWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, filePath, resolver, loader, bundler);
+	}
+
+	/**
 	 * Bundles the module provided as a string and along with its dependencies and returns the resulting
 	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
 	 * of its input map, and the resolver and loader are well-behaved.
+	 * @param options options object
 	 * @param mod the string of the module
 	 * @param filePath path to the module
 	 * @param resolver how to resolve paths
@@ -153,6 +240,55 @@ public class Bundler {
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
+	}
+
+	/**
+	 * Bundles the module provided as a string and along with its dependencies and returns the resulting
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved, uses DEFAULT_OPTIONS.
+	 * @param mod the string of the module
+	 * @param filePath path to the module
+	 * @param resolver how to resolve paths
+	 * @param loader how to load modules
+	 * @return the resulting script with early errors
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@NotNull String mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		return bundleStringWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
+	}
+
+	/**
+	 * Bundles the module provided as a string and along with its dependencies and returns the resulting
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved.
+	 * @param options options object
+	 * @param mod the module
+	 * @param filePath path to the module
+	 * @param resolver how to resolve paths
+	 * @param loader how to load modules
+	 * @return the resulting script with early errors
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		try {
+			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toString(), loadDependencies(mod, filePath, resolver, loader));
+		} catch (Exception e) {
+			throw new ModuleLoaderException(filePath.toString(), e);
+		}
+	}
+
+	/**
+	 * Bundles the module provided as a string and along with its dependencies and returns the resulting
+	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
+	 * of its input map, and the resolver and loader are well-behaved, uses DEFAULT_OPTIONS.
+	 * @param filePath path to the module
+	 * @param resolver how to resolve paths
+	 * @param loader how to load modules
+	 * @return the resulting script with early errors
+	 * @throws ModuleLoaderException
+	 */
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+		return bundleModuleWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
 	}
 
 	/**
