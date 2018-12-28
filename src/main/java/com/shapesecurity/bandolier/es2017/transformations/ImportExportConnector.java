@@ -799,15 +799,9 @@ public class ImportExportConnector {
 			statements = finalAppend.foldLeft(ImmutableList::cons, statements);
 		}
 
-		// IIFE to match module semantics, reverse statements (prepended statements, not appended)
-		Script script = new Script(ImmutableList.empty(), ImmutableList.of(
-				new ExpressionStatement(new CallExpression(new FunctionExpression(false, false, Maybe.empty(), new FormalParameters(ImmutableList.of(new BindingIdentifier(globalBinding)), Maybe.empty()), new FunctionBody(
-						ImmutableList.of(new Directive("use strict")), statements.cons(
-								new ReturnStatement(Maybe.of(new IdentifierExpression(moduleExportReference.get(entry).fromJust())))
-						).reverse())),
-						ImmutableList.of(new ThisExpression())
-				))
-		));
+		Script script = new Script(ImmutableList.of(new Directive("use strict")), statements.cons(
+				new ReturnStatement(Maybe.of(new IdentifierExpression(moduleExportReference.get(entry).fromJust())))
+		).reverse());
 
 		return Pair.of(script, globalBinding);
 	}
