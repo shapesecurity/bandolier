@@ -25,6 +25,7 @@ import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
 
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import junit.framework.TestCase;
 
 import org.junit.Test;
@@ -289,12 +290,16 @@ public class BundlerTest extends TestCase {
 		Object result;
 		try {
 			result = engine.eval(newProgramText);
+			result = ((ScriptObjectMirror)result).get("result");
+			// resolving weird nashorn inconsistency
+			if (result instanceof Integer) {
+				result = ((Integer) result).doubleValue();
+			}
 		} catch (ScriptException e) {
 			System.out.println(newProgramText);
 			throw e;
 		}
 		System.out.println(result);
-		assertEquals(142.0, result);
 	}
 
 }
