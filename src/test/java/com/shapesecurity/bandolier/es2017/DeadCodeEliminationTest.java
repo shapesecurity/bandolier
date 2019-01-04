@@ -135,6 +135,15 @@ public class DeadCodeEliminationTest {
 	public void testIIFE() {
 		testDCE("(function(){var test = 0;})();", "(function(){\n" +
 				"}());\n");
+		testDCE("(function(x){var test = 0;})();", "(function(x){\n" +
+				"var test=0;\n" +
+				"}());\n");
+		testDCE("(function(){var test = 0;})(x);", "(function(){\n" +
+				"var test=0;\n" +
+				"}(x));\n");
+		testDCE("(function(...x){var test = 0;})();", "(function(...x){\n" +
+				"var test=0;\n" +
+				"}());\n");
 	}
 
 

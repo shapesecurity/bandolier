@@ -84,7 +84,7 @@ public final class DeadCodeElimination {
 				CallExpression callExpression = (CallExpression) ((ExpressionStatement) item).expression;
 				if (callExpression.arguments.length == 0 && callExpression.callee instanceof FunctionExpression) {
 					FunctionExpression functionExpression = (FunctionExpression) callExpression.callee;
-					if (functionExpression.params.items.length == 0) {
+					if (functionExpression.params.items.length == 0 && functionExpression.params.rest.isNothing()) {
 						directives = directives.uniqByEquality().putAll(functionExpression.body.directives).toList();
 						statements = functionExpression.body.statements.map(statement -> statement);
 						iife = true;
