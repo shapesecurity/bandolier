@@ -41,15 +41,13 @@ public class PiercedModuleBundler implements IModuleBundler {
 				}
 				return item;
 			}));
-			Pair<ImmutableSet<Pair<String, String>>, Module> deadCodePair = DeadCodeElimination.removeAllUnusedDeclarations(module);
-			module = deadCodePair.right;
-			removedImports = removedImports.put(mapEntry.getKey(), deadCodePair.left);
 			newModules = newModules.put(mapEntry.getKey(), module);
 
 		}
 		Tuple3<HashTable<String, Module>, VariableNameGenerator, HashTable<Module, HashTable<String, String>>> tuple = VariableCollisionResolver.resolveCollisions(newModules);
-        Pair<Script, String> combinedPair =  ImportExportConnector.combineModules(options, tuple.a.get(entry).fromJust(), tuple.b, tuple.a, tuple.c, removedImports);
+        Pair<Script, String> combinedPair = ImportExportConnector.combineModules(options, tuple.a.get(entry).fromJust(), tuple.b, tuple.a, tuple.c, removedImports);
         Script combined = combinedPair.left;
+        combined = DeadCodeElimination.removeAllUnusedDeclarations(combined);
         return new Script(ImmutableList.empty(), ImmutableList.of(
 				new ExpressionStatement(new CallExpression(
 						new FunctionExpression(false, false, Maybe.empty(), new FormalParameters(ImmutableList.of(new BindingIdentifier(combinedPair.right)), Maybe.empty()),
