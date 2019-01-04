@@ -177,7 +177,7 @@ public class ImportExportConnector {
 			}
 			HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>> localExported = maybeLocalExported.fromJust();
 			if (localExported.length == 0) {
-				throw new RuntimeException("Ambiguous proxy export");
+				throw new RuntimeException("Ambiguous proxy export: '" + exports.left + "'");
 			}
 			// the following search is not ideal, but adding an inverse map in this case, would probably be slower.
 			Maybe<Pair<String, String>> ourMapping = ourRenamingMap.find(pair -> pair.right.equals(exports.left));
