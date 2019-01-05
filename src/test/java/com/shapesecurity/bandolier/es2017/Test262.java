@@ -164,14 +164,8 @@ public class Test262 {
 			// TDZ reference before export case
 			"instn-named-bndng-dflt-star.js",
 			"instn-named-bndng-dflt-named.js",
-			"instn-named-bndng-dflt-expr.js",
+			"instn-named-bndng-dflt-expr.js"
 
-			// ambiguous exports should throw, not export one or the other
-			"instn-star-ambiguous.js",
-			"instn-iee-err-ambiguous-as.js",
-			"instn-named-err-ambiguous.js",
-			"instn-named-err-ambiguous-as.js",
-			"instn-iee-err-ambiguous.js"
 	).uniqByEquality();
 
 

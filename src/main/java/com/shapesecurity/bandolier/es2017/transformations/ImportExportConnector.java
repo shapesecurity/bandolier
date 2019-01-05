@@ -152,9 +152,15 @@ public class ImportExportConnector {
 
 			boolean update = false;
 			for (Pair<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> pair : moduleExported) {
-				if (!pair.left.equals("default") && (!wantingExported.containsKey(pair.left) || !wantingExported.get(pair.left).fromJust().containsKey(Maybe.of(module)))) {
-					wantingExported = wantingExported.put(pair.left, pair.right.foldLeft((acc, subPair) -> acc.put(Maybe.of(module), subPair.right), wantingExported.get(pair.left).orJust(HashTable.emptyUsingEquality())));
-					update = true;
+				if (!pair.left.equals("default")) {
+					Maybe<HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> wantingExportedLocal = wantingExported.get(pair.left);
+					if (wantingExportedLocal.isNothing()) {
+						wantingExported = wantingExported.put(pair.left, pair.right.foldLeft((acc, subPair) -> acc.put(Maybe.of(module), subPair.right), HashTable.emptyUsingEquality()));
+						update = true;
+					} else if (!wantingExportedLocal.fromJust().containsKey(Maybe.of(module)) && !wantingExportedLocal.fromJust().containsKey(Maybe.empty())) {
+						update = wantingExportedLocal.fromJust().length > 0;
+						wantingExported = wantingExported.put(pair.left, HashTable.emptyUsingEquality()); // nothing will ever export, ambiguous
+					}
 				}
 			}
 			if (update) {
@@ -170,6 +176,9 @@ public class ImportExportConnector {
 				continue; // should become available in later iterations
 			}
 			HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>> localExported = maybeLocalExported.fromJust();
+			if (localExported.length == 0) {
+				throw new RuntimeException("Ambiguous proxy export: '" + exports.left + "'");
+			}
 			// the following search is not ideal, but adding an inverse map in this case, would probably be slower.
 			Maybe<Pair<String, String>> ourMapping = ourRenamingMap.find(pair -> pair.right.equals(exports.left));
 			for (Pair<Module, Maybe<String>> exportInfo : exports.right) {
@@ -636,8 +645,11 @@ public class ImportExportConnector {
 					if (localSource.isJust()) {
 						objectProperties = objectProperties.cons(new DataProperty(new StaticPropertyName(propertyName), new IdentifierExpression(localExportEntry.right.entries().maybeHead().fromJust().right.right.name)));
 					} else {
-						Pair<Maybe<Module>, Pair<ExportDeclaration, Variable>> remoteSource = localExportEntry.right.entries().maybeHead().fromJust();
-						objectProperties = objectProperties.cons(new DataProperty(new StaticPropertyName(propertyName), new IdentifierExpression(exported.get(remoteSource.left.fromJust()).fromJust().get(inverseExports.get(remoteSource.left.fromJust()).fromJust().get(localExportEntry.right.entries().maybeHead().fromJust().right.right.name).fromJust()).fromJust().entries().maybeHead().fromJust().right.right.name)));
+						Maybe<Pair<Maybe<Module>, Pair<ExportDeclaration, Variable>>> maybeRemoteSource = localExportEntry.right.entries().maybeHead();
+						if (maybeRemoteSource.isJust()) {
+							Pair<Maybe<Module>, Pair<ExportDeclaration, Variable>> remoteSource = maybeRemoteSource.fromJust();
+							objectProperties = objectProperties.cons(new DataProperty(new StaticPropertyName(propertyName), new IdentifierExpression(exported.get(remoteSource.left.fromJust()).fromJust().get(inverseExports.get(remoteSource.left.fromJust()).fromJust().get(remoteSource.right.right.name).fromJust()).fromJust().entries().maybeHead().fromJust().right.right.name)));
+						} // else omitted due to ambiguity
 					}
 				}
 			}
