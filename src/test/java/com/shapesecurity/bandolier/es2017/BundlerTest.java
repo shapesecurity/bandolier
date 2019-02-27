@@ -15,6 +15,7 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
+import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
 import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
@@ -38,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.shapesecurity.bandolier.es2017.TestUtils.testResult;
 import static com.shapesecurity.bandolier.es2017.TestUtils.testResultPierced;
@@ -110,6 +112,8 @@ public class BundlerTest extends TestCase {
 		modules.put("/root/circular2_dep.js", "import circ2 from '/root/circular2.js'; export var result = circ2 + 5;");
 		modules.put("/root/renaming.js", "import {x, setX} from '/root/renaming_dep.js'; var tempX = x; setX(10);export var result = tempX + x;");
 		modules.put("/root/renaming_dep.js", "export var x = 5; export function setX(y) { x = y; }");
+		modules.put("/root/normalizing/js1.js", "import './js2.js'; import '../normalizing/js2.js';");
+		modules.put("/root/normalizing/js2.js", "");
 		loader = new TestLoader(modules);
 	}
 
@@ -300,6 +304,16 @@ public class BundlerTest extends TestCase {
 			throw e;
 		}
 		System.out.println(result);
+	}
+
+	@Test
+	public void testLoadDependencies() throws Exception {
+		Path path = Paths.get("/root/normalizing/js1.js");
+		String source = loader.loadResource(path);
+
+		Map<String, Module> dependencies = Bundler.loadDependencies(Parser.parseModule(source), path, resolver, loader);
+		ImmutableList<String> dependentPaths = ImmutableList.from(dependencies.keySet().stream().sorted(String::compareTo).collect(Collectors.toList()));
+		assertEquals(ImmutableList.of("/root/normalizing/js1.js", "/root/normalizing/js2.js"), dependentPaths);
 	}
 
 }
