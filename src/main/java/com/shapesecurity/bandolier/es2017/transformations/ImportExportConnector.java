@@ -463,7 +463,9 @@ public class ImportExportConnector {
 
 		// ensure we scheduled everything -- modules will not be loaded if not imported somewhere.
 		if (schedule.size() != modules.length) {
-			throw new RuntimeException("Not all modules were scheduled: " + schedule.size() + " / " + modules.length + ".");
+			ImmutableList<String> unscheduled = modules.entries().filter(pair -> !schedule.contains(pair.right)).map(Pair::left);
+			throw new RuntimeException("Not all modules were scheduled: " + schedule.size() + " / " + modules.length + ".\n" +
+					"Unscheduled modules:\n" + unscheduled.foldLeft((acc, module) -> acc + module + "\n", ""));
 		}
 
 		// reference to export object

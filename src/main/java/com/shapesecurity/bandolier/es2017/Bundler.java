@@ -110,7 +110,7 @@ public class Bundler {
 	 */
 	public static @NotNull Script bundleString(@NotNull BundlerOptions options, @NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundler.bundleEntrypoint(options, filePath.toString(), loadDependencies(Parser.parseModule(source), filePath, resolver, loader));
+			return bundler.bundleEntrypoint(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(Parser.parseModule(source), filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -145,7 +145,7 @@ public class Bundler {
 	 */
 	public static @NotNull Script bundleModule(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundler.bundleEntrypoint(options, filePath.toString(), loadDependencies(mod, filePath, resolver, loader));
+			return bundler.bundleEntrypoint(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(mod, filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -234,7 +234,7 @@ public class Bundler {
 	 */
 	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@NotNull BundlerOptions options, @NotNull String mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toString(), loadDependencies(Parser.parseModule(mod), filePath, resolver, loader));
+			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(Parser.parseModule(mod), filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -269,7 +269,7 @@ public class Bundler {
 	 */
 	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toString(), loadDependencies(mod, filePath, resolver, loader));
+			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(mod, filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -298,12 +298,13 @@ public class Bundler {
 	 * @return is a map from module names (path to modules) to the loaded modules.
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	private static @NotNull Map<String, Module> loadDependencies(@NotNull Module module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
+	static @NotNull Map<String, Module> loadDependencies(@NotNull Module module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
 		throws ModuleLoaderException {
 
 		Map<String, Module> loadedModules = new LinkedHashMap<>();
 		LinkedList<String> toLoad = new LinkedList<>();
 		ImportResolvingRewriter rewriter = new ImportResolvingRewriter(resolver);
+		filePath = filePath.toAbsolutePath().normalize();
 		Module rewritten = rewriter.rewrite(module, filePath.getParent());
 		loadedModules.put(filePath.toString(), rewritten);
 		toLoad.add(filePath.toString());
