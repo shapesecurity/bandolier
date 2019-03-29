@@ -11,15 +11,43 @@ import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import java.nio.file.Paths;
 
 public class Main {
+
+	private static final void usage() {
+		System.out.println("Arguments: [OPTIONS] [target module]\n" +
+			"Options:\n" +
+			"	-n --node		Node import resolution strategy\n" +
+			"	-s --spec		ECMAScript import resolution strategy\n" +
+			"	-h --help		Show this help menu");
+	}
+
 	public static void main(String[] args) throws Exception {
-		if (args.length > 0) {
-			IResourceLoader loader = new FileLoader();
-			Script bundle = Bundler.bundle(BundlerOptions.NODE_OPTIONS, Paths.get(args[0]).toAbsolutePath(),
-										   new NodeResolver(loader),
-										   loader, new PiercedModuleBundler());
-			System.out.println(CodeGen.codeGen(bundle));
-		} else {
-			System.err.println("Must provide a filename");
+		BundlerOptions options = BundlerOptions.DEFAULT_OPTIONS;
+		String filename = null;
+		for (String arg : args) {
+			if (arg.equals("-n") || arg.equals("--node")) {
+				options = BundlerOptions.NODE_OPTIONS;
+			} else if (arg.equals("-s") || arg.equals("--spec")) {
+				options = BundlerOptions.SPEC_OPTIONS;
+			} else if (arg.equals("-h") || arg.equals("--help")) {
+				usage();
+				return;
+			} else if (filename == null) {
+				filename = arg;
+			} else {
+				System.err.println("Invalid argument: " + arg);
+				usage();
+				return;
+			}
 		}
+		if (filename == null) {
+			System.err.println("No target module specified.");
+			usage();
+			return;
+		}
+		IResourceLoader loader = new FileLoader();
+		Script bundle = Bundler.bundle(options, Paths.get(filename).toAbsolutePath(),
+									   new NodeResolver(loader),
+									   loader, new PiercedModuleBundler());
+		System.out.println(CodeGen.codeGen(bundle));
 	}
 }
