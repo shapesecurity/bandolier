@@ -1,6 +1,6 @@
 {
   "name": "bandolier",
-  "version": "3.2.3",
+  "version": "3.2.4",
   "description": "Bundles es2015 modules",
   "main": "index.js",
   "scripts": {
@@ -19,5 +19,8 @@
     "url": "https://github.com/shapesecurity/bandolier/issues"
   },
   "homepage": "https://github.com/shapesecurity/bandolier#readme",
-  "files": ["index.js", "bin"]
+  "files": [
+    "index.js",
+    "bin"
+  ]
 }
