@@ -143,7 +143,7 @@ public class Test262 {
 			"namespace/internals/own-property-keys-sort.js",
 			"namespace/internals/delete-exported-init.js",
 
-			// Nashorn bug in object expressions not setting function expression names.
+			// Nashorn does not perform function name inference
 			"eval-export-dflt-expr-fn-anon.js",
 			"instn-named-bndng-dflt-fun-named.js",
 			"instn-named-bndng-dflt-fun-anon.js",

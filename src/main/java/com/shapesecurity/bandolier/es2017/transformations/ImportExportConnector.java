@@ -779,20 +779,14 @@ public class ImportExportConnector {
 						names = names.cons("default");
 						if (body instanceof FunctionDeclaration) {
 							FunctionDeclaration declaration = (FunctionDeclaration) body;
-							String name = declaration.name.name;
-							if (invertedOriginalRenamingMaps.get(module).fromJust().get(name).orJust("").equals("*default*")) {
-								name = "default";
-							}
-							Expression expressionBody = new StaticMemberExpression(new ObjectExpression(ImmutableList.of(new DataProperty(new StaticPropertyName(name), new FunctionExpression(declaration.isAsync, declaration.isGenerator, Maybe.empty(), declaration.params, declaration.body)))), name);
-							statements = statements.append(ImmutableList.of(new VariableDeclarationStatement(new VariableDeclaration(VariableDeclarationKind.Var, ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportExpressionNames.get(exportDefault)), Maybe.of(expressionBody)))))));
-							continue;
+							Expression expressionBody = new FunctionExpression(declaration.isAsync, declaration.isGenerator, Maybe.empty(), declaration.params, declaration.body);
+							toAppend = toAppend.cons((new VariableDeclarationStatement(new VariableDeclaration(VariableDeclarationKind.Var, ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportExpressionNames.get(exportDefault)), Maybe.of(expressionBody)))))));
 						} else if (body instanceof ClassDeclaration) {
-							toAppend = toAppend.cons(((Statement) body));
+							ClassDeclaration declaration = (ClassDeclaration) body;
+							Expression expressionBody = new ClassExpression(Maybe.empty(), declaration._super, declaration.elements);
+							toAppend = toAppend.cons((new VariableDeclarationStatement(new VariableDeclaration(VariableDeclarationKind.Const, ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportExpressionNames.get(exportDefault)), Maybe.of(expressionBody)))))));
 						} else {
 							Expression expressionBody = (Expression) body;
-							if (body instanceof FunctionExpression) {
-								expressionBody = new StaticMemberExpression(new ObjectExpression(ImmutableList.of(new DataProperty(new StaticPropertyName("default"), expressionBody))), "default");
-							}
 							toAppend = toAppend.cons((new VariableDeclarationStatement(new VariableDeclaration(VariableDeclarationKind.Var, ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportExpressionNames.get(exportDefault)), Maybe.of(expressionBody)))))));
 						}
 					} else if (item instanceof ExportLocals) {
