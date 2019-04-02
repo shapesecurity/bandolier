@@ -320,7 +320,7 @@ public class ImportExportConnector {
 		// perform initial export extraction and prepare for proxy export resolution
 		for (Pair<String, Module> pair : modules) {
 			ScopeLookup lookup = lookups.get(pair.right).fromJust();
-			HashTable<String, String> exportNames = invertedOriginalRenamingMaps.get(pair.right).fromJust();//
+			HashTable<String, String> exportNames = invertedOriginalRenamingMaps.get(pair.right).fromJust();
 			HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> localExported = exported.get(pair.right).orJust(HashTable.emptyUsingEquality());
 
 			for (ImportDeclarationExportDeclarationStatement item : pair.right.items) {
