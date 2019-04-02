@@ -155,6 +155,24 @@ public class BundlerTest extends TestCase {
 		assertEquals(deps, expected);
 	}
 
+	public void testDeclarationWithoutName() throws Exception {
+		Map<String, String> modules = new HashMap<>();
+		modules.put("/import-default.js", "import f from './export.js'; export var result = (new f).x;");
+		TestLoader localLoader = new TestLoader(modules);
+
+		modules.put("/export.js", "export default function () { return {x: 42}; }");
+		testResult("/import-default.js", 42.0, resolver, localLoader);
+
+		modules.put("/export.js", "export default class { constructor() { return {x: 42}; } }");
+		testResult("/import-default.js", 42.0, resolver, localLoader);
+
+		modules.put("/export.js", "export default function SOMETHING () { return {x: 42}; }");
+		testResult("/import-default.js", 42.0, resolver, localLoader);
+
+		modules.put("/export.js", "export default class SOMETHING { constructor() { return {x: 42}; } }");
+		testResult("/import-default.js", 42.0, resolver, localLoader);
+	}
+
 	public void testDeterminism() throws Exception {
 		Map<String, String> modules = new HashMap<>();
 		modules.put("/js1.js", "import {b} from './js2.js'; import {c} from './js3.js'; export var result = 'a' + b + c");
