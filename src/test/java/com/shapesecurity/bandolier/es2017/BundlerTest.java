@@ -114,6 +114,7 @@ public class BundlerTest extends TestCase {
 		modules.put("/root/renaming_dep.js", "export var x = 5; export function setX(y) { x = y; }");
 		modules.put("/root/normalizing/js1.js", "import './js2.js'; import '../normalizing/js2.js';");
 		modules.put("/root/normalizing/js2.js", "");
+		modules.put("/root/test_name_collision.js", "import * as x from '/root/test_name_collision.js'; export var result = (function(){var e = 5; e = 10; return e;})()");
 		loader = new TestLoader(modules);
 	}
 
@@ -252,7 +253,7 @@ public class BundlerTest extends TestCase {
 
 	@Test
 	public void testBundle() throws Exception {
-		//testResult("/root/lib1/js0.js", null, resolver, loader); // the bundler is innocent!
+		testResult("/root/lib1/js0.js", null, resolver, loader); // the bundler is innocent!
 		testResult("/root/lib1/js1.js", 142.0, resolver, loader); // simple import
 		testResult("/root/lib1/js3.js", 142.0, resolver, loader); // simple import / current dir
 		testResult("/root/lib1/js4.js", 142.0, resolver, loader); // simple import / parent dir
@@ -277,6 +278,7 @@ public class BundlerTest extends TestCase {
 		testResult("/root/loadJson.esm", 1.0, resolver, loader);
 
 		testResult("/root/thisIsUndefined.js", null, resolver, loader);
+		testResult("/root/test_name_collision.js", 10.0, resolver, loader);
 		testResultPierced("/root/circular1.js", 12.0, resolver, loader);
 		testResultPierced("/root/circular2.js", Double.NaN, resolver, loader);
 		testResultPierced("/root/renaming.js", 15.0, resolver, loader);
