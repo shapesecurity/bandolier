@@ -11,53 +11,44 @@ import com.shapesecurity.shift.es2017.scope.GlobalScope;
 import com.shapesecurity.shift.es2017.scope.Reference;
 import com.shapesecurity.shift.es2017.scope.Scope;
 import com.shapesecurity.shift.es2017.scope.ScopeLookup;
+import com.shapesecurity.shift.es2017.scope.Variable;
 
 // renames all identifiers given some map
 public class VariableRenamingReducer extends ReconstructingReducer {
 
 	@Nonnull
-	private final HashTable<String, String> mapping;
+	private final HashTable<Variable, String> mapping;
 	@Nonnull
-	private final Maybe<ScopeLookup> lookup;
+	private final Maybe<Variable> defaultVariable;
 	@Nonnull
-	private final Maybe<GlobalScope> globalScope;
+	private final ScopeLookup lookup;
 
-	public VariableRenamingReducer(@Nonnull HashTable<String, String> mapping, @Nonnull Maybe<ScopeLookup> lookup, @Nonnull Maybe<GlobalScope> globalScope) {
+	public VariableRenamingReducer(@Nonnull HashTable<Variable, String> mapping, @Nonnull Maybe<Variable> defaultVariable, @Nonnull ScopeLookup lookup) {
 		this.mapping = mapping;
+		this.defaultVariable = defaultVariable;
 		this.lookup = lookup;
-		this.globalScope = globalScope;
 	}
 
 	@Nonnull
 	@Override
 	public AssignmentTargetIdentifier reduceAssignmentTargetIdentifier(@Nonnull AssignmentTargetIdentifier node) {
-		if (lookup.isJust()) {
-			Scope scope = lookup.fromJust().findScopeFor(node).orJust(globalScope.fromJust());
-			if (scope.isGlobal() && scope.through.get(node.name).map(list -> (ImmutableList<Reference>) list).orJustLazy(ImmutableList::empty).find(reference -> reference.node == node).isJust()) {
-				return new AssignmentTargetIdentifier(node.name);
-			}
-		}
-		Maybe<String> newName = mapping.get(node.name);
+		Maybe<String> newName = mapping.get(lookup.findVariableReferencedBy(node));
 		return new AssignmentTargetIdentifier(newName.orJust(node.name));
 	}
 
 	@Nonnull
 	@Override
 	public IdentifierExpression reduceIdentifierExpression(@Nonnull IdentifierExpression node) {
-		if (lookup.isJust()) {
-			Scope scope = lookup.fromJust().findScopeFor(node).orJust(globalScope.fromJust());
-			if (scope.isGlobal() && scope.through.get(node.name).map(list -> (ImmutableList<Reference>) list).orJustLazy(ImmutableList::empty).find(reference -> reference.node == node).isJust()) {
-				return new IdentifierExpression(node.name);
-			}
-		}
-		Maybe<String> newName = mapping.get(node.name);
+		Maybe<String> newName = mapping.get(lookup.findVariableReferencedBy(node));
 		return new IdentifierExpression(newName.orJust(node.name));
 	}
 
 	@Nonnull
 	@Override
 	public BindingIdentifier reduceBindingIdentifier(@Nonnull BindingIdentifier node) {
-		Maybe<String> newName = mapping.get(node.name);
+		Maybe<String> newName = defaultVariable.isJust() && node.name.equals("*default*") ?
+			Maybe.of(defaultVariable.fromJust().name) :
+			lookup.findVariableDeclaredBy(node).flatMap(mapping::get);
 		return new BindingIdentifier(newName.orJust(node.name));
 	}
 
@@ -81,7 +72,7 @@ public class VariableRenamingReducer extends ReconstructingReducer {
 	@Nonnull
 	@Override
 	public ExportFromSpecifier reduceExportFromSpecifier(@Nonnull ExportFromSpecifier node) {
-		return new ExportFromSpecifier(node.name, node.exportedName.map(exportedName -> mapping.get(exportedName).orJust(node.exportedName.fromJust())));
+		return new ExportFromSpecifier(node.name, node.exportedName);
 	}
 
 	@Nonnull
@@ -89,7 +80,7 @@ public class VariableRenamingReducer extends ReconstructingReducer {
 	public ExportLocalSpecifier reduceExportLocalSpecifier(
 			@Nonnull ExportLocalSpecifier node,
 			@Nonnull Node name) {
-		return new ExportLocalSpecifier((IdentifierExpression) name, node.exportedName.map(exportedName -> mapping.get(exportedName).orJust(node.exportedName.fromJust())));
+		return new ExportLocalSpecifier((IdentifierExpression) name, node.exportedName);
 	}
 
 	@Nonnull
