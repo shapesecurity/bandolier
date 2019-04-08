@@ -77,7 +77,7 @@ public class VariableNameGenerator implements Iterator<String> {
 	public String next() {
 		String identifier;
 		do {
-			StringBuilder identifierBuilder = new StringBuilder();
+			StringBuilder identifierBuilder = new StringBuilder("_");
 			int currentOrdinal = ordinal;
 			for (int i = 0; i < currentLength; i++) {
 				identifierBuilder.append(alphabet[currentOrdinal % lengthPower]);

@@ -15,7 +15,6 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
-import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
 import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
@@ -115,6 +114,18 @@ public class BundlerTest extends TestCase {
 		modules.put("/root/normalizing/js1.js", "import './js2.js'; import '../normalizing/js2.js';");
 		modules.put("/root/normalizing/js2.js", "");
 		modules.put("/root/test_name_collision.js", "import * as x from '/root/test_name_collision.js'; export var result = (function(){var e = 5; e = 10; return e;})()");
+		modules.put("/root/shadowing/a.js", "export function a() {return 142;}; export var Math = 1;");
+		modules.put("/root/shadowing/b.js", "import { a as b } from './a.js';\n" +
+			"export var result = (function () {\n" +
+			"  return (function a() {\n" +
+			"    return b();\n" +
+			"  })();\n" +
+			"})();");
+		modules.put("/root/shadowing/c.js", "import { a as b, Math as x } from './a.js';\n" +
+			"export var result = Math.pow(b(), x); (function(){var Math = {};})();");
+		modules.put("/root/shadowing/d.js", "export function a() {return 142;}; export var Math = { pow: function(z, w){ return z + w; } };");
+		modules.put("/root/shadowing/e.js", "import { a as b, Math } from './d.js';\n" +
+			"export var result = Math.pow(b(), 2); (function(){var Math = {};})();");
 		loader = new TestLoader(modules);
 	}
 
@@ -198,84 +209,84 @@ public class BundlerTest extends TestCase {
 		String actualPiercedDangerously = TestUtils.toString(TestUtils.bundlePierced(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), "/js1.js", resolver, localLoader));
 		String actualStandard = TestUtils.toString(TestUtils.bundleStandard(BundlerOptions.SPEC_OPTIONS, "/js1.js", resolver, localLoader));
 
-		String expectedPierced = "(function(t){\n" +
-				"\"use strict\";\n" +
-				"var d=\"d\";\n" +
-				"var c=\"c\"+d;\n" +
-				"var b=\"b\"+d;\n" +
-				"var result=\"a\"+b+c;\n" +
-				"var o={\n" +
-				"__proto__:null,result:result};\n" +
-				"if(t.Symbol)t.Object.defineProperty(o,t.Symbol.toStringTag,{\n" +
-				"value:\"Module\"});\n" +
-				"o=t.Object.freeze(o);\n" +
-				"return o;\n" +
-				"}(this));\n";
+		String expectedPierced = "(function(_t){\n" +
+			"\"use strict\";\n" +
+			"var d=\"d\";\n" +
+			"var c=\"c\"+d;\n" +
+			"var b=\"b\"+d;\n" +
+			"var result=\"a\"+b+c;\n" +
+			"var _o={\n" +
+			"__proto__:null,result:result};\n" +
+			"if(_t.Symbol)_t.Object.defineProperty(_o,_t.Symbol.toStringTag,{\n" +
+			"value:\"Module\"});\n" +
+			"_o=_t.Object.freeze(_o);\n" +
+			"return _o;\n" +
+			"}(this));\n";
 
-		String expectedPiercedDangerously = "(function(t){\n" +
-				"\"use strict\";\n" +
-				"var d=\"d\";\n" +
-				"var c=\"c\"+d;\n" +
-				"var b=\"b\"+d;\n" +
-				"var result=\"a\"+b+c;\n" +
-				"var o={\n" +
-				"__proto__:null,result:result};\n" +
-				"return o;\n" +
-				"}(this));\n";
+		String expectedPiercedDangerously = "(function(_t){\n" +
+			"\"use strict\";\n" +
+			"var d=\"d\";\n" +
+			"var c=\"c\"+d;\n" +
+			"var b=\"b\"+d;\n" +
+			"var result=\"a\"+b+c;\n" +
+			"var _o={\n" +
+			"__proto__:null,result:result};\n" +
+			"return _o;\n" +
+			"}(this));\n";
 
 		String expectedStandard = "(function(global){\n" +
-				"\"use strict\";\n" +
-				"function require(file,parentModule){\n" +
-				"if({\n" +
-				"}.hasOwnProperty.call(require.cache,file))return require.cache[file];\n" +
-				"var resolved=require.resolve(file);\n" +
-				"if(!resolved)throw new Error(\"Failed to resolve module \"+file);\n" +
-				"var module$={\n" +
-				"id:file,require:require,filename:file,exports:{\n" +
-				"},loaded:false,parent:parentModule,children:[]};\n" +
-				"if(parentModule)parentModule.children.push(module$);\n" +
-				"var dirname=file.slice(0,file.lastIndexOf(\"/\")+1);\n" +
-				"require.cache[file]=module$.exports;\n" +
-				"resolved.call(void 0,module$,module$.exports,dirname,file);\n" +
-				"module$.loaded=true;\n" +
-				"return require.cache[file]=module$.exports;\n" +
-				"}require.modules={\n" +
-				"};\n" +
-				"require.cache={\n" +
-				"};\n" +
-				"require.resolve=function(file){\n" +
-				"return{\n" +
-				"}.hasOwnProperty.call(require.modules,file)?require.modules[file]:void 0;\n" +
-				"};\n" +
-				"require.define=function(file,fn){\n" +
-				"require.modules[file]=fn;\n" +
-				"};\n" +
-				"require.define(\"1\",function(module,exports,__dirname,__filename){\n" +
-				"var __resolver=require(\"2\",module);\n" +
-				"var b=__resolver[\"b\"];\n" +
-				"var __resolver=require(\"3\",module);\n" +
-				"var c=__resolver[\"c\"];\n" +
-				"var result=\"a\"+b+c;\n" +
-				"exports[\"result\"]=result;\n" +
-				"});\n" +
-				"require.define(\"2\",function(module,exports,__dirname,__filename){\n" +
-				"var __resolver=require(\"4\",module);\n" +
-				"var d=__resolver[\"d\"];\n" +
-				"var b=\"b\"+d;\n" +
-				"exports[\"b\"]=b;\n" +
-				"});\n" +
-				"require.define(\"3\",function(module,exports,__dirname,__filename){\n" +
-				"var __resolver=require(\"4\",module);\n" +
-				"var d=__resolver[\"d\"];\n" +
-				"var c=\"c\"+d;\n" +
-				"exports[\"c\"]=c;\n" +
-				"});\n" +
-				"require.define(\"4\",function(module,exports,__dirname,__filename){\n" +
-				"var d=\"d\";\n" +
-				"exports[\"d\"]=d;\n" +
-				"});\n" +
-				"return require(\"1\");\n" +
-				"}.call(this,this));\n";
+			"\"use strict\";\n" +
+			"function require(file,parentModule){\n" +
+			"if({\n" +
+			"}.hasOwnProperty.call(require.cache,file))return require.cache[file];\n" +
+			"var resolved=require.resolve(file);\n" +
+			"if(!resolved)throw new Error(\"Failed to resolve module \"+file);\n" +
+			"var module$={\n" +
+			"id:file,require:require,filename:file,exports:{\n" +
+			"},loaded:false,parent:parentModule,children:[]};\n" +
+			"if(parentModule)parentModule.children.push(module$);\n" +
+			"var dirname=file.slice(0,file.lastIndexOf(\"/\")+1);\n" +
+			"require.cache[file]=module$.exports;\n" +
+			"resolved.call(void 0,module$,module$.exports,dirname,file);\n" +
+			"module$.loaded=true;\n" +
+			"return require.cache[file]=module$.exports;\n" +
+			"}require.modules={\n" +
+			"};\n" +
+			"require.cache={\n" +
+			"};\n" +
+			"require.resolve=function(file){\n" +
+			"return{\n" +
+			"}.hasOwnProperty.call(require.modules,file)?require.modules[file]:void 0;\n" +
+			"};\n" +
+			"require.define=function(file,fn){\n" +
+			"require.modules[file]=fn;\n" +
+			"};\n" +
+			"require.define(\"1\",function(module,exports,__dirname,__filename){\n" +
+			"var __resolver=require(\"2\",module);\n" +
+			"var b=__resolver[\"b\"];\n" +
+			"var __resolver=require(\"3\",module);\n" +
+			"var c=__resolver[\"c\"];\n" +
+			"var result=\"a\"+b+c;\n" +
+			"exports[\"result\"]=result;\n" +
+			"});\n" +
+			"require.define(\"2\",function(module,exports,__dirname,__filename){\n" +
+			"var __resolver=require(\"4\",module);\n" +
+			"var d=__resolver[\"d\"];\n" +
+			"var b=\"b\"+d;\n" +
+			"exports[\"b\"]=b;\n" +
+			"});\n" +
+			"require.define(\"3\",function(module,exports,__dirname,__filename){\n" +
+			"var __resolver=require(\"4\",module);\n" +
+			"var d=__resolver[\"d\"];\n" +
+			"var c=\"c\"+d;\n" +
+			"exports[\"c\"]=c;\n" +
+			"});\n" +
+			"require.define(\"4\",function(module,exports,__dirname,__filename){\n" +
+			"var d=\"d\";\n" +
+			"exports[\"d\"]=d;\n" +
+			"});\n" +
+			"return require(\"1\");\n" +
+			"}.call(this,this));\n";
 
 		assertEquals(expectedPierced, actualPierced);
 		assertEquals(expectedPiercedDangerously, actualPiercedDangerously);
@@ -310,6 +321,9 @@ public class BundlerTest extends TestCase {
 
 		testResult("/root/thisIsUndefined.js", null, resolver, loader);
 		testResult("/root/test_name_collision.js", 10.0, resolver, loader);
+		testResult("/root/shadowing/b.js", 142., resolver, loader);
+		testResult("/root/shadowing/c.js", 142., resolver, loader);
+		testResult("/root/shadowing/e.js", 144., resolver, loader);
 		testResultPierced("/root/circular1.js", 12.0, resolver, loader);
 		testResultPierced("/root/circular2.js", Double.NaN, resolver, loader);
 		testResultPierced("/root/renaming.js", 15.0, resolver, loader);

@@ -54,15 +54,15 @@ public class DeadCodeEliminationTest {
 
 	@Test
 	public void testImports() {
-		testBundled(BundlerOptions.DEFAULT_OPTIONS, "/js1.js", "(function(e){\n" +
-				"\"use strict\";\n" +
-				"var t={\n" +
-				"__proto__:null};\n" +
-				"if(e.Symbol)e.Object.defineProperty(t,e.Symbol.toStringTag,{\n" +
-				"value:\"Module\"});\n" +
-				"t=e.Object.freeze(t);\n" +
-				"return t;\n" +
-				"}(this));\n");
+		testBundled(BundlerOptions.DEFAULT_OPTIONS, "/js1.js", "(function(_e){\n" +
+			"\"use strict\";\n" +
+			"var _t={\n" +
+			"__proto__:null};\n" +
+			"if(_e.Symbol)_e.Object.defineProperty(_t,_e.Symbol.toStringTag,{\n" +
+			"value:\"Module\"});\n" +
+			"_t=_e.Object.freeze(_t);\n" +
+			"return _t;\n" +
+			"}(this));\n");
 	}
 
 	@Test
