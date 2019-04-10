@@ -18,8 +18,10 @@ import com.shapesecurity.shift.es2017.scope.ScopeLookup;
 import com.shapesecurity.shift.es2017.scope.Variable;
 
 import javax.annotation.Nonnull;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 // determines all declared global variables for a module, linked to a scope analysis variable
 public class VariableDeclarationExtractor {
@@ -31,8 +33,13 @@ public class VariableDeclarationExtractor {
 	public static MultiHashTable<String, Variable> extractAllDeclaredVariables(@Nonnull Scope globalScope) {
 		return globalScope.children.foldLeft(
 			(acc, scope) -> acc.merge(extractAllDeclaredVariables(scope)),
-			ImmutableList.from(globalScope.variables().toArray(new Variable[0]))
-				.filter(variable -> variable.declarations.length > 0 && !variable.declarations.exists(declaration -> declaration.kind == Declaration.Kind.Import))
+			ImmutableList.from(StreamSupport.stream(
+				ImmutableList.from(globalScope.variables().toArray(new Variable[0]))
+					.filter(variable -> variable.declarations.length > 0 && !variable.declarations.exists(declaration -> declaration.kind == Declaration.Kind.Import))
+					.spliterator(),
+				false
+			)
+				.sorted(Comparator.naturalOrder()).collect(Collectors.toList()))
 				.foldLeft((acc, variable) -> acc.put(variable.name, variable), MultiHashTable.emptyUsingEquality())
 		);
 	}

@@ -13,6 +13,9 @@ import com.shapesecurity.shift.es2017.scope.ScopeLookup;
 import com.shapesecurity.shift.es2017.scope.Variable;
 
 import javax.annotation.Nonnull;
+import java.util.Comparator;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 // detects and resolves variable conflicts in a set of modules
 public class VariableCollisionResolver {
@@ -52,15 +55,26 @@ public class VariableCollisionResolver {
 		HashTable<Module, GlobalScope> globalScopes = modules.foldLeft((acc, pair) -> acc.put(pair.right, ScopeAnalyzer.analyze(pair.right)), HashTable.emptyUsingIdentity());
 		HashTable<Module, ScopeLookup> scopeLookups = modules.foldLeft((acc, pair) -> acc.put(pair.right, new ScopeLookup(globalScopes.get(pair.right).fromJust())), HashTable.emptyUsingIdentity());
 		ImmutableSet<String> allNames = modules.foldLeft((acc, module) -> acc.union(VariableReferenceExtractor.extractAllReferencedVariableNames(globalScopes.get(module.right).fromJust())), ImmutableSet.emptyUsingEquality());
+		ImmutableList<Module> sortedModules = ImmutableList.from(StreamSupport.stream(modules.entries().spliterator(), false).sorted(Comparator.comparing(pair1 -> pair1.left)).map(pair -> pair.right).collect(Collectors.toList()));
 
-		HashTable<String, ImmutableSet<Pair<Module, ImmutableList<Variable>>>> allDeclaredVariables = modules.foldLeft((acc, module) ->
-			VariableDeclarationExtractor.extractAllDeclaredVariables(globalScopes.get(module.right).fromJust()).entries()
+		HashTable<String, ImmutableList<Pair<Module, ImmutableList<Variable>>>> allDeclaredVariables = sortedModules.foldLeft((acc, module) ->
+			VariableDeclarationExtractor.extractAllDeclaredVariables(globalScopes.get(module).fromJust()).entries()
 				.foldLeft((subAcc, pair) ->
-					subAcc.put(pair.left, Pair.of(module.right, pair.right)),
+					subAcc.put(pair.left, Pair.of(
+						module,
+						pair.right
+					)),
 					acc
 				),
 			MultiHashTable.<String, Pair<Module, ImmutableList<Variable>>>emptyUsingEquality()
-		).toHashTable(ImmutableList::uniqByEquality);
+		).toHashTable(list -> list);
+
+		ImmutableList<Pair<String, ImmutableList<Pair<Module, ImmutableList<Variable>>>>> allDeclaredVariablesEntriesSorted =
+			ImmutableList.from(
+				StreamSupport.stream(allDeclaredVariables.entries().spliterator(), false)
+				.sorted(Comparator.comparing(pair1 -> pair1.left))
+				.collect(Collectors.toList())
+			);
 
 		ImmutableSet<Variable> throughVariables = globalScopes.foldLeft((acc, pair) -> acc.union(pair.right.through.foldLeft((subAcc, subPair) -> subAcc.putAll(subPair.right.map(reference -> {
 			ScopeLookup lookup = scopeLookups.get(pair.left).fromJust();
@@ -69,21 +83,24 @@ public class VariableCollisionResolver {
 				lookup.findVariableReferencedBy((AssignmentTargetIdentifier) reference.node);
 		})), acc)), ImmutableSet.emptyUsingIdentity());
 
+		ImmutableList<Variable> throughVariablesSorted = ImmutableList.from(StreamSupport.stream(throughVariables.spliterator(), false)
+			.sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
+
 		VariableNameGenerator nameGenerator = new VariableNameGenerator(allNames.union(throughVariables.map(variable -> variable.name)));
 
 		HashTable<Module, HashTable<Variable, String>> renamingMaps =
-			allDeclaredVariables.entries().filter(pair -> pair.right.length() > 1)
-			.map(pair -> pair.right.toList().maybeTail().fromJust())
+			allDeclaredVariablesEntriesSorted.filter(pair -> pair.right.length > 1)
+			.map(pair -> pair.right.maybeTail().fromJust())
 			.foldLeft((acc, item) ->
 				item.foldLeft((subAcc, pair) ->
 					extractAndRenameVariables(nameGenerator, subAcc, pair.left, pair.right),
 					acc
 				),
-				throughVariables.foldAbelian((variable, acc) ->
+				throughVariablesSorted.foldLeft((acc, variable) ->
 						allDeclaredVariables.get(variable.name).maybe(acc, declarations ->
 							acc.merge(
-								declarations.foldAbelian(
-									(pair, subAcc) ->
+								declarations.foldLeft(
+									(subAcc, pair) ->
 										extractAndRenameVariables(nameGenerator, subAcc, pair.left, pair.right),
 										acc
 								)
