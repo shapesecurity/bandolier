@@ -17,6 +17,8 @@ import com.shapesecurity.shift.es2017.scope.*;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 // connects a list of modules via import/export statements.
 public class ImportExportConnector {
@@ -312,11 +314,14 @@ public class ImportExportConnector {
 		// current renaming map, to be applied at end
 		HashTable<Variable, String> renamingMap = HashTable.emptyUsingEquality();
 
+		ImmutableList<Module> sortedModules = ImmutableList.from(StreamSupport.stream(specifierToModule.entries().spliterator(), false).sorted(Comparator.comparing(pair1 -> pair1.left)).map(pair -> pair.right).collect(Collectors.toList()));
+
 		// all keys in the invertedOriginalRenamingMaps's submaps are generated variable names that are guaranteed to be unique, so no collisions will happen
 		HashTable<Module, HashTable<String, Variable>> invertedOriginalRenamingMaps = originalRenamingMap.map(map -> map.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingEquality()));
 
 		// variables that represent default exports, but not considered by scope analysis
-		HashTable<Module, Variable> moduleDefaults = modules.foldAbelian((module, acc) -> acc.put(module, new Variable(nameGenerator.next(), ImmutableList.empty(), ImmutableList.empty())), HashTable.emptyUsingIdentity());
+		// variables are created indexed negative to the sorted order to not conflict with scope analysis indices
+		HashTable<Module, Variable> moduleDefaults = sortedModules.foldLeft((acc, module) -> acc.put(module, new Variable(nameGenerator.next(), ImmutableList.empty(), ImmutableList.empty(), -acc.length - 1)), HashTable.emptyUsingIdentity());
 
 		// perform initial export extraction and prepare for proxy export resolution
 		for (Module module : modules) {
