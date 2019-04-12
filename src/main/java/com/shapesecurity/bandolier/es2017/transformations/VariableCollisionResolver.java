@@ -8,11 +8,13 @@ import com.shapesecurity.shift.es2017.ast.IdentifierExpression;
 import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.reducer.Director;
 import com.shapesecurity.shift.es2017.scope.GlobalScope;
+import com.shapesecurity.shift.es2017.scope.Reference;
 import com.shapesecurity.shift.es2017.scope.ScopeAnalyzer;
 import com.shapesecurity.shift.es2017.scope.ScopeLookup;
 import com.shapesecurity.shift.es2017.scope.Variable;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -51,6 +53,24 @@ public class VariableCollisionResolver {
 		);
 	}
 
+	private static ImmutableList<Variable> throughVariables(ScopeLookup lookup, GlobalScope moduleScope) {
+		return orderedEntries(moduleScope.through).map(throughItem -> {
+			Reference reference = throughItem.right.head;
+			return reference.node instanceof IdentifierExpression ?
+				lookup.findVariableReferencedBy((IdentifierExpression) reference.node) :
+				lookup.findVariableReferencedBy((AssignmentTargetIdentifier) reference.node);
+		});
+	}
+
+	private static <K extends Comparable<K>, V> ImmutableList<Pair<K, V>> orderedEntries(@Nonnull HashTable<K, V> table) {
+		ArrayList<Pair<K, V>> entries = new ArrayList<>(table.length);
+		for (Pair<K, V> entry : table) {
+			entries.add(entry);
+		}
+		entries.sort(Comparator.comparing(p -> p.left));
+		return ImmutableList.from(entries);
+	}
+
 	public static ResolvedResult resolveCollisions(@Nonnull HashTable<String, Module> modules) {
 		HashTable<Module, GlobalScope> globalScopes = modules.foldLeft((acc, pair) -> acc.put(pair.right, ScopeAnalyzer.analyze(pair.right)), HashTable.emptyUsingIdentity());
 		HashTable<Module, ScopeLookup> scopeLookups = modules.foldLeft((acc, pair) -> acc.put(pair.right, new ScopeLookup(globalScopes.get(pair.right).fromJust())), HashTable.emptyUsingIdentity());
@@ -76,17 +96,11 @@ public class VariableCollisionResolver {
 				.collect(Collectors.toList())
 			);
 
-		ImmutableSet<Variable> throughVariables = globalScopes.foldLeft((acc, pair) -> acc.union(pair.right.through.foldLeft((subAcc, subPair) -> subAcc.putAll(subPair.right.map(reference -> {
-			ScopeLookup lookup = scopeLookups.get(pair.left).fromJust();
-			return reference.node instanceof IdentifierExpression ?
-				lookup.findVariableReferencedBy((IdentifierExpression) reference.node) :
-				lookup.findVariableReferencedBy((AssignmentTargetIdentifier) reference.node);
-		})), acc)), ImmutableSet.emptyUsingIdentity());
+		ImmutableList<Variable> throughVariables = sortedModules.foldLeft((acc, module) -> acc.append(
+			throughVariables(scopeLookups.get(module).fromJust(), globalScopes.get(module).fromJust())
+		), ImmutableList.empty());
 
-		ImmutableList<Variable> throughVariablesSorted = ImmutableList.from(StreamSupport.stream(throughVariables.spliterator(), false)
-			.sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
-
-		VariableNameGenerator nameGenerator = new VariableNameGenerator(allNames.union(throughVariables.map(variable -> variable.name)));
+		VariableNameGenerator nameGenerator = new VariableNameGenerator(allNames.union(throughVariables.map(variable -> variable.name).uniqByEquality()));
 
 		HashTable<Module, HashTable<Variable, String>> renamingMaps =
 			allDeclaredVariablesEntriesSorted.filter(pair -> pair.right.length > 1)
@@ -96,7 +110,7 @@ public class VariableCollisionResolver {
 					extractAndRenameVariables(nameGenerator, subAcc, pair.left, pair.right),
 					acc
 				),
-				throughVariablesSorted.foldLeft((acc, variable) ->
+				throughVariables.foldLeft((acc, variable) ->
 						allDeclaredVariables.get(variable.name).maybe(acc, declarations ->
 							acc.merge(
 								declarations.foldLeft(
