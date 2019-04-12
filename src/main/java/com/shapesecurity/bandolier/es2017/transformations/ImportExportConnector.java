@@ -320,8 +320,7 @@ public class ImportExportConnector {
 		HashTable<Module, HashTable<String, Variable>> invertedOriginalRenamingMaps = originalRenamingMap.map(map -> map.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingEquality()));
 
 		// variables that represent default exports, but not considered by scope analysis
-		// variables are created indexed negative to the sorted order to not conflict with scope analysis indices
-		HashTable<Module, Variable> moduleDefaults = sortedModules.foldLeft((acc, module) -> acc.put(module, new Variable(nameGenerator.next(), ImmutableList.empty(), ImmutableList.empty(), -acc.length - 1)), HashTable.emptyUsingIdentity());
+		HashTable<Module, Variable> moduleDefaults = sortedModules.foldLeft((acc, module) -> acc.put(module, new Variable(nameGenerator.next(), ImmutableList.empty(), ImmutableList.empty())), HashTable.emptyUsingIdentity());
 
 		// perform initial export extraction and prepare for proxy export resolution
 		for (Module module : modules) {
@@ -426,7 +425,6 @@ public class ImportExportConnector {
 		}
 
 		// build dependency graph
-		HashMap<Module, HashSet<Module>> dependedBy = new HashMap<>();
 		HashMap<Module, LinkedList<Module>> dependingOn = new HashMap<>();
 		for (Module module : modules) {
 			LinkedList<Module> dependents = null;
@@ -444,7 +442,6 @@ public class ImportExportConnector {
 						moduleSpecifier = ((ExportAllFrom) item).moduleSpecifier;
 					}
 					Module from = specifierToModule.get(moduleSpecifier).fromJust();
-					dependedBy.computeIfAbsent(from, mod -> new HashSet<>()).add(module);
 					dependents.add(from);
 				}
 			}
