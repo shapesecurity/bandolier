@@ -484,7 +484,9 @@ public class ImportExportConnector {
 		HashSet<VariableReference> unresolvedImportReferences = new HashSet<>();
 
 		HashSet<Module> usedExportModules = new HashSet<>();
-		usedExportModules.add(entrypoint);
+		if (options.exportStrategy != BundlerOptions.ExportStrategy.NONE) {
+			usedExportModules.add(entrypoint);
+		}
 
 		HashSet<Module> nonSelfDependentModules = new HashSet<>();
 
@@ -797,9 +799,12 @@ public class ImportExportConnector {
 			statements = finalAppend.foldLeft(ImmutableList::cons, statements);
 		}
 
-		Script script = new Script(ImmutableList.of(new Directive("use strict")), statements.cons(
-				new ReturnStatement(Maybe.of(new IdentifierExpression(moduleExportReference.get(entrypoint).fromJust())))
-		).reverse());
+		if (options.exportStrategy != BundlerOptions.ExportStrategy.NONE) {
+			statements = statements.cons(
+					new ReturnStatement(Maybe.of(new IdentifierExpression(moduleExportReference.get(entrypoint).fromJust())))
+			);
+		}
+		Script script = new Script(ImmutableList.of(new Directive("use strict")), statements.reverse());
 
 		return Pair.of(script, globalBinding);
 	}

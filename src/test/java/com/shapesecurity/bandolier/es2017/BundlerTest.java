@@ -394,4 +394,18 @@ public class BundlerTest extends TestCase {
 				"return _t;\n" +
 				"}(this));\n", bundledWithoutRealNamespace);
 	}
+
+	public void testNoExports() throws Exception {
+		Path path = Paths.get("/root/lib1/js1.js");
+		String source = loader.loadResource(path);
+		BundlerOptions options = BundlerOptions.DEFAULT_OPTIONS.withExportStrategy(BundlerOptions.ExportStrategy.NONE);
+
+		String bundledWithoutExports = TestUtils.toString(Bundler.bundleModule(options, Parser.parseModule(source), path, resolver, loader, new PiercedModuleBundler()));
+		assertEquals("(function(_e){\n" +
+				"\"use strict\";\n" +
+				"var b=100;\n" +
+				"var result=42+b;\n" +
+				"}(this));\n", bundledWithoutExports);
+	}
+
 }

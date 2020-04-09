@@ -13,7 +13,8 @@ public final class BundlerOptions {
 
 	public enum ExportStrategy {
 		EXPLICIT,
-		ALL_GLOBALS
+		ALL_GLOBALS,
+		NONE,
 	}
 
 	public enum DangerLevel {
@@ -61,6 +62,10 @@ public final class BundlerOptions {
 	}
 
 	public BundlerOptions withRealNamespaceObjects(boolean realNamespaceObjects) {
+		return new BundlerOptions(importUnresolvedResolutionStrategy, exportStrategy, dangerLevel, throwOnCircularDependency, throwOnImportAssignment, realNamespaceObjects);
+	}
+
+	public BundlerOptions withExportStrategy(ExportStrategy exportStrategy) {
 		return new BundlerOptions(importUnresolvedResolutionStrategy, exportStrategy, dangerLevel, throwOnCircularDependency, throwOnImportAssignment, realNamespaceObjects);
 	}
 }
