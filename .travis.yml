@@ -4,4 +4,4 @@ before_script:
   - curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh | bash
   - bash scripts/check-version.sh
 jdk:
-  - oraclejdk8
+  - openjdk8
