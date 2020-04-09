@@ -673,20 +673,27 @@ public class ImportExportConnector {
 			Pair<Module, ImmutableList<ObjectProperty>> reducedModulePair = reducedModuleMap.get(module);
 			ImmutableList<Statement> finalAppend = ImmutableList.empty();
 			if (usedExportModules.contains(module)) {
+				ImmutableList<ObjectProperty> properties = reducedModulePair.right;
+				if (options.realNamespaceObjects) {
+					properties = properties.cons(new DataProperty(new StaticPropertyName("__proto__"), new LiteralNullExpression()));
+				}
+				Statement namespaceDeclaration = new VariableDeclarationStatement(new VariableDeclaration(
+						VariableDeclarationKind.Var,
+						ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportName), Maybe.of(new ObjectExpression(properties))))
+				));
 				// declare export object if safe
 				if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE) {
 
 					if (!nonSelfDependentModules.contains(module)) { // TDZ required
-						statements = statements.cons(new VariableDeclarationStatement(new VariableDeclaration(
-								VariableDeclarationKind.Var,
-								ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportName), Maybe.of(new ObjectExpression(reducedModulePair.right.cons(new DataProperty(new StaticPropertyName("__proto__"), new LiteralNullExpression()))))))
-						)));
+						statements = statements.cons(namespaceDeclaration);
 
-						// set toStringTag
-						statements = statements.cons(new IfStatement(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), new ExpressionStatement(new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "defineProperty"), ImmutableList.of(new IdentifierExpression(exportName), new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), "toStringTag"), new ObjectExpression(ImmutableList.of(new DataProperty(new StaticPropertyName("value"), new LiteralStringExpression("Module"))))))), Maybe.empty()));
+						if (options.realNamespaceObjects) {
+							// set toStringTag
+							statements = statements.cons(new IfStatement(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), new ExpressionStatement(new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "defineProperty"), ImmutableList.of(new IdentifierExpression(exportName), new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), "toStringTag"), new ObjectExpression(ImmutableList.of(new DataProperty(new StaticPropertyName("value"), new LiteralStringExpression("Module"))))))), Maybe.empty()));
 
-						// freeze export object
-						statements = statements.cons(new ExpressionStatement(new AssignmentExpression(new AssignmentTargetIdentifier(exportName), new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "freeze"), ImmutableList.of(new IdentifierExpression(exportName))))));
+							// freeze export object
+							statements = statements.cons(new ExpressionStatement(new AssignmentExpression(new AssignmentTargetIdentifier(exportName), new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "freeze"), ImmutableList.of(new IdentifierExpression(exportName))))));
+						}
 
 						// declare export initialisation object
 						statements = statements.cons(new VariableDeclarationStatement(new VariableDeclaration(
@@ -694,27 +701,23 @@ public class ImportExportConnector {
 								ImmutableList.of(new VariableDeclarator(new BindingIdentifier(moduleExportDefinedName.get(module).fromJust()), Maybe.of(new ObjectExpression(ImmutableList.empty()))))
 						)));
 					} else {
-						finalAppend = finalAppend.cons(new VariableDeclarationStatement(new VariableDeclaration(
-								VariableDeclarationKind.Var,
-								ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportName), Maybe.of(new ObjectExpression(reducedModulePair.right.cons(new DataProperty(new StaticPropertyName("__proto__"), new LiteralNullExpression()))))))
-						)));
+						finalAppend = finalAppend.cons(namespaceDeclaration);
 
-						// set toStringTag
-						finalAppend = finalAppend.cons(new IfStatement(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), new ExpressionStatement(new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "defineProperty"), ImmutableList.of(new IdentifierExpression(exportName), new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), "toStringTag"), new ObjectExpression(ImmutableList.of(new DataProperty(new StaticPropertyName("value"), new LiteralStringExpression("Module"))))))), Maybe.empty()));
+						if (options.realNamespaceObjects) {
+							// set toStringTag
+							finalAppend = finalAppend.cons(new IfStatement(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), new ExpressionStatement(new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "defineProperty"), ImmutableList.of(new IdentifierExpression(exportName), new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Symbol"), "toStringTag"), new ObjectExpression(ImmutableList.of(new DataProperty(new StaticPropertyName("value"), new LiteralStringExpression("Module"))))))), Maybe.empty()));
 
-						// freeze export object
-						finalAppend = finalAppend.cons(new ExpressionStatement(new AssignmentExpression(new AssignmentTargetIdentifier(exportName), new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "freeze"), ImmutableList.of(new IdentifierExpression(exportName))))));
+							// freeze export object
+							finalAppend = finalAppend.cons(new ExpressionStatement(new AssignmentExpression(new AssignmentTargetIdentifier(exportName), new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "freeze"), ImmutableList.of(new IdentifierExpression(exportName))))));
+						}
 
 						finalAppend = finalAppend.reverse();
 					}
 				} else {
-					finalAppend = finalAppend.cons(new VariableDeclarationStatement(new VariableDeclaration(
-							VariableDeclarationKind.Var,
-							ImmutableList.of(new VariableDeclarator(new BindingIdentifier(exportName), Maybe.of(new ObjectExpression(reducedModulePair.right.cons(new DataProperty(new StaticPropertyName("__proto__"), new LiteralNullExpression()))))))
-					)));
+					finalAppend = finalAppend.cons(namespaceDeclaration);
 
 					// freeze export object
-					if (options.dangerLevel == BundlerOptions.DangerLevel.BALANCED) {
+					if (options.realNamespaceObjects && options.dangerLevel == BundlerOptions.DangerLevel.BALANCED) {
 						finalAppend = finalAppend.cons(new ExpressionStatement(new AssignmentExpression(new AssignmentTargetIdentifier(exportName), new CallExpression(new StaticMemberExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "Object"), "freeze"), ImmutableList.of(new IdentifierExpression(exportName))))));
 						finalAppend = finalAppend.reverse();
 					}

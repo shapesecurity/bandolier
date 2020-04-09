@@ -15,6 +15,7 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
+import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
 import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
@@ -33,6 +34,7 @@ import org.junit.Test;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -363,4 +365,33 @@ public class BundlerTest extends TestCase {
 		assertEquals(ImmutableList.of("/root/normalizing/js1.js", "/root/normalizing/js2.js"), dependentPaths);
 	}
 
+	public void testNoFreezing() throws Exception {
+		Path path = Paths.get("/root/lib1/js1.js");
+		String source = loader.loadResource(path);
+		BundlerOptions options = BundlerOptions.DEFAULT_OPTIONS;
+
+		String bundledWithRealNamespace = TestUtils.toString(Bundler.bundleModule(options, Parser.parseModule(source), path, resolver, loader, new PiercedModuleBundler()));
+		assertEquals("(function(_e){\n" +
+				"\"use strict\";\n" +
+				"var b=100;\n" +
+				"var result=42+b;\n" +
+				"var _t={\n" +
+				"__proto__:null,result:result};\n" +
+				"if(_e.Symbol)_e.Object.defineProperty(_t,_e.Symbol.toStringTag,{\n" +
+				"value:\"Module\"});\n" +
+				"_t=_e.Object.freeze(_t);\n" +
+				"return _t;\n" +
+				"}(this));\n", bundledWithRealNamespace);
+
+		options = options.withRealNamespaceObjects(false);
+		String bundledWithoutRealNamespace = TestUtils.toString(Bundler.bundleModule(options, Parser.parseModule(source), path, resolver, loader, new PiercedModuleBundler()));
+		assertEquals("(function(_e){\n" +
+				"\"use strict\";\n" +
+				"var b=100;\n" +
+				"var result=42+b;\n" +
+				"var _t={\n" +
+				"result:result};\n" +
+				"return _t;\n" +
+				"}(this));\n", bundledWithoutRealNamespace);
+	}
 }
