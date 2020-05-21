@@ -228,7 +228,7 @@ public class ImportExportConnector {
 		++index;
 		LinkedList<Module> children = dependingOn.get(module);
 		if (children != null) {
-			Iterator<Module> subModules = children.descendingIterator();
+			Iterator<Module> subModules = children.iterator();
 			while (subModules.hasNext()) {
 				Module subModule = subModules.next();
 				Pair<Integer, ModuleState> pair = scheduleModule(subModule, schedule, scheduleSet, dependingOn, index, stack, stackSet, moduleAncestorIndex);

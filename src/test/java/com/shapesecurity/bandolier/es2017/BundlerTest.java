@@ -214,8 +214,8 @@ public class BundlerTest extends TestCase {
 		String expectedPierced = "(function(_t){\n" +
 			"\"use strict\";\n" +
 			"var d=\"d\";\n" +
-			"var c=\"c\"+d;\n" +
 			"var b=\"b\"+d;\n" +
+			"var c=\"c\"+d;\n" +
 			"var result=\"a\"+b+c;\n" +
 			"var _o={\n" +
 			"__proto__:null,result:result};\n" +
@@ -228,8 +228,8 @@ public class BundlerTest extends TestCase {
 		String expectedPiercedDangerously = "(function(_t){\n" +
 			"\"use strict\";\n" +
 			"var d=\"d\";\n" +
-			"var c=\"c\"+d;\n" +
 			"var b=\"b\"+d;\n" +
+			"var c=\"c\"+d;\n" +
 			"var result=\"a\"+b+c;\n" +
 			"var _o={\n" +
 			"__proto__:null,result:result};\n" +
@@ -293,6 +293,18 @@ public class BundlerTest extends TestCase {
 		assertEquals(expectedPierced, actualPierced);
 		assertEquals(expectedPiercedDangerously, actualPiercedDangerously);
 		assertEquals(expectedStandard, actualStandard);
+	}
+
+	@Test
+	public void testImportOrdering() throws Exception {
+		Map<String, String> modules = new HashMap<>();
+		modules.put("/main.js", "import { a } from './a.js'; import { b } from './b.js'; import { c } from './c.js'; export var result = a + b + c.str;");
+		TestLoader localLoader = new TestLoader(modules);
+
+		modules.put("/c.js", "export var c = { str: 'original' };");
+		modules.put("/a.js", "import { c } from './c.js'; c.str = 'something'; export var a = 'a';");
+		modules.put("/b.js", "import { c } from './c.js'; c.str = 'replaced'; export var b = 'b';");
+		testResult("/main.js", "abreplaced", resolver, localLoader);
 	}
 
 	@Test
