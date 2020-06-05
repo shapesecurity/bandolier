@@ -308,6 +308,18 @@ public class BundlerTest extends TestCase {
 	}
 
 	@Test
+	public void testIdenticalModuleImport() throws Exception {
+		Map<String, String> modules = new HashMap<>();
+		modules.put("/main.js", "import './a.js'; import './b.js'; import { c } from './c.js'; export var result = c.str;");
+		TestLoader localLoader = new TestLoader(modules);
+
+		modules.put("/c.js", "export var c = { str: 'original' };");
+		modules.put("/a.js", "import { c } from './c.js'; c.str += '1';");
+		modules.put("/b.js", "import { c } from './c.js'; c.str += '1';");
+		testResult("/main.js", "original11", resolver, localLoader);
+	}
+
+	@Test
 	public void testBundle() throws Exception {
 		testResult("/root/lib1/js0.js", null, resolver, loader); // the bundler is innocent!
 		testResult("/root/lib1/js1.js", 142.0, resolver, loader); // simple import

@@ -215,14 +215,14 @@ public class ImportExportConnector {
 	 * @param moduleAncestorIndex  internal counter, always initialise to 0
 	 * @return an index and state of a module scheduled. the index is used internally, and is to be discarded. success can be determined by checking the module state is `ModuleState.INSTANTIATED`
 	 */
-	private static Pair<Integer, ModuleState> scheduleModule(@Nonnull Module module, @Nonnull LinkedList<Module> schedule, @Nonnull HashSet<Module> scheduleSet, @Nonnull HashMap<Module, LinkedList<Module>> dependingOn, int index, @Nonnull LinkedList<Module> stack, @Nonnull HashSet<Module> stackSet, @Nonnull HashMap<Module, Integer> moduleAncestorIndex) {
-		if (scheduleSet.contains(module)) {
+	private static Pair<Integer, ModuleState> scheduleModule(@Nonnull Module module, @Nonnull LinkedList<Module> schedule, @Nonnull IdentityHashMap scheduleSet, @Nonnull HashMap<Module, LinkedList<Module>> dependingOn, int index, @Nonnull LinkedList<Module> stack, @Nonnull IdentityHashMap stackSet, @Nonnull HashMap<Module, Integer> moduleAncestorIndex) {
+		if (scheduleSet.containsKey(module)) {
 			return Pair.of(index, ModuleState.INSTANTIATED);
-		} else if (stackSet.contains(module)) {
+		} else if (stackSet.containsKey(module)) {
 			return Pair.of(index, ModuleState.INSTANTIATING);
 		}
 		stack.push(module);
-		stackSet.add(module);
+		stackSet.put(module, 1);
 		moduleAncestorIndex.put(module, index);
 		int originalIndex = index;
 		++index;
@@ -234,7 +234,7 @@ public class ImportExportConnector {
 				Pair<Integer, ModuleState> pair = scheduleModule(subModule, schedule, scheduleSet, dependingOn, index, stack, stackSet, moduleAncestorIndex);
 				index = pair.left;
 				if (pair.right == ModuleState.INSTANTIATING) {
-					if (!stackSet.contains(subModule)) {
+					if (!stackSet.containsKey(subModule)) {
 						return Pair.of(-1, ModuleState.ERROR);
 					}
 					int ancestorIndex = moduleAncestorIndex.get(module);
@@ -259,20 +259,20 @@ public class ImportExportConnector {
 					return Pair.of(-1, ModuleState.ERROR);
 				}
 				subModule = stack.pop();
-				scheduleSet.add(subModule);
+				scheduleSet.put(subModule, 1);
 				schedule.add(subModule);
-			} while (!subModule.equals(module));
+			} while (subModule != module);
 		}
 		return Pair.of(index, ModuleState.INSTANTIATED);
 	}
 
-	private static ImmutableSet<Module> recurRecursiveDependencyChecker(@Nonnull Module module, @Nonnull HashSet<Module> nonSelfReferentialModules, @Nonnull HashMap<Module, LinkedList<Module>> dependingOn, @Nonnull ImmutableSet<Module> recurring) {
+	private static ImmutableSet<Module> recurRecursiveDependencyChecker(@Nonnull Module module, @Nonnull IdentityHashMap nonSelfReferentialModules, @Nonnull HashMap<Module, LinkedList<Module>> dependingOn, @Nonnull ImmutableSet<Module> recurring) {
 		if (recurring.contains(module)) {
 			return ImmutableSet.<Module>emptyUsingIdentity().put(module);
 		}
 		LinkedList<Module> dependingOnLocal = dependingOn.get(module);
 		if (dependingOnLocal == null) {
-			nonSelfReferentialModules.add(module);
+			nonSelfReferentialModules.put(module, 1);
 			return ImmutableSet.emptyUsingIdentity();
 		}
 		ImmutableSet<Module> dependencies = ImmutableList.from(dependingOnLocal).uniqByIdentity();
@@ -287,7 +287,7 @@ public class ImportExportConnector {
 				return subDependencies;
 			}
 		}
-		nonSelfReferentialModules.add(module);
+		nonSelfReferentialModules.put(module, 1);
 		return subDependencies;
 	}
 
@@ -317,7 +317,7 @@ public class ImportExportConnector {
 		ImmutableList<Module> sortedModules = ImmutableList.from(StreamSupport.stream(specifierToModule.entries().spliterator(), false).sorted(Comparator.comparing(pair1 -> pair1.left)).map(pair -> pair.right).collect(Collectors.toList()));
 
 		// all keys in the invertedOriginalRenamingMaps's submaps are generated variable names that are guaranteed to be unique, so no collisions will happen
-		HashTable<Module, HashTable<String, Variable>> invertedOriginalRenamingMaps = originalRenamingMap.map(map -> map.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingEquality()));
+		HashTable<Module, HashTable<String, Variable>> invertedOriginalRenamingMaps = originalRenamingMap.map(map -> map.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingIdentity()));
 
 		// variables that represent default exports, but not considered by scope analysis
 		HashTable<Module, Variable> moduleDefaults = sortedModules.foldLeft((acc, module) -> acc.put(module, new Variable(nameGenerator.next(), ImmutableList.empty(), ImmutableList.empty())), HashTable.emptyUsingIdentity());
@@ -451,7 +451,7 @@ public class ImportExportConnector {
 		// note that export name pre-binding is accomplished by name hoisting of function-scoped declarations.
 
 		LinkedList<Module> schedule = new LinkedList<>();
-		Pair<Integer, ModuleState> result = scheduleModule(entrypoint, schedule, new HashSet<>(), dependingOn, 0, new LinkedList<>(), new HashSet<>(), new HashMap<>());
+		Pair<Integer, ModuleState> result = scheduleModule(entrypoint, schedule, new IdentityHashMap(), dependingOn, 0, new LinkedList<>(), new IdentityHashMap(), new HashMap<>());
 		if (result.right != ModuleState.INSTANTIATED) {
 			throw new RuntimeException("Failed to schedule modules.");
 		}
@@ -479,7 +479,7 @@ public class ImportExportConnector {
 
 		MultiHashTable<Module, BindingIdentifier> importedBindings = MultiHashTable.emptyUsingIdentity();
 
-		final HashTable<Module, HashTable<String, String>> inverseExports = exported.foldLeft((acc, pair) -> pair.right.foldLeft((subAcc, subPair) -> subPair.right.foldLeft((subSubAcc, subSubPair) -> subSubAcc.put(pair.left, subSubAcc.get(pair.left).orJustLazy(HashTable::emptyUsingEquality).put(subSubPair.right.right.name, subPair.left)), subAcc), acc), HashTable.emptyUsingIdentity());
+		final HashTable<Module, HashTable<String, String>> inverseExports = exported.foldLeft((acc, pair) -> pair.right.foldLeft((subAcc, subPair) -> subPair.right.foldLeft((subSubAcc, subSubPair) -> subSubAcc.put(pair.left, subSubAcc.get(pair.left).orJustLazy(HashTable::emptyUsingIdentity).put(subSubPair.right.right.name, subPair.left)), subAcc), acc), HashTable.emptyUsingIdentity());
 
 		HashSet<VariableReference> unresolvedImportReferences = new HashSet<>();
 
@@ -488,7 +488,7 @@ public class ImportExportConnector {
 			usedExportModules.add(entrypoint);
 		}
 
-		HashSet<Module> nonSelfDependentModules = new HashSet<>();
+		IdentityHashMap nonSelfDependentModules = new IdentityHashMap();
 
 		recurRecursiveDependencyChecker(entrypoint, nonSelfDependentModules, dependingOn, ImmutableSet.emptyUsingIdentity());
 
@@ -629,7 +629,7 @@ public class ImportExportConnector {
 					propertyName = localExportEntry.left;
 				}
 				Maybe<Pair<ExportDeclaration, Variable>> localSource = localExportEntry.right.get(Maybe.empty());
-				if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE && !nonSelfDependentModules.contains(module)) {
+				if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE && !nonSelfDependentModules.containsKey(module)) {
 					FunctionBody body;
 					if (localSource.isJust()) {
 						Expression sourceObject = new IdentifierExpression(moduleExportDefinedName.get(module).fromJust());
@@ -686,7 +686,7 @@ public class ImportExportConnector {
 				// declare export object if safe
 				if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE) {
 
-					if (!nonSelfDependentModules.contains(module)) { // TDZ required
+					if (!nonSelfDependentModules.containsKey(module)) { // TDZ required
 						statements = statements.cons(namespaceDeclaration);
 
 						if (options.realNamespaceObjects) {
@@ -788,7 +788,7 @@ public class ImportExportConnector {
 					} else {
 						continue; // output nothing
 					}
-					if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE && usedExportModules.contains(module) && !nonSelfDependentModules.contains(module)) {
+					if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE && usedExportModules.contains(module) && !nonSelfDependentModules.containsKey(module)) {
 						toAppend = names.foldLeft((acc, name) -> acc.cons(new ExpressionStatement(new AssignmentExpression(new StaticMemberAssignmentTarget(new IdentifierExpression(finalModuleExportDefinedName.get(module).fromJust()), invertedOriginalRenamingMap.get(name).orJust(invertedExportedRenamingMap.get(name).orJust(name))), new LiteralNumericExpression(1)))), toAppend);
 					}
 				} else {

@@ -136,7 +136,7 @@ public class VariableCollisionResolver {
 		renamingMaps = renamingMaps.entries().foldLeft((acc, pair) -> acc.put(finalFinishedModules.get(pair.left).fromJust(), pair.right), HashTable.emptyUsingIdentity());
 
 		for (Module module : missingModules) {
-			renamingMaps = renamingMaps.put(module, HashTable.emptyUsingEquality());
+			renamingMaps = renamingMaps.put(module, HashTable.emptyUsingIdentity());
 			finishedModules = finishedModules.put(module, module);
 		}
 
