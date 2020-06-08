@@ -1,13 +1,11 @@
 package com.shapesecurity.bandolier.es2017;
 
-import com.shapesecurity.functional.data.HashCodeBuilder;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Directive;
 import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
 import com.shapesecurity.shift.es2017.ast.Module;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 public class ModuleWrapper extends Module {
 
