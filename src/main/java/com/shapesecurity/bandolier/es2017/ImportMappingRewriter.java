@@ -49,15 +49,15 @@ public class ImportMappingRewriter {
 
 	/**
 	 * rewrites all imports in the module based on the map the class was constructed with
-	 * @param module the module to rewrite
+	 * @param moduleWrapper the module to rewrite
 	 * @return a module with all imports rewritten based on the map
 	 */
 	@NotNull
-	public ModuleWrapper rewrite(@NotNull ModuleWrapper module) {
+	public ModuleWrapper rewrite(@NotNull ModuleWrapper moduleWrapper) {
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
-				module.items.bind(x -> rewritePaths(x));
+			moduleWrapper.module.items.bind(x -> rewritePaths(x));
 
-		return new ModuleWrapper(module.directives, items);
+		return new ModuleWrapper(moduleWrapper.module.directives, items);
 	}
 
 	@NotNull

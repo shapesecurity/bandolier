@@ -59,7 +59,7 @@ public class ImportExportTransformerTest extends TestCase {
 		ModuleWrapper expectedModule = new ModuleWrapper(Parser.parseModule(expected));
 
 		if (!transformed.contentEquals(expectedModule)) {
-			System.out.println(CodeGen.codeGen(transformed));
+			System.out.println(CodeGen.codeGen(transformed.module));
 			System.out.println(expected);
 		}
 

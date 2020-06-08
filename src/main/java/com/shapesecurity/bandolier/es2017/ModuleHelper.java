@@ -14,11 +14,11 @@ public abstract class ModuleHelper {
 
 	/**
 	 * Returns a list of raw string module specifiers for a given module.
-	 * @param module module to interpret
+	 * @param wrapper module to interpret
 	 * @return list of dependent module specifiers.
 	 */
-	public static @NotNull ImmutableList<String> getModuleDependencies(@NotNull ModuleWrapper module) {
-		return module.items.bind(s -> {
+	public static @NotNull ImmutableList<String> getModuleDependencies(@NotNull ModuleWrapper wrapper) {
+		return wrapper.module.items.bind(s -> {
 			if (s instanceof ImportDeclaration) {
 				if (s instanceof Import) {
 					return ImmutableList.of(((Import) s).moduleSpecifier);

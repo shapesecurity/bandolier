@@ -55,10 +55,9 @@ public class ImportResolvingRewriterTest extends TestCase {
 		ModuleWrapper rewritten = rewriter.rewrite(original, Paths.get(path));
 
 		ModuleWrapper parsed = new ModuleWrapper(Parser.parseModule(rewrittenSource));
-		parsed.hashCode();
 		if (!rewritten.contentEquals(parsed)) {
-			System.out.println(CodeGen.codeGen(rewritten));
-			System.out.println(CodeGen.codeGen(parsed));
+			System.out.println(CodeGen.codeGen(rewritten.module));
+			System.out.println(CodeGen.codeGen(parsed.module));
 		}
 		assertTrue("Module contents of rewritten is same as parsed", rewritten.contentEquals(parsed));
 	}

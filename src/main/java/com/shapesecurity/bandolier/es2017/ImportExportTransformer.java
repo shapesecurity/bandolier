@@ -59,14 +59,14 @@ import com.shapesecurity.shift.es2017.ast.VariableDeclarator;
  * {@link Script}.
  */
 public class ImportExportTransformer {
-	static public ModuleWrapper transformModule(ModuleWrapper module) {
+	static public ModuleWrapper transformModule(ModuleWrapper wrapper) {
 		ImmutableList<Statement> statementItems =
-			module.items.bind(ImportExportTransformer::transformImportDeclarationExportDeclarationStatement);
+			wrapper.module.items.bind(ImportExportTransformer::transformImportDeclarationExportDeclarationStatement);
 
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
 			statementItems.map(x -> (ImportDeclarationExportDeclarationStatement) x);
 
-		return new ModuleWrapper(module.directives, items);
+		return new ModuleWrapper(wrapper.module.directives, items);
 	}
 
 	static private ImmutableList<Statement> transformImportDeclarationExportDeclarationStatement(

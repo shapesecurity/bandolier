@@ -8,6 +8,7 @@ import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es2017.ast.*;
 
 import com.shapesecurity.bandolier.es2017.ModuleWrapper;
+import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.es2017.ast.operators.UnaryOperator;
 
@@ -45,7 +46,7 @@ public class StandardModuleBundler implements IModuleBundler {
 
 	@Override
 	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, ModuleWrapper> modules) {
-		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
+		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(w -> w.module).map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
 	}
 
 	//(function(global){ ... }.call(this, this));
@@ -65,8 +66,8 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		LinkedList<Statement> requireStatements =
 				rewrittenModules.entrySet().stream().map(x -> {
-					Node reduced = ImportExportTransformer.transformModule(x.getValue());
-					return requireDefineStatement(x.getKey(), (ModuleWrapper) reduced);
+					ModuleWrapper moduleWrapper = ImportExportTransformer.transformModule(x.getValue());
+					return requireDefineStatement(x.getKey(), moduleWrapper);
 				}).collect(Collectors.toCollection(LinkedList::new));
 		ImmutableList<Statement> statements = ImmutableList.from(requireStatements);
 		statements = statements.append(ImmutableList.of(requireCall(rootPath)));
@@ -373,7 +374,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// require.define("/path/to/module.js",function(module,exports,__dirname,__filename){
 	//    ...
 	// });
-	private ExpressionStatement requireDefineStatement(String moduleName, ModuleWrapper module) {
+	private ExpressionStatement requireDefineStatement(String moduleName, ModuleWrapper moduleWrapper) {
 		BindingIdentifier moduleParam = new BindingIdentifier("module");
 		BindingIdentifier exportsParam = new BindingIdentifier("exports");
 		BindingIdentifier dirnameParam = new BindingIdentifier("__dirname");
@@ -384,8 +385,8 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		FormalParameters params = new FormalParameters(paramsList, Maybe.empty());
 
-		ImmutableList<Directive> directives = module.directives;
-		ImmutableList<Statement> items = module.items.map(x -> (Statement) x);
+		ImmutableList<Directive> directives = moduleWrapper.module.directives;
+		ImmutableList<Statement> items = moduleWrapper.module.items.map(x -> (Statement) x);
 
 		FunctionBody body = new FunctionBody(directives, items);
 

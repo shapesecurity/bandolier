@@ -73,7 +73,7 @@ public class VariableCollisionResolver {
 	}
 
 	public static ResolvedResult resolveCollisions(@Nonnull HashTable<String, ModuleWrapper> modules) {
-		HashTable<ModuleWrapper, GlobalScope> globalScopes = modules.foldLeft((acc, pair) -> acc.put(pair.right, ScopeAnalyzer.analyze(pair.right)), HashTable.emptyUsingIdentity());
+		HashTable<ModuleWrapper, GlobalScope> globalScopes = modules.foldLeft((acc, pair) -> acc.put(pair.right, ScopeAnalyzer.analyze(pair.right.module)), HashTable.emptyUsingIdentity());
 		HashTable<ModuleWrapper, ScopeLookup> scopeLookups = modules.foldLeft((acc, pair) -> acc.put(pair.right, new ScopeLookup(globalScopes.get(pair.right).fromJust())), HashTable.emptyUsingIdentity());
 		ImmutableSet<String> allNames = modules.foldLeft((acc, module) -> acc.union(VariableReferenceExtractor.extractAllReferencedVariableNames(globalScopes.get(module.right).fromJust())), ImmutableSet.emptyUsingEquality());
 		ImmutableList<ModuleWrapper> sortedModules = ImmutableList.from(StreamSupport.stream(modules.entries().spliterator(), false).sorted(Comparator.comparing(pair1 -> pair1.left)).map(pair -> pair.right).collect(Collectors.toList()));
@@ -129,7 +129,7 @@ public class VariableCollisionResolver {
 		ImmutableSet<ModuleWrapper> missingModules = modules.entries().map(pair -> pair.right).uniqByIdentity();
 		HashTable<ModuleWrapper, ModuleWrapper> finishedModules = HashTable.emptyUsingIdentity();
 		for (Pair<ModuleWrapper, HashTable<Variable, String>> modulePair : renamingMaps) {
-			ModuleWrapper newModule = new ModuleWrapper((Module) Director.reduceModule(new VariableRenamingReducer(modulePair.right, Maybe.empty(), scopeLookups.get(modulePair.left).fromJust()), modulePair.left));
+			ModuleWrapper newModule = new ModuleWrapper((Module) Director.reduceModule(new VariableRenamingReducer(modulePair.right, Maybe.empty(), scopeLookups.get(modulePair.left).fromJust()), modulePair.left.module));
 			finishedModules = finishedModules.put(modulePair.left, newModule);
 			missingModules = missingModules.remove(modulePair.left);
 		}

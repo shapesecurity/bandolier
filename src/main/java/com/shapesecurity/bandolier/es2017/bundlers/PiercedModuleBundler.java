@@ -27,9 +27,9 @@ public class PiercedModuleBundler implements IModuleBundler {
 	public @NotNull Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, ModuleWrapper> modules) {
 		HashTable<String, ModuleWrapper> newModules = HashTable.emptyUsingEquality();
 		for (Map.Entry<String, ModuleWrapper> mapEntry : modules.entrySet()) {
-			ModuleWrapper module = mapEntry.getValue();
+			ModuleWrapper wrapper = mapEntry.getValue();
 			if (options.exportStrategy == BundlerOptions.ExportStrategy.ALL_GLOBALS) {
-				module = new ModuleWrapper(module.directives, module.items.map(item -> {
+				wrapper = new ModuleWrapper(wrapper.module.directives, wrapper.module.items.map(item -> {
 					if (item instanceof VariableDeclarationStatement) {
 						return new Export(((VariableDeclarationStatement) item).declaration);
 					} else if (item instanceof FunctionDeclaration) {
@@ -40,7 +40,7 @@ public class PiercedModuleBundler implements IModuleBundler {
 					return item;
 				}));
 			}
-			newModules = newModules.put(mapEntry.getKey(), module);
+			newModules = newModules.put(mapEntry.getKey(), wrapper);
 		}
 		VariableCollisionResolver.ResolvedResult result = VariableCollisionResolver.resolveCollisions(newModules);
 		HashTable<String, ModuleWrapper> specifierToModule = newModules.map(module -> result.moduleMap.get(module).fromJust());
@@ -61,6 +61,6 @@ public class PiercedModuleBundler implements IModuleBundler {
 
 	@Override
 	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, ModuleWrapper> modules) {
-		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
+		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(w -> w.module).map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
 	}
 }

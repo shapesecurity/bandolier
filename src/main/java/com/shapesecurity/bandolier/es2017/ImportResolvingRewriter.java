@@ -61,14 +61,14 @@ public class ImportResolvingRewriter {
 
 	/**
 	 * Rewrites the module
-	 * @param module the module to rewrite
+	 * @param moduleWrapper the module to rewrite
 	 * @param path represents the path to the current module being rewritten
 	 * @return
 	 */
-	public ModuleWrapper rewrite(ModuleWrapper module, Path path) {
-		ImmutableList<ImportDeclarationExportDeclarationStatement> items = module.items.bind(x -> rewritePaths(x, path));
+	public ModuleWrapper rewrite(ModuleWrapper moduleWrapper, Path path) {
+		ImmutableList<ImportDeclarationExportDeclarationStatement> items = moduleWrapper.module.items.bind(x -> rewritePaths(x, path));
 
-		return new ModuleWrapper(module.directives, items);
+		return new ModuleWrapper(moduleWrapper.module.directives, items);
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewritePaths(ImportDeclarationExportDeclarationStatement statement, Path path) {

@@ -7,28 +7,21 @@ import com.shapesecurity.shift.es2017.ast.Module;
 
 import javax.annotation.Nonnull;
 
-public class ModuleWrapper extends Module {
+public class ModuleWrapper {
+
+	@Nonnull
+	public Module module;
 
 	public ModuleWrapper(@Nonnull ImmutableList<Directive> directives, @Nonnull ImmutableList<ImportDeclarationExportDeclarationStatement> items) {
-		super(directives, items);
+		this.module = new Module(directives, items);
 	}
 
 	public ModuleWrapper(@Nonnull Module module) {
-		super(module.directives, module.items);
-	}
-
-	@Override
-	public boolean equals(Object object) {
-		return this == object;
-	}
-
-	@Override
-	public int hashCode() {
-		return System.identityHashCode(this);
+		this.module = module;
 	}
 
 	@Nonnull
 	public boolean contentEquals(Object object) {
-		return object instanceof ModuleWrapper && this.directives.equals(((ModuleWrapper)object).directives) && this.items.equals(((ModuleWrapper)object).items);
+		return object instanceof ModuleWrapper && this.module.equals(((ModuleWrapper) object).module);
 	}
 }
