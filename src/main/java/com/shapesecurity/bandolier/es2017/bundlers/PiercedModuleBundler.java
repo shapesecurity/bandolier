@@ -8,7 +8,7 @@ import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
@@ -24,12 +24,12 @@ import java.util.stream.Collectors;
 public class PiercedModuleBundler implements IModuleBundler {
 
 	@Override
-	public @NotNull Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, Module> modules) {
-		HashTable<String, Module> newModules = HashTable.emptyUsingEquality();
-		for (Map.Entry<String, Module> mapEntry : modules.entrySet()) {
-			Module module = mapEntry.getValue();
+	public @NotNull Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, ModuleWrapper> modules) {
+		HashTable<String, ModuleWrapper> newModules = HashTable.emptyUsingEquality();
+		for (Map.Entry<String, ModuleWrapper> mapEntry : modules.entrySet()) {
+			ModuleWrapper module = mapEntry.getValue();
 			if (options.exportStrategy == BundlerOptions.ExportStrategy.ALL_GLOBALS) {
-				module = new Module(module.directives, module.items.map(item -> {
+				module = new ModuleWrapper(module.directives, module.items.map(item -> {
 					if (item instanceof VariableDeclarationStatement) {
 						return new Export(((VariableDeclarationStatement) item).declaration);
 					} else if (item instanceof FunctionDeclaration) {
@@ -43,7 +43,7 @@ public class PiercedModuleBundler implements IModuleBundler {
 			newModules = newModules.put(mapEntry.getKey(), module);
 		}
 		VariableCollisionResolver.ResolvedResult result = VariableCollisionResolver.resolveCollisions(newModules);
-		HashTable<String, Module> specifierToModule = newModules.map(module -> result.moduleMap.get(module).fromJust());
+		HashTable<String, ModuleWrapper> specifierToModule = newModules.map(module -> result.moduleMap.get(module).fromJust());
 		Pair<Script, String> scriptAndGlobalParameter = ImportExportConnector.combineModules(options, result.moduleMap.get(newModules.get(entry).fromJust()).fromJust(), result, specifierToModule);
 		Script combined = scriptAndGlobalParameter.left;
 		combined = DeadCodeElimination.removeAllUnusedDeclarations(combined);
@@ -60,7 +60,7 @@ public class PiercedModuleBundler implements IModuleBundler {
 
 
 	@Override
-	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, Module> modules) {
+	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, ModuleWrapper> modules) {
 		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
 	}
 }

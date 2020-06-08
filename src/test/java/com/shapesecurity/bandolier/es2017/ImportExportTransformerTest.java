@@ -15,7 +15,7 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
@@ -54,15 +54,15 @@ public class ImportExportTransformerTest extends TestCase {
 	}
 
 	private void testTransformer(String expected, String code) throws JsError {
-		Module module = Parser.parseModule(code);
-		Module transformed = ImportExportTransformer.transformModule(module);
-		Module expectedModule = Parser.parseModule(expected);
+		ModuleWrapper module = new ModuleWrapper(Parser.parseModule(code));
+		ModuleWrapper transformed = ImportExportTransformer.transformModule(module);
+		ModuleWrapper expectedModule = new ModuleWrapper(Parser.parseModule(expected));
 
-		if (!transformed.equals(expectedModule)) {
+		if (!transformed.contentEquals(expectedModule)) {
 			System.out.println(CodeGen.codeGen(transformed));
 			System.out.println(expected);
 		}
 
-		assertEquals(expectedModule, transformed);
+		assertTrue("Module contents of transformed module is same as expectedModule", expectedModule.contentEquals(transformed));
 	}
 }

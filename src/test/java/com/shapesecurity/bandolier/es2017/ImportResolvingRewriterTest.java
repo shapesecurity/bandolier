@@ -16,7 +16,7 @@
 package com.shapesecurity.bandolier.es2017;
 
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
@@ -51,14 +51,14 @@ public class ImportResolvingRewriterTest extends TestCase {
 
 	private void testRewrite(String rewrittenSource, String originalSource, String path) throws JsError {
 		ImportResolvingRewriter rewriter = new ImportResolvingRewriter(new FileSystemResolver());
-		Module original = Parser.parseModule(originalSource);
-		Module rewritten = rewriter.rewrite(original, Paths.get(path));
+		ModuleWrapper original = new ModuleWrapper(Parser.parseModule(originalSource));
+		ModuleWrapper rewritten = rewriter.rewrite(original, Paths.get(path));
 
-		Module parsed = Parser.parseModule(rewrittenSource);
-		if (!rewritten.equals(parsed)) {
+		ModuleWrapper parsed = new ModuleWrapper(Parser.parseModule(rewrittenSource));
+		if (!rewritten.contentEquals(parsed)) {
 			System.out.println(CodeGen.codeGen(rewritten));
 			System.out.println(CodeGen.codeGen(parsed));
 		}
-		assertEquals(rewritten, parsed);
+		assertTrue("Module contents of rewritten is same as parsed", rewritten.contentEquals(parsed));
 	}
 }

@@ -7,7 +7,7 @@ import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es2017.ast.*;
 
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.es2017.ast.operators.UnaryOperator;
 
@@ -28,7 +28,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// This function is only guaranteed to be deterministic if the provided `modules` map has deterministic ordering
 	@NotNull
 	@Override
-	public Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, Module> modules) {
+	public Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, ModuleWrapper> modules) {
 		// rather than bundle with absolute paths (a potential information leak) create a mapping
 		// of absolute paths to a unique name
 		Integer moduleCount = 0;
@@ -37,19 +37,19 @@ public class StandardModuleBundler implements IModuleBundler {
 		}
 
 		ImportMappingRewriter importMappingRewriter = new ImportMappingRewriter(this.pathMapping);
-		LinkedHashMap<String, Module> rewrittenModules = new LinkedHashMap<>();
+		LinkedHashMap<String, ModuleWrapper> rewrittenModules = new LinkedHashMap<>();
 		modules.forEach((absPath, m) -> rewrittenModules.put(this.pathMapping.get(absPath), importMappingRewriter.rewrite(m)));
 		ExpressionStatement bundled = anonymousFunctionCall(this.pathMapping.get(entry), rewrittenModules);
 		return new Script(ImmutableList.empty(), ImmutableList.of(bundled));
 	}
 
 	@Override
-	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, Module> modules) {
+	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, ModuleWrapper> modules) {
 		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
 	}
 
 	//(function(global){ ... }.call(this, this));
-	private ExpressionStatement anonymousFunctionCall(String rootPath, LinkedHashMap<String, Module> rewrittenModules) {
+	private ExpressionStatement anonymousFunctionCall(String rootPath, LinkedHashMap<String, ModuleWrapper> rewrittenModules) {
 		StaticMemberExpression anonymousCall =
 				new StaticMemberExpression(anonymousFunctionExpression(rootPath, rewrittenModules), "call");
 		ImmutableList<SpreadElementExpression> params = ImmutableList.of(new ThisExpression(), new ThisExpression());
@@ -59,14 +59,14 @@ public class StandardModuleBundler implements IModuleBundler {
 	}
 
 	// function(global) {...}
-	private FunctionExpression anonymousFunctionExpression(String rootPath, LinkedHashMap<String, Module> rewrittenModules) {
+	private FunctionExpression anonymousFunctionExpression(String rootPath, LinkedHashMap<String, ModuleWrapper> rewrittenModules) {
 		BindingIdentifier globalIden = new BindingIdentifier("global");
 		FormalParameters params = new FormalParameters(ImmutableList.of(globalIden), Maybe.empty());
 
 		LinkedList<Statement> requireStatements =
 				rewrittenModules.entrySet().stream().map(x -> {
 					Node reduced = ImportExportTransformer.transformModule(x.getValue());
-					return requireDefineStatement(x.getKey(), (Module) reduced);
+					return requireDefineStatement(x.getKey(), (ModuleWrapper) reduced);
 				}).collect(Collectors.toCollection(LinkedList::new));
 		ImmutableList<Statement> statements = ImmutableList.from(requireStatements);
 		statements = statements.append(ImmutableList.of(requireCall(rootPath)));
@@ -373,7 +373,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	// require.define("/path/to/module.js",function(module,exports,__dirname,__filename){
 	//    ...
 	// });
-	private ExpressionStatement requireDefineStatement(String moduleName, Module module) {
+	private ExpressionStatement requireDefineStatement(String moduleName, ModuleWrapper module) {
 		BindingIdentifier moduleParam = new BindingIdentifier("module");
 		BindingIdentifier exportsParam = new BindingIdentifier("exports");
 		BindingIdentifier dirnameParam = new BindingIdentifier("__dirname");

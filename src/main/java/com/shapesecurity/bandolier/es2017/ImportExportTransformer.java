@@ -45,7 +45,7 @@ import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStat
 import com.shapesecurity.shift.es2017.ast.ImportNamespace;
 import com.shapesecurity.shift.es2017.ast.ImportSpecifier;
 import com.shapesecurity.shift.es2017.ast.LiteralStringExpression;
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.ast.SpreadElementExpression;
 import com.shapesecurity.shift.es2017.ast.Statement;
@@ -55,18 +55,18 @@ import com.shapesecurity.shift.es2017.ast.VariableDeclarationStatement;
 import com.shapesecurity.shift.es2017.ast.VariableDeclarator;
 
 /**
- * ImportExportTransformer applies the transformations necessary for reducing a {@link Module} to a
+ * ImportExportTransformer applies the transformations necessary for reducing a {@link ModuleWrapper} to a
  * {@link Script}.
  */
 public class ImportExportTransformer {
-	static public Module transformModule(Module module) {
+	static public ModuleWrapper transformModule(ModuleWrapper module) {
 		ImmutableList<Statement> statementItems =
 			module.items.bind(ImportExportTransformer::transformImportDeclarationExportDeclarationStatement);
 
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
 			statementItems.map(x -> (ImportDeclarationExportDeclarationStatement) x);
 
-		return new Module(module.directives, items);
+		return new ModuleWrapper(module.directives, items);
 	}
 
 	static private ImmutableList<Statement> transformImportDeclarationExportDeclarationStatement(

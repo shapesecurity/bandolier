@@ -21,7 +21,7 @@ import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
@@ -157,7 +157,7 @@ public class BundlerTest extends TestCase {
 	}
 
 	private static void testDependencyCollector(String code, String... dependencies) throws JsError {
-		Module module = Parser.parseModule(code);
+		ModuleWrapper module = new ModuleWrapper(Parser.parseModule(code));
 		ImmutableList<String> deps = ModuleHelper.getModuleDependencies(module);
 		ImmutableList<String> expected = ImmutableList.from(dependencies);
 
@@ -320,6 +320,22 @@ public class BundlerTest extends TestCase {
 	}
 
 	@Test
+	public void testIdenticalModuleImportWithSubdirs() throws Exception {
+		Map<String, String> modules = new HashMap<>();
+		modules.put("/a.js",
+			"import { b as b1 } from './b.js';\n" +
+			"import { b as b2 } from './subdir/b.js';\n" +
+			"export var result = b1 + b2;");
+		TestLoader localLoader = new TestLoader(modules);
+
+		modules.put("/b.js", "export { b } from './c.js';");
+		modules.put("/c.js", "export var b = 2;");
+		modules.put("/subdir/b.js", "export { b } from './c.js';");
+		modules.put("/subdir/c.js", "export var b = 3;");
+		testResult("/a.js", 5.0, resolver, localLoader);
+	}
+
+	@Test
 	public void testBundle() throws Exception {
 		testResult("/root/lib1/js0.js", null, resolver, loader); // the bundler is innocent!
 		testResult("/root/lib1/js1.js", 142.0, resolver, loader); // simple import
@@ -359,7 +375,7 @@ public class BundlerTest extends TestCase {
 	public void testBundleModule() throws Exception {
 		Path path = Paths.get("/root/lib1/js1.js");
 		String source = loader.loadResource(path);
-		Script bundled = Bundler.bundleModule(Parser.parseModule(source), path, resolver, loader, new StandardModuleBundler());
+		Script bundled = Bundler.bundleModule(new ModuleWrapper(Parser.parseModule(source)), path, resolver, loader, new StandardModuleBundler());
 
 		String newProgramText = TestUtils.toString(bundled);
 		ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
@@ -384,7 +400,7 @@ public class BundlerTest extends TestCase {
 		Path path = Paths.get("/root/normalizing/js1.js");
 		String source = loader.loadResource(path);
 
-		Map<String, Module> dependencies = Bundler.loadDependencies(Parser.parseModule(source), path, resolver, loader);
+		Map<String, ModuleWrapper> dependencies = Bundler.loadDependencies(new ModuleWrapper(Parser.parseModule(source)), path, resolver, loader);
 		ImmutableList<String> dependentPaths = ImmutableList.from(dependencies.keySet().stream().sorted(String::compareTo).collect(Collectors.toList()));
 		assertEquals(ImmutableList.of("/root/normalizing/js1.js", "/root/normalizing/js2.js"), dependentPaths);
 	}
@@ -394,7 +410,7 @@ public class BundlerTest extends TestCase {
 		String source = loader.loadResource(path);
 		BundlerOptions options = BundlerOptions.DEFAULT_OPTIONS;
 
-		String bundledWithRealNamespace = TestUtils.toString(Bundler.bundleModule(options, Parser.parseModule(source), path, resolver, loader, new PiercedModuleBundler()));
+		String bundledWithRealNamespace = TestUtils.toString(Bundler.bundleModule(options, new ModuleWrapper(Parser.parseModule(source)), path, resolver, loader, new PiercedModuleBundler()));
 		assertEquals("(function(_e){\n" +
 				"\"use strict\";\n" +
 				"var b=100;\n" +
@@ -408,7 +424,7 @@ public class BundlerTest extends TestCase {
 				"}(this));\n", bundledWithRealNamespace);
 
 		options = options.withRealNamespaceObjects(false);
-		String bundledWithoutRealNamespace = TestUtils.toString(Bundler.bundleModule(options, Parser.parseModule(source), path, resolver, loader, new PiercedModuleBundler()));
+		String bundledWithoutRealNamespace = TestUtils.toString(Bundler.bundleModule(options, new ModuleWrapper(Parser.parseModule(source)), path, resolver, loader, new PiercedModuleBundler()));
 		assertEquals("(function(_e){\n" +
 				"\"use strict\";\n" +
 				"var b=100;\n" +
@@ -424,7 +440,7 @@ public class BundlerTest extends TestCase {
 		String source = loader.loadResource(path);
 		BundlerOptions options = BundlerOptions.DEFAULT_OPTIONS.withExportStrategy(BundlerOptions.ExportStrategy.NONE);
 
-		String bundledWithoutExports = TestUtils.toString(Bundler.bundleModule(options, Parser.parseModule(source), path, resolver, loader, new PiercedModuleBundler()));
+		String bundledWithoutExports = TestUtils.toString(Bundler.bundleModule(options, new ModuleWrapper(Parser.parseModule(source)), path, resolver, loader, new PiercedModuleBundler()));
 		assertEquals("(function(_e){\n" +
 				"\"use strict\";\n" +
 				"var b=100;\n" +

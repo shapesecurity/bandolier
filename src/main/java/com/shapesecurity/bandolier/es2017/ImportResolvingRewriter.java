@@ -26,7 +26,7 @@ import com.shapesecurity.shift.es2017.ast.Import;
 import com.shapesecurity.shift.es2017.ast.ImportDeclaration;
 import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
 import com.shapesecurity.shift.es2017.ast.ImportNamespace;
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.ast.Statement;
 
 import java.nio.file.Path;
@@ -65,10 +65,10 @@ public class ImportResolvingRewriter {
 	 * @param path represents the path to the current module being rewritten
 	 * @return
 	 */
-	public Module rewrite(Module module, Path path) {
+	public ModuleWrapper rewrite(ModuleWrapper module, Path path) {
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items = module.items.bind(x -> rewritePaths(x, path));
 
-		return new Module(module.directives, items);
+		return new ModuleWrapper(module.directives, items);
 	}
 
 	private ImmutableList<ImportDeclarationExportDeclarationStatement> rewritePaths(ImportDeclarationExportDeclarationStatement statement, Path path) {
