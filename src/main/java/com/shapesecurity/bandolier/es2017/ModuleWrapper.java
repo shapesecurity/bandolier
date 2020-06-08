@@ -1,11 +1,13 @@
 package com.shapesecurity.bandolier.es2017;
 
+import com.shapesecurity.functional.data.HashCodeBuilder;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Directive;
 import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
 import com.shapesecurity.shift.es2017.ast.Module;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 
 public class ModuleWrapper extends Module {
 
@@ -18,9 +20,13 @@ public class ModuleWrapper extends Module {
 	}
 
 	@Override
-	@Nonnull
 	public boolean equals(Object object) {
 		return this == object;
+	}
+
+	@Override
+	public int hashCode() {
+		return System.identityHashCode(this);
 	}
 
 	@Nonnull
