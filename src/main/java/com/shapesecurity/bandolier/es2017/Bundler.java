@@ -24,7 +24,7 @@ import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.shift.es2017.ast.*;
-import com.shapesecurity.bandolier.es2017.ModuleWrapper;
+import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
@@ -110,7 +110,7 @@ public class Bundler {
 	 */
 	public static @NotNull Script bundleString(@NotNull BundlerOptions options, @NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundler.bundleEntrypoint(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(new ModuleWrapper(Parser.parseModule(source)), filePath, resolver, loader));
+			return bundler.bundleEntrypoint(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(Parser.parseModule(source), filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -132,7 +132,7 @@ public class Bundler {
 	}
 
 	/**
-	 * Bundles the module provided as a parsed ModuleWrapper along with its dependencies and returns the resulting
+	 * Bundles the module provided as a parsed Module along with its dependencies and returns the resulting
 	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
 	 * of its input map, and the resolver and loader are well-behaved.
 	 * @param options options object
@@ -143,7 +143,7 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleModule(@NotNull BundlerOptions options, @NotNull ModuleWrapper mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	public static @NotNull Script bundleModule(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundler.bundleEntrypoint(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(mod, filePath, resolver, loader));
 		} catch (Exception e) {
@@ -152,7 +152,7 @@ public class Bundler {
 	}
 
 	/**
-	 * Bundles the module provided as a parsed ModuleWrapper along with its dependencies and returns the resulting
+	 * Bundles the module provided as a parsed Module along with its dependencies and returns the resulting
 	 * Script. Deterministic as long as the bundler has no sources of nondeterminism other than the ordering
 	 * of its input map, and the resolver and loader are well-behaved, uses DEFAULT_OPTIONS.
 	 * @param mod the module
@@ -162,7 +162,7 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleModule(@NotNull ModuleWrapper mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	public static @NotNull Script bundleModule(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundleModule(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
 	}
 
@@ -234,7 +234,7 @@ public class Bundler {
 	 */
 	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@NotNull BundlerOptions options, @NotNull String mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(new ModuleWrapper(Parser.parseModule(mod)), filePath, resolver, loader));
+			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(Parser.parseModule(mod), filePath, resolver, loader));
 		} catch (Exception e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
@@ -267,7 +267,7 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull ModuleWrapper mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(mod, filePath, resolver, loader));
 		} catch (Exception e) {
@@ -285,7 +285,7 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull ModuleWrapper mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundleModuleWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
 	}
 
@@ -298,14 +298,14 @@ public class Bundler {
 	 * @return is a map from module names (path to modules) to the loaded modules.
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	static @NotNull Map<String, ModuleWrapper> loadDependencies(@NotNull ModuleWrapper module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
+	static @NotNull Map<String, Module> loadDependencies(@NotNull Module module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
 		throws ModuleLoaderException {
 
-		Map<String, ModuleWrapper> loadedModules = new LinkedHashMap<>();
+		Map<String, Module> loadedModules = new LinkedHashMap<>();
 		LinkedList<String> toLoad = new LinkedList<>();
 		ImportResolvingRewriter rewriter = new ImportResolvingRewriter(resolver);
 		filePath = filePath.toAbsolutePath().normalize();
-		ModuleWrapper rewritten = rewriter.rewrite(module, filePath.getParent());
+		Module rewritten = rewriter.rewrite(module, filePath.getParent());
 		loadedModules.put(filePath.toString(), rewritten);
 		toLoad.add(filePath.toString());
 
@@ -316,12 +316,12 @@ public class Bundler {
 					try {
 						switch (getFileExtension(dependency)) {
 							case "json":
-								module = new ModuleWrapper(Parser.parseModule("export default (" + loader.loadResource(Paths.get(dependency)) + ");"));
+								module = Parser.parseModule("export default (" + loader.loadResource(Paths.get(dependency)) + ");");
 								break;
 							case "js":
 							case "esm":
 							default:
-								module = new ModuleWrapper(Parser.parseModule(loader.loadResource(Paths.get(dependency))));
+								module = Parser.parseModule(loader.loadResource(Paths.get(dependency)));
 						}
 					} catch (IOException | JsError e) {
 						throw new ModuleLoaderException(dependency, e);

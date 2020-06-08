@@ -23,7 +23,7 @@ import com.shapesecurity.shift.es2017.ast.Import;
 import com.shapesecurity.shift.es2017.ast.ImportDeclaration;
 import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
 import com.shapesecurity.shift.es2017.ast.ImportNamespace;
-import com.shapesecurity.bandolier.es2017.ModuleWrapper;
+import com.shapesecurity.shift.es2017.ast.Module;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -49,15 +49,15 @@ public class ImportMappingRewriter {
 
 	/**
 	 * rewrites all imports in the module based on the map the class was constructed with
-	 * @param moduleWrapper the module to rewrite
+	 * @param module the module to rewrite
 	 * @return a module with all imports rewritten based on the map
 	 */
 	@NotNull
-	public ModuleWrapper rewrite(@NotNull ModuleWrapper moduleWrapper) {
+	public Module rewrite(@NotNull Module module) {
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
-			moduleWrapper.module.items.bind(x -> rewritePaths(x));
+			module.items.bind(x -> rewritePaths(x));
 
-		return new ModuleWrapper(moduleWrapper.module.directives, items);
+		return new Module(module.directives, items);
 	}
 
 	@NotNull

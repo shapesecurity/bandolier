@@ -1,7 +1,6 @@
 package com.shapesecurity.bandolier.es2017.transformations;
 
 import com.shapesecurity.functional.Pair;
-import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.*;
 import com.shapesecurity.shift.es2017.ast.AssignmentTargetIdentifier;
 import com.shapesecurity.shift.es2017.ast.IdentifierExpression;
