@@ -55,7 +55,7 @@ public class ImportMappingRewriter {
 	@NotNull
 	public Module rewrite(@NotNull Module module) {
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
-				module.items.bind(x -> rewritePaths(x));
+			module.items.bind(x -> rewritePaths(x));
 
 		return new Module(module.directives, items);
 	}

@@ -65,8 +65,8 @@ public class StandardModuleBundler implements IModuleBundler {
 
 		LinkedList<Statement> requireStatements =
 				rewrittenModules.entrySet().stream().map(x -> {
-					Node reduced = ImportExportTransformer.transformModule(x.getValue());
-					return requireDefineStatement(x.getKey(), (Module) reduced);
+					Node module = ImportExportTransformer.transformModule(x.getValue());
+					return requireDefineStatement(x.getKey(), (Module) module);
 				}).collect(Collectors.toCollection(LinkedList::new));
 		ImmutableList<Statement> statements = ImmutableList.from(requireStatements);
 		statements = statements.append(ImmutableList.of(requireCall(rootPath)));

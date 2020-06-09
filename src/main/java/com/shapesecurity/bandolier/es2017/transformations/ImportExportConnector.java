@@ -5,6 +5,7 @@ import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.*;
 import com.shapesecurity.shift.es2017.ast.*;
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.es2017.ast.operators.UnaryOperator;
@@ -37,15 +38,15 @@ public class ImportExportConnector {
 	 * @param lookup global scope lookup
 	 * @return a new module-local export list
 	 */
-	private static HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> handleBinding(@Nonnull HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> localExported, @Nonnull ExportDeclaration export, @Nonnull BindingBindingWithDefault binding, @Nonnull ScopeLookup lookup, @Nonnull HashTable<String, Variable> exportNames) {
+	private static HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> handleBinding(@Nonnull HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> localExported, @Nonnull ExportDeclaration export, @Nonnull BindingBindingWithDefault binding, @Nonnull ScopeLookup lookup, @Nonnull HashTable<String, Variable> exportNames) {
 		if (binding instanceof BindingIdentifier) {
 			Variable variable = lookup.findVariableDeclaredBy((BindingIdentifier) binding).fromJust();
-			localExported = localExported.put(exportNames.get(variable.name).map(var -> var.name).orJust(variable.name), HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of(export, variable)));
+			localExported = localExported.put(exportNames.get(variable.name).map(var -> var.name).orJust(variable.name), HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of(export, variable)));
 		} else if (binding instanceof ObjectBinding) {
 			for (BindingProperty property : ((ObjectBinding) binding).properties) {
 				if (property instanceof BindingPropertyIdentifier) {
 					Variable variable = lookup.findVariableDeclaredBy(((BindingPropertyIdentifier) property).binding).fromJust();
-					localExported = localExported.put(exportNames.get(variable.name).map(var -> var.name).orJust(variable.name), HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of(export, variable)));
+					localExported = localExported.put(exportNames.get(variable.name).map(var -> var.name).orJust(variable.name), HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of(export, variable)));
 				} else if (property instanceof BindingPropertyProperty) {
 					localExported = handleBinding(localExported, export, ((BindingPropertyProperty) property).binding, lookup, exportNames);
 				}
@@ -58,7 +59,7 @@ public class ImportExportConnector {
 				BindingBindingWithDefault subBinding = maybeBinding.fromJust();
 				if (subBinding instanceof BindingPropertyIdentifier) {
 					Variable variable = lookup.findVariableDeclaredBy(((BindingPropertyIdentifier) subBinding).binding).fromJust();
-					localExported = localExported.put(exportNames.get(variable.name).map(var -> var.name).orJust(variable.name), HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of(export, variable)));
+					localExported = localExported.put(exportNames.get(variable.name).map(var -> var.name).orJust(variable.name), HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of(export, variable)));
 				} else if (subBinding instanceof BindingWithDefault) {
 					localExported = handleBinding(localExported, export, ((BindingWithDefault) subBinding).binding, lookup, exportNames);
 				}
@@ -110,10 +111,10 @@ public class ImportExportConnector {
 	 * @param name import specifier
 	 * @return variable of export, safe to reference
 	 */
-	private static Maybe<Variable> resolveImport(@Nonnull HashTable<Module, HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>>> exported,
-										  @Nonnull Module module,
+	private static Maybe<Variable> resolveImport(@Nonnull HashTable<ModuleWrapper, HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>>> exported,
+										  @Nonnull ModuleWrapper module,
 										  @Nonnull String name) {
-		Maybe<HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> table = exported.get(module).fromJust().get(name);
+		Maybe<HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> table = exported.get(module).fromJust().get(name);
 		if (table.isNothing()) {
 			return Maybe.empty();
 		}
@@ -139,23 +140,23 @@ public class ImportExportConnector {
 	 * @param renamingMap the current renaming map of original modules, with modification applied via the merging in this method. used to resolve specifiers in differing modules.
 	 * @return a tuple of a new exported table, updated set, and new renaming map, respectively.
 	 */
-	private static Tuple3<HashTable<Module, HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>>>, ImmutableSet<Module>, HashTable<Module, HashTable<Variable, String>>> resolveProxyExports(
-			@Nonnull Module module,
-			@Nonnull HashTable<Module, HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>>> exported,
-			@Nonnull MultiHashTable<Module, Module> globalExportsDesired,
-			@Nonnull HashTable<Module, MultiHashTable<String, Pair<Module, Maybe<String>>>> specificExportsDesired,
-			@Nonnull ImmutableSet<Module> updated,
-			@Nonnull HashTable<Module, HashTable<Variable, String>> renamingMap) {
-		HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> moduleExported = exported.get(module).fromJust();
-		ImmutableList<Module> wantAll = globalExportsDesired.get(module);
+	private static Tuple3<HashTable<ModuleWrapper, HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>>>, ImmutableSet<ModuleWrapper>, HashTable<ModuleWrapper, HashTable<Variable, String>>> resolveProxyExports(
+			@Nonnull ModuleWrapper module,
+			@Nonnull HashTable<ModuleWrapper, HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>>> exported,
+			@Nonnull MultiHashTable<ModuleWrapper, ModuleWrapper> globalExportsDesired,
+			@Nonnull HashTable<ModuleWrapper, MultiHashTable<String, Pair<ModuleWrapper, Maybe<String>>>> specificExportsDesired,
+			@Nonnull ImmutableSet<ModuleWrapper> updated,
+			@Nonnull HashTable<ModuleWrapper, HashTable<Variable, String>> renamingMap) {
+		HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> moduleExported = exported.get(module).fromJust();
+		ImmutableList<ModuleWrapper> wantAll = globalExportsDesired.get(module);
 		HashTable<Variable, String> ourRenamingMap = renamingMap.get(module).fromJust();
-		for (Module wantingModule : wantAll) {
-			HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> wantingExported = exported.get(wantingModule).orJust(HashTable.emptyUsingEquality());
+		for (ModuleWrapper wantingModule : wantAll) {
+			HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> wantingExported = exported.get(wantingModule).orJust(HashTable.emptyUsingEquality());
 
 			boolean update = false;
-			for (Pair<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> pair : moduleExported) {
+			for (Pair<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> pair : moduleExported) {
 				if (!pair.left.equals("default")) {
-					Maybe<HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> wantingExportedLocal = wantingExported.get(pair.left);
+					Maybe<HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> wantingExportedLocal = wantingExported.get(pair.left);
 					if (wantingExportedLocal.isNothing()) {
 						wantingExported = wantingExported.put(pair.left, pair.right.foldLeft((acc, subPair) -> acc.put(Maybe.of(module), subPair.right), HashTable.emptyUsingEquality()));
 						update = true;
@@ -171,20 +172,20 @@ public class ImportExportConnector {
 				renamingMap = renamingMap.put(wantingModule, renamingMap.get(wantingModule).fromJust().merge(ourRenamingMap));
 			}
 		}
-		MultiHashTable<String, Pair<Module, Maybe<String>>> subExports = specificExportsDesired.get(module).orJust(MultiHashTable.emptyUsingEquality());
-		for (Pair<String, ImmutableList<Pair<Module, Maybe<String>>>> exports : subExports.entries()) {
-			Maybe<HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> maybeLocalExported = moduleExported.get(exports.left);
+		MultiHashTable<String, Pair<ModuleWrapper, Maybe<String>>> subExports = specificExportsDesired.get(module).orJust(MultiHashTable.emptyUsingEquality());
+		for (Pair<String, ImmutableList<Pair<ModuleWrapper, Maybe<String>>>> exports : subExports.entries()) {
+			Maybe<HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> maybeLocalExported = moduleExported.get(exports.left);
 			if (maybeLocalExported.isNothing()) {
 				continue; // should become available in later iterations
 			}
-			HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>> localExported = maybeLocalExported.fromJust();
+			HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>> localExported = maybeLocalExported.fromJust();
 			if (localExported.length == 0) {
 				throw new RuntimeException("Ambiguous proxy export: '" + exports.left + "'");
 			}
 			// the following search is not ideal, but adding an inverse map in this case, would probably be slower.
 			Maybe<Pair<Variable, String>> ourMapping = ourRenamingMap.find(pair -> pair.right.equals(exports.left));
-			for (Pair<Module, Maybe<String>> exportInfo : exports.right) {
-				HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> wantingExported = exported.get(exportInfo.left).orJust(HashTable.emptyUsingEquality());
+			for (Pair<ModuleWrapper, Maybe<String>> exportInfo : exports.right) {
+				HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> wantingExported = exported.get(exportInfo.left).orJust(HashTable.emptyUsingEquality());
 				String exportName = exportInfo.right.orJust(exports.left);
 				if (!wantingExported.containsKey(exportName)) {
 					exported = exported.put(exportInfo.left, wantingExported.put(exportName, wantingExported.get(exportName).orJust(HashTable.emptyUsingEquality()).merge(localExported)));
@@ -215,7 +216,7 @@ public class ImportExportConnector {
 	 * @param moduleAncestorIndex  internal counter, always initialise to 0
 	 * @return an index and state of a module scheduled. the index is used internally, and is to be discarded. success can be determined by checking the module state is `ModuleState.INSTANTIATED`
 	 */
-	private static Pair<Integer, ModuleState> scheduleModule(@Nonnull Module module, @Nonnull LinkedList<Module> schedule, @Nonnull HashSet<Module> scheduleSet, @Nonnull HashMap<Module, LinkedList<Module>> dependingOn, int index, @Nonnull LinkedList<Module> stack, @Nonnull HashSet<Module> stackSet, @Nonnull HashMap<Module, Integer> moduleAncestorIndex) {
+	private static Pair<Integer, ModuleState> scheduleModule(@Nonnull ModuleWrapper module, @Nonnull LinkedList<ModuleWrapper> schedule, @Nonnull HashSet<ModuleWrapper> scheduleSet, @Nonnull HashMap<ModuleWrapper, LinkedList<ModuleWrapper>> dependingOn, int index, @Nonnull LinkedList<ModuleWrapper> stack, @Nonnull HashSet<ModuleWrapper> stackSet, @Nonnull HashMap<ModuleWrapper, Integer> moduleAncestorIndex) {
 		if (scheduleSet.contains(module)) {
 			return Pair.of(index, ModuleState.INSTANTIATED);
 		} else if (stackSet.contains(module)) {
@@ -226,11 +227,11 @@ public class ImportExportConnector {
 		moduleAncestorIndex.put(module, index);
 		int originalIndex = index;
 		++index;
-		LinkedList<Module> children = dependingOn.get(module);
+		LinkedList<ModuleWrapper> children = dependingOn.get(module);
 		if (children != null) {
-			Iterator<Module> subModules = children.iterator();
+			Iterator<ModuleWrapper> subModules = children.iterator();
 			while (subModules.hasNext()) {
-				Module subModule = subModules.next();
+				ModuleWrapper subModule = subModules.next();
 				Pair<Integer, ModuleState> pair = scheduleModule(subModule, schedule, scheduleSet, dependingOn, index, stack, stackSet, moduleAncestorIndex);
 				index = pair.left;
 				if (pair.right == ModuleState.INSTANTIATING) {
@@ -253,7 +254,7 @@ public class ImportExportConnector {
 			return Pair.of(-1, ModuleState.ERROR);
 		}
 		if (ancestorIndex == originalIndex) {
-			Module subModule;
+			ModuleWrapper subModule;
 			do {
 				if (stack.size() == 0) {
 					return Pair.of(-1, ModuleState.ERROR);
@@ -261,28 +262,28 @@ public class ImportExportConnector {
 				subModule = stack.pop();
 				scheduleSet.add(subModule);
 				schedule.add(subModule);
-			} while (!subModule.equals(module));
+			} while (subModule != module);
 		}
 		return Pair.of(index, ModuleState.INSTANTIATED);
 	}
 
-	private static ImmutableSet<Module> recurRecursiveDependencyChecker(@Nonnull Module module, @Nonnull HashSet<Module> nonSelfReferentialModules, @Nonnull HashMap<Module, LinkedList<Module>> dependingOn, @Nonnull ImmutableSet<Module> recurring) {
+	private static ImmutableSet<ModuleWrapper> recurRecursiveDependencyChecker(@Nonnull ModuleWrapper module, @Nonnull HashSet<ModuleWrapper> nonSelfReferentialModules, @Nonnull HashMap<ModuleWrapper, LinkedList<ModuleWrapper>> dependingOn, @Nonnull ImmutableSet<ModuleWrapper> recurring) {
 		if (recurring.contains(module)) {
-			return ImmutableSet.<Module>emptyUsingIdentity().put(module);
+			return ImmutableSet.<ModuleWrapper>emptyUsingIdentity().put(module);
 		}
-		LinkedList<Module> dependingOnLocal = dependingOn.get(module);
+		LinkedList<ModuleWrapper> dependingOnLocal = dependingOn.get(module);
 		if (dependingOnLocal == null) {
 			nonSelfReferentialModules.add(module);
 			return ImmutableSet.emptyUsingIdentity();
 		}
-		ImmutableSet<Module> dependencies = ImmutableList.from(dependingOnLocal).uniqByIdentity();
-		ImmutableSet<Module> subDependencies = dependencies;
-		ImmutableSet<Module> subRecurring = recurring.put(module);
-		for (Module subModule : dependencies) {
+		ImmutableSet<ModuleWrapper> dependencies = ImmutableList.from(dependingOnLocal).uniqByIdentity();
+		ImmutableSet<ModuleWrapper> subDependencies = dependencies;
+		ImmutableSet<ModuleWrapper> subRecurring = recurring.put(module);
+		for (ModuleWrapper subModule : dependencies) {
 			subDependencies = subDependencies.union(recurRecursiveDependencyChecker(subModule, nonSelfReferentialModules, dependingOn, subRecurring));
 		}
 
-		for (Module subDependency : subDependencies) {
+		for (ModuleWrapper subDependency : subDependencies) {
 			if (subRecurring.contains(subDependency)) {
 				return subDependencies;
 			}
@@ -299,51 +300,51 @@ public class ImportExportConnector {
 	 * @param specifierToModule map of module names to modules
 	 * @return a complete script and the global binding to be used in an IIFE argument
 	 */
-	public static Pair<Script, String> combineModules(@Nonnull BundlerOptions options, @Nonnull Module entrypoint, @Nonnull VariableCollisionResolver.ResolvedResult resolvedData, @Nonnull HashTable<String, Module> specifierToModule) {
-		ImmutableSet<Module> modules = resolvedData.moduleMap.entries().map(Pair::right).uniqByIdentity();
-		HashTable<Module, HashTable<Variable, String>> originalRenamingMap = resolvedData.renamingMap;
+	public static Pair<Script, String> combineModules(@Nonnull BundlerOptions options, @Nonnull ModuleWrapper entrypoint, @Nonnull VariableCollisionResolver.ResolvedResult resolvedData, @Nonnull HashTable<String, ModuleWrapper> specifierToModule) {
+		ImmutableSet<ModuleWrapper> wrappers = resolvedData.moduleMap.entries().map(Pair::right).uniqByIdentity();
+		HashTable<ModuleWrapper, HashTable<Variable, String>> originalRenamingMap = resolvedData.renamingMap;
 		VariableNameGenerator nameGenerator = resolvedData.nameGenerator;
-		HashTable<Module, GlobalScope> globalScopes = modules.foldAbelian((module, acc) -> acc.put(module, ScopeAnalyzer.analyze(module)), HashTable.emptyUsingIdentity());
-		HashTable<Module, ScopeLookup> scopeLookups = modules.foldAbelian((module, acc) -> acc.put(module, new ScopeLookup(globalScopes.get(module).fromJust())), HashTable.emptyUsingIdentity());
+		HashTable<ModuleWrapper, GlobalScope> globalScopes = wrappers.foldAbelian((wrapper, acc) -> acc.put(wrapper, ScopeAnalyzer.analyze(wrapper.module)), HashTable.emptyUsingIdentity());
+		HashTable<ModuleWrapper, ScopeLookup> scopeLookups = wrappers.foldAbelian((wrapper, acc) -> acc.put(wrapper, new ScopeLookup(globalScopes.get(wrapper).fromJust())), HashTable.emptyUsingIdentity());
 		// all exported variables, per module, tracks the export the import was delivered from.
-		HashTable<Module, HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>>> exported = HashTable.emptyUsingIdentity();
+		HashTable<ModuleWrapper, HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>>> exported = HashTable.emptyUsingIdentity();
 		// namespace proxy export requests
-		MultiHashTable<Module, Module> globalExportsDesired = MultiHashTable.emptyUsingIdentity();
+		MultiHashTable<ModuleWrapper, ModuleWrapper> globalExportsDesired = MultiHashTable.emptyUsingIdentity();
 		// named proxy export requests
-		HashTable<Module, MultiHashTable<String, Pair<Module, Maybe<String>>>> specificExportsDesired = HashTable.emptyUsingIdentity();
+		HashTable<ModuleWrapper, MultiHashTable<String, Pair<ModuleWrapper, Maybe<String>>>> specificExportsDesired = HashTable.emptyUsingIdentity();
 		// current renaming map, to be applied at end
 		HashTable<Variable, String> renamingMap = HashTable.emptyUsingEquality();
 
-		ImmutableList<Module> sortedModules = ImmutableList.from(StreamSupport.stream(specifierToModule.entries().spliterator(), false).sorted(Comparator.comparing(pair1 -> pair1.left)).map(pair -> pair.right).collect(Collectors.toList()));
+		ImmutableList<ModuleWrapper> sortedModules = ImmutableList.from(StreamSupport.stream(specifierToModule.entries().spliterator(), false).sorted(Comparator.comparing(pair1 -> pair1.left)).map(pair -> pair.right).collect(Collectors.toList()));
 
 		// all keys in the invertedOriginalRenamingMaps's submaps are generated variable names that are guaranteed to be unique, so no collisions will happen
-		HashTable<Module, HashTable<String, Variable>> invertedOriginalRenamingMaps = originalRenamingMap.map(map -> map.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingEquality()));
+		HashTable<ModuleWrapper, HashTable<String, Variable>> invertedOriginalRenamingMaps = originalRenamingMap.map(map -> map.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingIdentity()));
 
 		// variables that represent default exports, but not considered by scope analysis
-		HashTable<Module, Variable> moduleDefaults = sortedModules.foldLeft((acc, module) -> acc.put(module, new Variable(nameGenerator.next(), ImmutableList.empty(), ImmutableList.empty())), HashTable.emptyUsingIdentity());
+		HashTable<ModuleWrapper, Variable> moduleDefaults = sortedModules.foldLeft((acc, module) -> acc.put(module, new Variable(nameGenerator.next(), ImmutableList.empty(), ImmutableList.empty())), HashTable.emptyUsingIdentity());
 
 		// perform initial export extraction and prepare for proxy export resolution
-		for (Module module : modules) {
-			ScopeLookup lookup = scopeLookups.get(module).fromJust();
-			HashTable<String, Variable> exportNames = invertedOriginalRenamingMaps.get(module).fromJust();
-			HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> localExported = exported.get(module).orJust(HashTable.emptyUsingEquality());
+		for (ModuleWrapper wrapper : wrappers) {
+			ScopeLookup lookup = scopeLookups.get(wrapper).fromJust();
+			HashTable<String, Variable> exportNames = invertedOriginalRenamingMaps.get(wrapper).fromJust();
+			HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> localExported = exported.get(wrapper).orJust(HashTable.emptyUsingEquality());
 
-			for (ImportDeclarationExportDeclarationStatement item : module.items) {
+			for (ImportDeclarationExportDeclarationStatement item : wrapper.module.items) {
 				if (item instanceof ExportAllFrom) {
-					Module from = specifierToModule.get(((ExportAllFrom) item).moduleSpecifier).fromJust();
-					globalExportsDesired = globalExportsDesired.put(from, module);
+					ModuleWrapper from = specifierToModule.get(((ExportAllFrom) item).moduleSpecifier).fromJust();
+					globalExportsDesired = globalExportsDesired.put(from, wrapper);
 				} else if (item instanceof ExportFrom) {
-					Module from = specifierToModule.get(((ExportFrom) item).moduleSpecifier).fromJust();
+					ModuleWrapper from = specifierToModule.get(((ExportFrom) item).moduleSpecifier).fromJust();
 					specificExportsDesired = ((ExportFrom) item).namedExports
 							.foldLeft((acc, name) ->
-									acc.put(from, acc.get(from).orJust(MultiHashTable.emptyUsingEquality()).put(name.name, Pair.of(module, name.exportedName)))
+									acc.put(from, acc.get(from).orJust(MultiHashTable.emptyUsingEquality()).put(name.name, Pair.of(wrapper, name.exportedName)))
 							, specificExportsDesired);
 				} else if (item instanceof ExportLocals) {
 					for (ExportLocalSpecifier specifier : ((ExportLocals) item).namedExports) {
 						Variable referencedVariable = lookup.findVariableReferencedBy(specifier.name);
 						String name = specifier.exportedName.orJust(specifier.name.name);
 						name = exportNames.get(name).map(variable -> variable.name).orJust(name);
-						localExported = localExported.put(name, HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, referencedVariable)));
+						localExported = localExported.put(name, HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, referencedVariable)));
 					}
 				} else if (item instanceof Export) {
 					FunctionDeclarationClassDeclarationVariableDeclaration declaration = ((Export) item).declaration;
@@ -351,12 +352,12 @@ public class ImportExportConnector {
 						Variable variable = lookup.findVariableDeclaredBy(((FunctionDeclaration) declaration).name).fromJust();
 						String name = variable.name;
 						name = exportNames.get(name).map(var -> var.name).orJust(name);
-						localExported = localExported.put(name, HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
+						localExported = localExported.put(name, HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
 					} else if (declaration instanceof ClassDeclaration) {
 						Variable variable = lookup.findVariableDeclaredBy(((ClassDeclaration) declaration).name).fromJust();
 						String name = variable.name;
 						name = exportNames.get(name).map(var -> var.name).orJust(name);
-						localExported = localExported.put(name, HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
+						localExported = localExported.put(name, HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
 					} else if (declaration instanceof VariableDeclaration) {
 						for (VariableDeclarator declarator : ((VariableDeclaration) declaration).declarators) {
 							localExported = handleBinding(localExported, (ExportDeclaration) item, declarator.binding, lookup, exportNames);
@@ -366,24 +367,24 @@ public class ImportExportConnector {
 					}
 				} else if (item instanceof ExportDefault) {
 					FunctionDeclarationClassDeclarationExpression body = ((ExportDefault) item).body;
-					Variable variable = moduleDefaults.get(module).fromJust();
+					Variable variable = moduleDefaults.get(wrapper).fromJust();
 					if (body instanceof FunctionDeclaration) {
 						BindingIdentifier name = ((FunctionDeclaration) body).name;
-						Variable localVariable = name.name.equals("*default*") ? moduleDefaults.get(module).fromJust() : lookup.findVariableDeclaredBy(name).fromJust();
+						Variable localVariable = name.name.equals("*default*") ? moduleDefaults.get(wrapper).fromJust() : lookup.findVariableDeclaredBy(name).fromJust();
 						renamingMap = renamingMap.put(localVariable, variable.name);
-						localExported = localExported.put("default", HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
+						localExported = localExported.put("default", HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
 					} else if (body instanceof ClassDeclaration) {
 						BindingIdentifier name = ((ClassDeclaration) body).name;
-						Variable localVariable = name.name.equals("*default*") ? moduleDefaults.get(module).fromJust() : lookup.findVariableDeclaredBy(name).fromJust();
+						Variable localVariable = name.name.equals("*default*") ? moduleDefaults.get(wrapper).fromJust() : lookup.findVariableDeclaredBy(name).fromJust();
 						renamingMap = renamingMap.put(localVariable, variable.name);
-						localExported = localExported.put("default", HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
+						localExported = localExported.put("default", HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
 					} else {
-						localExported = localExported.put("default", HashTable.<Maybe<Module>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
+						localExported = localExported.put("default", HashTable.<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>emptyUsingEquality().put(Maybe.empty(), Pair.of((ExportDeclaration) item, variable)));
 					}
 				}
 			}
 
-			exported = exported.put(module, localExported);
+			exported = exported.put(wrapper, localExported);
 		}
 
 		// name of global object for resolving internal usage of standard JS APIs
@@ -392,17 +393,17 @@ public class ImportExportConnector {
 		// proxy export resolution
 		if (globalExportsDesired.entries().length > 0 || specificExportsDesired.length > 0) {
 			// prepare for proxy export resolution
-			final MultiHashTable<Module, Module> finalGlobalExportsDesired = globalExportsDesired;
-			final HashTable<Module, MultiHashTable<String, Pair<Module, Maybe<String>>>> finalSpecificExportsDesired = specificExportsDesired;
-			ImmutableSet<Module> updated = exported.keys().foldAbelian((module, acc) -> finalGlobalExportsDesired.get(module).isNotEmpty() || finalSpecificExportsDesired.get(module).isJust() ? acc.put(module) : acc, ImmutableSet.emptyUsingIdentity());
+			final MultiHashTable<ModuleWrapper, ModuleWrapper> finalGlobalExportsDesired = globalExportsDesired;
+			final HashTable<ModuleWrapper, MultiHashTable<String, Pair<ModuleWrapper, Maybe<String>>>> finalSpecificExportsDesired = specificExportsDesired;
+			ImmutableSet<ModuleWrapper> updated = exported.keys().foldAbelian((module, acc) -> finalGlobalExportsDesired.get(module).isNotEmpty() || finalSpecificExportsDesired.get(module).isJust() ? acc.put(module) : acc, ImmutableSet.emptyUsingIdentity());
 			boolean someUpdate = false;
 			// iterate while we have any potentially erroneous resolved modules.
 			while (updated.length() > 0) {
-				ImmutableSet<Module> nextUpdated = ImmutableSet.emptyUsingIdentity();
-				for (Module module : updated) {
+				ImmutableSet<ModuleWrapper> nextUpdated = ImmutableSet.emptyUsingIdentity();
+				for (ModuleWrapper module : updated) {
 					someUpdate = true;
 					// see resolveProxyExports for specifics.
-					Tuple3<HashTable<Module, HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>>>, ImmutableSet<Module>, HashTable<Module, HashTable<Variable, String>>> tuple =
+					Tuple3<HashTable<ModuleWrapper, HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>>>, ImmutableSet<ModuleWrapper>, HashTable<ModuleWrapper, HashTable<Variable, String>>> tuple =
 						resolveProxyExports(module, exported, globalExportsDesired, specificExportsDesired, nextUpdated, originalRenamingMap);
 					exported = tuple.a;
 					nextUpdated = nextUpdated.union(tuple.b);
@@ -413,9 +414,9 @@ public class ImportExportConnector {
 			if (someUpdate) {
 				invertedOriginalRenamingMaps = originalRenamingMap.map(map -> map.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingEquality()));
 			}
-			for (Pair<Module, MultiHashTable<String, Pair<Module, Maybe<String>>>> subExports : specificExportsDesired) {
-				for (Pair<String, ImmutableList<Pair<Module, Maybe<String>>>> exports : subExports.right.entries()) {
-					Maybe<HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> maybeLocalExported = exported.get(subExports.left).fromJust().get(exports.left);
+			for (Pair<ModuleWrapper, MultiHashTable<String, Pair<ModuleWrapper, Maybe<String>>>> subExports : specificExportsDesired) {
+				for (Pair<String, ImmutableList<Pair<ModuleWrapper, Maybe<String>>>> exports : subExports.right.entries()) {
+					Maybe<HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> maybeLocalExported = exported.get(subExports.left).fromJust().get(exports.left);
 					if (maybeLocalExported.isNothing()) {
 						throw new RuntimeException("Unresolved proxy export");
 					}
@@ -425,13 +426,13 @@ public class ImportExportConnector {
 		}
 
 		// build dependency graph
-		HashMap<Module, LinkedList<Module>> dependingOn = new HashMap<>();
-		for (Module module : modules) {
-			LinkedList<Module> dependents = null;
-			for (ImportDeclarationExportDeclarationStatement item : module.items) {
+		HashMap<ModuleWrapper, LinkedList<ModuleWrapper>> dependingOn = new HashMap<>();
+		for (ModuleWrapper wrapper : wrappers) {
+			LinkedList<ModuleWrapper> dependents = null;
+			for (ImportDeclarationExportDeclarationStatement item : wrapper.module.items) {
 				if (item instanceof ImportDeclaration || item instanceof ExportFrom || item instanceof ExportAllFrom) {
 					if (dependents == null) {
-						dependents = dependingOn.computeIfAbsent(module, mod -> new LinkedList<>());
+						dependents = dependingOn.computeIfAbsent(wrapper, mod -> new LinkedList<>());
 					}
 					String moduleSpecifier;
 					if (item instanceof ImportDeclaration) {
@@ -441,7 +442,7 @@ public class ImportExportConnector {
 					} else {
 						moduleSpecifier = ((ExportAllFrom) item).moduleSpecifier;
 					}
-					Module from = specifierToModule.get(moduleSpecifier).fromJust();
+					ModuleWrapper from = specifierToModule.get(moduleSpecifier).fromJust();
 					dependents.add(from);
 				}
 			}
@@ -450,45 +451,45 @@ public class ImportExportConnector {
 		// schedule all modules, see https://tc39.github.io/ecma262/#sec-innermoduleinstantiation
 		// note that export name pre-binding is accomplished by name hoisting of function-scoped declarations.
 
-		LinkedList<Module> schedule = new LinkedList<>();
+		LinkedList<ModuleWrapper> schedule = new LinkedList<>();
 		Pair<Integer, ModuleState> result = scheduleModule(entrypoint, schedule, new HashSet<>(), dependingOn, 0, new LinkedList<>(), new HashSet<>(), new HashMap<>());
 		if (result.right != ModuleState.INSTANTIATED) {
 			throw new RuntimeException("Failed to schedule modules.");
 		}
 
 		// ensure we scheduled everything -- modules will not be loaded if not imported somewhere.
-		if (schedule.size() != modules.length()) {
+		if (schedule.size() != wrappers.length()) {
 			ImmutableList<String> unscheduled = specifierToModule.entries().filter(pair -> !schedule.contains(pair.right)).map(Pair::left);
-			throw new RuntimeException("Not all modules were scheduled: " + schedule.size() + " / " + modules.length() + ".\n" +
+			throw new RuntimeException("Not all modules were scheduled: " + schedule.size() + " / " + wrappers.length() + ".\n" +
 					"Unscheduled modules:\n" + unscheduled.foldLeft((acc, module) -> acc + module + "\n", ""));
 		}
 
 		// reference to export object
-		HashTable<Module, String> moduleExportReference = HashTable.emptyUsingIdentity();
-		for (Module module : schedule) {
+		HashTable<ModuleWrapper, String> moduleExportReference = HashTable.emptyUsingIdentity();
+		for (ModuleWrapper module : schedule) {
 			moduleExportReference = moduleExportReference.put(module, nameGenerator.next());
 		}
 
 		// export object property initialisation names
-		HashTable<Module, String> moduleExportDefinedName = HashTable.emptyUsingIdentity();
-		for (Module module : schedule) {
+		HashTable<ModuleWrapper, String> moduleExportDefinedName = HashTable.emptyUsingIdentity();
+		for (ModuleWrapper module : schedule) {
 			moduleExportDefinedName = moduleExportDefinedName.put(module, nameGenerator.next());
 		}
 
-		final HashTable<Module, String> finalModuleExportDefinedName = moduleExportDefinedName;
+		final HashTable<ModuleWrapper, String> finalModuleExportDefinedName = moduleExportDefinedName;
 
-		MultiHashTable<Module, BindingIdentifier> importedBindings = MultiHashTable.emptyUsingIdentity();
+		MultiHashTable<ModuleWrapper, BindingIdentifier> importedBindings = MultiHashTable.emptyUsingIdentity();
 
-		final HashTable<Module, HashTable<String, String>> inverseExports = exported.foldLeft((acc, pair) -> pair.right.foldLeft((subAcc, subPair) -> subPair.right.foldLeft((subSubAcc, subSubPair) -> subSubAcc.put(pair.left, subSubAcc.get(pair.left).orJustLazy(HashTable::emptyUsingEquality).put(subSubPair.right.right.name, subPair.left)), subAcc), acc), HashTable.emptyUsingIdentity());
+		final HashTable<ModuleWrapper, HashTable<String, String>> inverseExports = exported.foldLeft((acc, pair) -> pair.right.foldLeft((subAcc, subPair) -> subPair.right.foldLeft((subSubAcc, subSubPair) -> subSubAcc.put(pair.left, subSubAcc.get(pair.left).orJustLazy(HashTable::emptyUsingIdentity).put(subSubPair.right.right.name, subPair.left)), subAcc), acc), HashTable.emptyUsingIdentity());
 
 		HashSet<VariableReference> unresolvedImportReferences = new HashSet<>();
 
-		HashSet<Module> usedExportModules = new HashSet<>();
+		HashSet<ModuleWrapper> usedExportModules = new HashSet<>();
 		if (options.exportStrategy != BundlerOptions.ExportStrategy.NONE) {
 			usedExportModules.add(entrypoint);
 		}
 
-		HashSet<Module> nonSelfDependentModules = new HashSet<>();
+		HashSet<ModuleWrapper> nonSelfDependentModules = new HashSet<>();
 
 		recurRecursiveDependencyChecker(entrypoint, nonSelfDependentModules, dependingOn, ImmutableSet.emptyUsingIdentity());
 
@@ -497,28 +498,28 @@ public class ImportExportConnector {
 		}
 
 		// process import naming
-		for (Module module : schedule) {
-			ScopeLookup lookup = scopeLookups.get(module).fromJust();
+		for (ModuleWrapper wrapper : schedule) {
+			ScopeLookup lookup = scopeLookups.get(wrapper).fromJust();
 
-			for (ImportDeclarationExportDeclarationStatement item : module.items) {
+			for (ImportDeclarationExportDeclarationStatement item : wrapper.module.items) {
 				if (item instanceof Import) {
 					Import importItem = (Import) item;
-					Module from = specifierToModule.get(importItem.moduleSpecifier).fromJust();
+					ModuleWrapper from = specifierToModule.get(importItem.moduleSpecifier).fromJust();
 					if (importItem.defaultBinding.isJust()) {
 						Maybe<Variable> variable = resolveImport(exported, from, "default");
 						if (variable.isNothing()) {
 							if (options.importUnresolvedResolutionStrategy == BundlerOptions.ImportUnresolvedResolutionStrategy.COMPILE_ERROR) {
 								throw new RuntimeException("Unresolved import: \"default\"");
 							} else {
-								scopeLookups.get(module).fromJust().findVariableDeclaredBy(importItem.defaultBinding.fromJust()).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
+								scopeLookups.get(wrapper).fromJust().findVariableDeclaredBy(importItem.defaultBinding.fromJust()).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
 								continue;
 							}
 						}
 						renamingMap = renamingMap.put(lookup.findVariableDeclaredBy(importItem.defaultBinding.fromJust()).fromJust(), variable.fromJust().name);
-						importedBindings = importedBindings.put(module, importItem.defaultBinding.fromJust());
+						importedBindings = importedBindings.put(wrapper, importItem.defaultBinding.fromJust());
 					}
 					for (ImportSpecifier specifier : importItem.namedImports) {
-						importedBindings = importedBindings.put(module, specifier.binding);
+						importedBindings = importedBindings.put(wrapper, specifier.binding);
 						if (specifier.name.isJust()) {
 							String specifierName = specifier.name.fromJust();
 							Maybe<Variable> variable = resolveImport(exported, from, specifierName);
@@ -526,7 +527,7 @@ public class ImportExportConnector {
 								if (options.importUnresolvedResolutionStrategy == BundlerOptions.ImportUnresolvedResolutionStrategy.COMPILE_ERROR) {
 									throw new RuntimeException("Unresolved import: \"" + specifierName + "\"");
 								} else {
-									scopeLookups.get(module).fromJust().findVariableDeclaredBy(specifier.binding).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
+									scopeLookups.get(wrapper).fromJust().findVariableDeclaredBy(specifier.binding).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
 									continue;
 								}
 							}
@@ -537,12 +538,12 @@ public class ImportExportConnector {
 								if (options.importUnresolvedResolutionStrategy == BundlerOptions.ImportUnresolvedResolutionStrategy.COMPILE_ERROR) {
 									throw new RuntimeException("Unresolved import: \"" + specifier.binding.name + "\"");
 								} else {
-									scopeLookups.get(module).fromJust().findVariableDeclaredBy(specifier.binding).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
+									scopeLookups.get(wrapper).fromJust().findVariableDeclaredBy(specifier.binding).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
 									continue;
 								}
 							}
 							Variable variable = maybeVariable.fromJust();
-							Variable localVariable = invertedOriginalRenamingMaps.get(module).fromJust().get(variable.name).orJust(variable);
+							Variable localVariable = invertedOriginalRenamingMaps.get(wrapper).fromJust().get(variable.name).orJust(variable);
 							if (!lookup.findVariableDeclaredBy(specifier.binding).fromJust().equals(localVariable)) {
 								String name = renamingMap.get(variable).orJust(variable.name);
 								renamingMap = renamingMap.put(lookup.findVariableDeclaredBy(specifier.binding).fromJust(), name);
@@ -551,19 +552,19 @@ public class ImportExportConnector {
 					}
 				} else if (item instanceof ImportNamespace) {
 					ImportNamespace importItem = (ImportNamespace) item;
-					Module from = specifierToModule.get(importItem.moduleSpecifier).fromJust();
+					ModuleWrapper from = specifierToModule.get(importItem.moduleSpecifier).fromJust();
 					if (importItem.defaultBinding.isJust()) {
 						Maybe<Variable> variable = resolveImport(exported, from, "default");
 						if (variable.isNothing()) {
 							if (options.importUnresolvedResolutionStrategy == BundlerOptions.ImportUnresolvedResolutionStrategy.COMPILE_ERROR) {
 								throw new RuntimeException("Unresolved import: \"default\"");
 							} else {
-								scopeLookups.get(module).fromJust().findVariableDeclaredBy(importItem.defaultBinding.fromJust()).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
+								scopeLookups.get(wrapper).fromJust().findVariableDeclaredBy(importItem.defaultBinding.fromJust()).fromJust().references.map(reference -> reference.node).iterator().forEachRemaining(unresolvedImportReferences::add);
 								continue;
 							}
 						}
 						renamingMap = renamingMap.put(lookup.findVariableDeclaredBy(importItem.defaultBinding.fromJust()).fromJust(), variable.fromJust().name);
-						importedBindings = importedBindings.put(module, importItem.defaultBinding.fromJust());
+						importedBindings = importedBindings.put(wrapper, importItem.defaultBinding.fromJust());
 					}
 					usedExportModules.add(from);
 					renamingMap = renamingMap.put(lookup.findVariableDeclaredBy(importItem.namespaceBinding).fromJust(), moduleExportReference.get(from).fromJust());
@@ -571,19 +572,19 @@ public class ImportExportConnector {
 			}
 		}
 
-		final HashTable<String, Module> finalModuleExportReferenceInverted = moduleExportReference.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingEquality());
+		final HashTable<String, ModuleWrapper> finalModuleExportReferenceInverted = moduleExportReference.foldLeft((acc, pair) -> acc.put(pair.right, pair.left), HashTable.emptyUsingEquality());
 
-		final HashTable<Module, ImmutableSet<Variable>> finalImportedBindings = importedBindings.toHashTable((module, list) -> list.map(identifier -> scopeLookups.get(module).fromJust().findVariableDeclaredBy(identifier)).filter(Maybe::isJust).map(Maybe::fromJust).uniqByIdentity());
+		final HashTable<ModuleWrapper, ImmutableSet<Variable>> finalImportedBindings = importedBindings.toHashTable((module, list) -> list.map(identifier -> scopeLookups.get(module).fromJust().findVariableDeclaredBy(identifier)).filter(Maybe::isJust).map(Maybe::fromJust).uniqByIdentity());
 
-		final HashTable<VariableReference, Module> finalImportedReferences = finalImportedBindings.foldLeft((acc, pair) -> acc.merge(pair.right.foldAbelian((variable, subAcc) -> variable.references.map(reference -> reference.node).foldLeft((subSubAcc, node) -> subSubAcc.put(node, pair.left), subAcc), HashTable.emptyUsingIdentity())), HashTable.emptyUsingIdentity());
+		final HashTable<VariableReference, ModuleWrapper> finalImportedReferences = finalImportedBindings.foldLeft((acc, pair) -> acc.merge(pair.right.foldAbelian((variable, subAcc) -> variable.references.map(reference -> reference.node).foldLeft((subSubAcc, node) -> subSubAcc.put(node, pair.left), subAcc), HashTable.emptyUsingIdentity())), HashTable.emptyUsingIdentity());
 
 		final HashTable<Variable, String> finalRenamingMap = renamingMap;
 
-		HashMap<Module, Pair<Module, ImmutableList<ObjectProperty>>> reducedModuleMap = new HashMap<>();
+		HashMap<ModuleWrapper, Pair<ModuleWrapper, ImmutableList<ObjectProperty>>> reducedModuleMap = new HashMap<>();
 
 		// prepare module export AST nodes
-		for (Module module : schedule) {
-			ScopeLookup lookup = scopeLookups.get(module).fromJust();
+		for (ModuleWrapper moduleWrapper : schedule) {
+			ScopeLookup lookup = scopeLookups.get(moduleWrapper).fromJust();
 			Reducer<Node> reducer = new WrappedReducer<>((originalNode, newNode) -> {
 				// throw TypeErrors for illegal assignment
 				if (originalNode instanceof AssignmentExpression && (options.dangerLevel != BundlerOptions.DangerLevel.DANGEROUS || options.throwOnImportAssignment)) {
@@ -615,25 +616,25 @@ public class ImportExportConnector {
 					}
 				}
 				return newNode;
-			}, new VariableRenamingReducer(renamingMap, moduleDefaults.get(module), scopeLookups.get(module).fromJust()));
-			HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> localExported = exported.get(module).fromJust();
-			Pair<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>>[] localExportEntries = localExported.entries().toArray(new Pair[0]);
+			}, new VariableRenamingReducer(renamingMap, moduleDefaults.get(moduleWrapper), scopeLookups.get(moduleWrapper).fromJust()));
+			HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> localExported = exported.get(moduleWrapper).fromJust();
+			Pair<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>>[] localExportEntries = localExported.entries().toArray(new Pair[0]);
 			Arrays.sort(localExportEntries, Comparator.comparing(o -> o.left));
 			ImmutableList<ObjectProperty> objectProperties = ImmutableList.empty();
 
 			// prepare object properties for export
 			for (int i = localExportEntries.length - 1; i >= 0; --i) {
-				Pair<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> localExportEntry = localExportEntries[i];
+				Pair<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> localExportEntry = localExportEntries[i];
 				String propertyName = invertedOriginalRenamingMaps.get(entrypoint).fromJust().get(localExportEntry.left).map(variable -> variable.name).orJust(localExportEntry.left);
 				if (propertyName.equals("*default*")) {
 					propertyName = localExportEntry.left;
 				}
 				Maybe<Pair<ExportDeclaration, Variable>> localSource = localExportEntry.right.get(Maybe.empty());
-				if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE && !nonSelfDependentModules.contains(module)) {
+				if (options.dangerLevel == BundlerOptions.DangerLevel.SAFE && !nonSelfDependentModules.contains(moduleWrapper)) {
 					FunctionBody body;
 					if (localSource.isJust()) {
-						Expression sourceObject = new IdentifierExpression(moduleExportDefinedName.get(module).fromJust());
-						usedExportModules.add(module);
+						Expression sourceObject = new IdentifierExpression(moduleExportDefinedName.get(moduleWrapper).fromJust());
+						usedExportModules.add(moduleWrapper);
 						Variable newVariable = localExportEntry.right.entries().maybeHead().fromJust().right.right;
 						String name = renamingMap.get(newVariable).orJust(newVariable.name);
 						body = new FunctionBody(ImmutableList.empty(), ImmutableList.of(
@@ -642,7 +643,7 @@ public class ImportExportConnector {
 										Maybe.of(new ThrowStatement(new NewExpression(new StaticMemberExpression(new IdentifierExpression(globalBinding), "ReferenceError"), ImmutableList.of(new LiteralStringExpression(propertyName + " is not defined"))))))
 						));
 					} else {
-						Pair<Maybe<Module>, Pair<ExportDeclaration, Variable>> remoteSource = localExportEntry.right.entries().maybeHead().fromJust();
+						Pair<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>> remoteSource = localExportEntry.right.entries().maybeHead().fromJust();
 						Expression sourceObject = new IdentifierExpression(moduleExportDefinedName.get(remoteSource.left.fromJust()).fromJust());
 						usedExportModules.add(remoteSource.left.fromJust());
 						body = new FunctionBody(ImmutableList.empty(), ImmutableList.of(
@@ -656,23 +657,23 @@ public class ImportExportConnector {
 					if (localSource.isJust()) {
 						objectProperties = objectProperties.cons(new DataProperty(new StaticPropertyName(propertyName), new IdentifierExpression(localExportEntry.right.entries().maybeHead().fromJust().right.right.name)));
 					} else {
-						Maybe<Pair<Maybe<Module>, Pair<ExportDeclaration, Variable>>> maybeRemoteSource = localExportEntry.right.entries().maybeHead();
+						Maybe<Pair<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> maybeRemoteSource = localExportEntry.right.entries().maybeHead();
 						if (maybeRemoteSource.isJust()) {
-							Pair<Maybe<Module>, Pair<ExportDeclaration, Variable>> remoteSource = maybeRemoteSource.fromJust();
+							Pair<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>> remoteSource = maybeRemoteSource.fromJust();
 							objectProperties = objectProperties.cons(new DataProperty(new StaticPropertyName(propertyName), new IdentifierExpression(exported.get(remoteSource.left.fromJust()).fromJust().get(inverseExports.get(remoteSource.left.fromJust()).fromJust().get(remoteSource.right.right.name).fromJust()).fromJust().entries().maybeHead().fromJust().right.right.name)));
 						} // else omitted due to ambiguity
 					}
 				}
 			}
-			reducedModuleMap.put(module, Pair.of((Module) Director.reduceModule(reducer, module), objectProperties));
+			reducedModuleMap.put(moduleWrapper, Pair.of(new ModuleWrapper((Module) Director.reduceModule(reducer, moduleWrapper.module)), objectProperties));
 		}
 
 		// replace all imports/exports as appropriate
 		ImmutableList<Statement> statements = ImmutableList.empty();
-		for (Module module : schedule) {
+		for (ModuleWrapper module : schedule) {
 			String exportName = moduleExportReference.get(module).fromJust();
 			// safety reduced module, and list of exported properties
-			Pair<Module, ImmutableList<ObjectProperty>> reducedModulePair = reducedModuleMap.get(module);
+			Pair<ModuleWrapper, ImmutableList<ObjectProperty>> reducedModulePair = reducedModuleMap.get(module);
 			ImmutableList<Statement> finalAppend = ImmutableList.empty();
 			if (usedExportModules.contains(module)) {
 				ImmutableList<ObjectProperty> properties = reducedModulePair.right;
@@ -727,13 +728,13 @@ public class ImportExportConnector {
 			}
 
 			final HashTable<String, String> invertedOriginalRenamingMap = invertedOriginalRenamingMaps.get(module).fromJust().map(variable -> variable.name).remove(moduleDefaults.get(module).map(variable -> variable.name).orJust(""));
-			final HashTable<String, HashTable<Maybe<Module>, Pair<ExportDeclaration, Variable>>> localExported = exported.get(module).fromJust();
+			final HashTable<String, HashTable<Maybe<ModuleWrapper>, Pair<ExportDeclaration, Variable>>> localExported = exported.get(module).fromJust();
 			final HashTable<String, String> invertedExportedRenamingMap = renamingMap.entries().filter(pair -> localExported.containsKey(pair.left.name) && !pair.left.name.equals(pair.right)).foldLeft((acc, pair) -> acc.put(pair.right, pair.left.name), HashTable.<String, String>emptyUsingEquality()).remove(moduleDefaults.get(module).map(variable -> variable.name).orJust(""));
 
 			// output the module's contents, replacing import/export statements as needed
 			HashTable<BindingIdentifier, Variable> allBindings = finalImportedBindings.get(module).orJust(ImmutableSet.emptyUsingIdentity()).foldAbelian((variable, acc) -> variable.declarations.foldLeft((subAcc, declaration) -> subAcc.put(declaration.node, variable), acc), HashTable.emptyUsingIdentity());
 			ImmutableSet<VariableReference> declaredReferences = ImmutableSet.emptyUsingIdentity();
-			for (ImportDeclarationExportDeclarationStatement item : reducedModulePair.left.items) {
+			for (ImportDeclarationExportDeclarationStatement item : reducedModulePair.left.module.items) {
 				for (Pair<BranchGetter, Node> pair : new BranchIterator(item)) {
 					if (pair.right instanceof BindingIdentifier) {
 						Maybe<Variable> declared = allBindings.get((BindingIdentifier) pair.right);

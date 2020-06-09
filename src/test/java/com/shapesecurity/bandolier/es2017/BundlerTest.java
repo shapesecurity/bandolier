@@ -34,7 +34,6 @@ import org.junit.Test;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -299,12 +298,38 @@ public class BundlerTest extends TestCase {
 	public void testImportOrdering() throws Exception {
 		Map<String, String> modules = new HashMap<>();
 		modules.put("/main.js", "import { a } from './a.js'; import { b } from './b.js'; import { c } from './c.js'; export var result = a + b + c.str;");
-		TestLoader localLoader = new TestLoader(modules);
-
 		modules.put("/c.js", "export var c = { str: 'original' };");
 		modules.put("/a.js", "import { c } from './c.js'; c.str = 'something'; export var a = 'a';");
 		modules.put("/b.js", "import { c } from './c.js'; c.str = 'replaced'; export var b = 'b';");
+		TestLoader localLoader = new TestLoader(modules);
 		testResult("/main.js", "abreplaced", resolver, localLoader);
+	}
+
+	@Test
+	public void testIdenticalModuleImport() throws Exception {
+		Map<String, String> modules = new HashMap<>();
+		modules.put("/main.js", "import './a.js'; import './b.js'; import { c } from './c.js'; export var result = c.str;");
+		modules.put("/c.js", "export var c = { str: 'original' };");
+		modules.put("/a.js", "import { c } from './c.js'; c.str += '1';");
+		modules.put("/b.js", "import { c } from './c.js'; c.str += '1';");
+		TestLoader localLoader = new TestLoader(modules);
+		testResult("/main.js", "original11", resolver, localLoader);
+	}
+
+	@Test
+	public void testIdenticalModuleImportWithSubdirs() throws Exception {
+		Map<String, String> modules = new HashMap<>();
+		modules.put("/a.js",
+			"import { b as b1 } from './b.js';\n" +
+			"import { b as b2 } from './subdir/b.js';\n" +
+			"export var result = b1 + b2;");
+		modules.put("/b.js", "export { b } from './c.js';");
+		modules.put("/c.js", "export var b = 2;");
+		modules.put("/subdir/b.js", "export { b } from './c.js';");
+		modules.put("/subdir/c.js", "export var b = 3;");
+
+		TestLoader localLoader = new TestLoader(modules);
+		testResult("/a.js", 5.0, resolver, localLoader);
 	}
 
 	@Test

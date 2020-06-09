@@ -1,11 +1,10 @@
 package com.shapesecurity.bandolier.es2017.bundlers;
 
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.bandolier.es2017.transformations.DeadCodeElimination;
 import com.shapesecurity.bandolier.es2017.transformations.ImportExportConnector;
 import com.shapesecurity.bandolier.es2017.transformations.VariableCollisionResolver;
-import com.shapesecurity.bandolier.es2017.transformations.VariableNameGenerator;
 import com.shapesecurity.functional.Pair;
-import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Module;
@@ -13,7 +12,6 @@ import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
 import com.shapesecurity.shift.es2017.ast.*;
-import com.shapesecurity.functional.data.ImmutableSet;
 import com.shapesecurity.functional.data.Maybe;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +23,7 @@ public class PiercedModuleBundler implements IModuleBundler {
 
 	@Override
 	public @NotNull Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, Module> modules) {
-		HashTable<String, Module> newModules = HashTable.emptyUsingEquality();
+		HashTable<String, ModuleWrapper> newModules = HashTable.emptyUsingEquality();
 		for (Map.Entry<String, Module> mapEntry : modules.entrySet()) {
 			Module module = mapEntry.getValue();
 			if (options.exportStrategy == BundlerOptions.ExportStrategy.ALL_GLOBALS) {
@@ -40,10 +38,10 @@ public class PiercedModuleBundler implements IModuleBundler {
 					return item;
 				}));
 			}
-			newModules = newModules.put(mapEntry.getKey(), module);
+			newModules = newModules.put(mapEntry.getKey(), new ModuleWrapper(module));
 		}
 		VariableCollisionResolver.ResolvedResult result = VariableCollisionResolver.resolveCollisions(newModules);
-		HashTable<String, Module> specifierToModule = newModules.map(module -> result.moduleMap.get(module).fromJust());
+		HashTable<String, ModuleWrapper> specifierToModule = newModules.map(module -> result.moduleMap.get(module).fromJust());
 		Pair<Script, String> scriptAndGlobalParameter = ImportExportConnector.combineModules(options, result.moduleMap.get(newModules.get(entry).fromJust()).fromJust(), result, specifierToModule);
 		Script combined = scriptAndGlobalParameter.left;
 		combined = DeadCodeElimination.removeAllUnusedDeclarations(combined);
