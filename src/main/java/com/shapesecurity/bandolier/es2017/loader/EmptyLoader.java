@@ -1,7 +1,6 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -15,14 +14,14 @@ public class EmptyLoader implements IResourceLoader {
     private EmptyLoader() {}
 
     @Override
-    @NotNull
-    public Boolean exists(@NotNull Path path) {
+    @Nonnull
+    public Boolean exists(@Nonnull Path path) {
         return false;
     }
 
     @Override
-    @NotNull
-    public String loadResource(@NotNull Path path) throws IOException {
+    @Nonnull
+    public String loadResource(@Nonnull Path path) throws IOException {
         throw new IOException("Cannot find resource " + path.toString());
     }
 }

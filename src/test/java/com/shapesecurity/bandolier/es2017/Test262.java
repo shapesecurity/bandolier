@@ -1,6 +1,5 @@
 package com.shapesecurity.bandolier.es2017;
 
-import com.google.common.hash.HashCode;
 import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
 import com.shapesecurity.bandolier.es2017.bundlers.IModuleBundler;
 import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
@@ -9,7 +8,6 @@ import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.bandolier.es2017.loader.NodeResolver;
 import com.shapesecurity.functional.Pair;
-import com.shapesecurity.functional.data.HashCodeBuilder;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.ImmutableSet;
 import com.shapesecurity.functional.data.Maybe;
@@ -31,9 +29,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 
 public class Test262 {
 

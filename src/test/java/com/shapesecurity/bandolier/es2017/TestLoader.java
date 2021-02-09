@@ -1,8 +1,8 @@
 package com.shapesecurity.bandolier.es2017;
 
 import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -15,15 +15,15 @@ public class TestLoader implements IResourceLoader {
         this.modules = modules;
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public Boolean exists(@NotNull Path path) {
+    public Boolean exists(@Nonnull Path path) {
         return modules.containsKey(path.toString());
     }
 
-    @NotNull
+    @Nonnull
     @Override
-    public String loadResource(@NotNull Path path) throws IOException {
+    public String loadResource(@Nonnull Path path) throws IOException {
         String code = modules.get(path.toString());
         if (code == null) throw new AssertionError(path);
         return code;

@@ -1,34 +1,33 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 
 class RootedFileLoader extends FileLoader {
-    @NotNull
+    @Nonnull
     private final Path root;
 
-    public RootedFileLoader(@NotNull Path root) {
+    public RootedFileLoader(@Nonnull Path root) {
         super();
         this.root = root.normalize();
     }
 
     @Override
-    @NotNull
-    public Boolean existsBackend(@NotNull Path path) {
+    @Nonnull
+    public Boolean existsBackend(@Nonnull Path path) {
         return super.existsBackend(this.resolve(path));
     }
 
     @Override
-    @NotNull
-    public String loadResourceBackend(@NotNull Path path) throws IOException {
+    @Nonnull
+    public String loadResourceBackend(@Nonnull Path path) throws IOException {
         return super.loadResourceBackend(this.resolve(path));
     }
 
     // paths cannot be resolved above the given root directory
-    @NotNull
-    private Path resolve(@NotNull Path path) {
+    @Nonnull
+    private Path resolve(@Nonnull Path path) {
         return this.root.resolve("./" + path.normalize().toString()).normalize();
     }
 }

@@ -16,8 +16,8 @@
 package com.shapesecurity.bandolier.es2017;
 
 
-import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
+import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.ExportAllFrom;
 import com.shapesecurity.shift.es2017.ast.ExportDeclaration;

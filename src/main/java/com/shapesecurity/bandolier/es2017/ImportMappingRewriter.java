@@ -25,8 +25,7 @@ import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStat
 import com.shapesecurity.shift.es2017.ast.ImportNamespace;
 import com.shapesecurity.shift.es2017.ast.Module;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.util.Map;
 
 /**
@@ -35,7 +34,7 @@ import java.util.Map;
 public class ImportMappingRewriter {
 
 
-	@NotNull
+	@Nonnull
 	private final Map<String, String> importMap;
 
 	/**
@@ -43,7 +42,7 @@ public class ImportMappingRewriter {
 	 * @param importMap maps the current import path to a new one, must contain a mapping for every
 	 *                  import in the module
 	 */
-	public ImportMappingRewriter(@NotNull Map<String, String> importMap) {
+	public ImportMappingRewriter(@Nonnull Map<String, String> importMap) {
 		this.importMap = importMap;
 	}
 
@@ -52,16 +51,16 @@ public class ImportMappingRewriter {
 	 * @param module the module to rewrite
 	 * @return a module with all imports rewritten based on the map
 	 */
-	@NotNull
-	public Module rewrite(@NotNull Module module) {
+	@Nonnull
+	public Module rewrite(@Nonnull Module module) {
 		ImmutableList<ImportDeclarationExportDeclarationStatement> items =
 			module.items.bind(x -> rewritePaths(x));
 
 		return new Module(module.directives, items);
 	}
 
-	@NotNull
-	private String lookupMapping(@NotNull String path) {
+	@Nonnull
+	private String lookupMapping(@Nonnull String path) {
 		assert this.importMap.containsKey(path);
 
 		return this.importMap.get(path);

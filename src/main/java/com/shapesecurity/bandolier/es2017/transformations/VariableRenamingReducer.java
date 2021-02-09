@@ -1,17 +1,23 @@
 package com.shapesecurity.bandolier.es2017.transformations;
 
-import javax.annotation.Nonnull;
-
 import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2017.ast.*;
+import com.shapesecurity.shift.es2017.ast.AssignmentTargetIdentifier;
+import com.shapesecurity.shift.es2017.ast.BindingIdentifier;
+import com.shapesecurity.shift.es2017.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2017.ast.ExportFromSpecifier;
+import com.shapesecurity.shift.es2017.ast.ExportLocalSpecifier;
+import com.shapesecurity.shift.es2017.ast.IdentifierExpression;
+import com.shapesecurity.shift.es2017.ast.Import;
+import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.es2017.ast.ImportSpecifier;
+import com.shapesecurity.shift.es2017.ast.Node;
 import com.shapesecurity.shift.es2017.reducer.ReconstructingReducer;
-import com.shapesecurity.shift.es2017.scope.GlobalScope;
-import com.shapesecurity.shift.es2017.scope.Reference;
-import com.shapesecurity.shift.es2017.scope.Scope;
 import com.shapesecurity.shift.es2017.scope.ScopeLookup;
 import com.shapesecurity.shift.es2017.scope.Variable;
+
+import javax.annotation.Nonnull;
 
 // renames all identifiers given some map
 public class VariableRenamingReducer extends ReconstructingReducer {

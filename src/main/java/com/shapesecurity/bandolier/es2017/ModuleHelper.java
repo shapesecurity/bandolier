@@ -1,9 +1,15 @@
 package com.shapesecurity.bandolier.es2017;
 
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2017.ast.*;
+import com.shapesecurity.shift.es2017.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2017.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2017.ast.ExportFrom;
+import com.shapesecurity.shift.es2017.ast.Import;
+import com.shapesecurity.shift.es2017.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2017.ast.ImportNamespace;
 import com.shapesecurity.shift.es2017.ast.Module;
-import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nonnull;
 
 public abstract class ModuleHelper {
 
@@ -17,7 +23,8 @@ public abstract class ModuleHelper {
 	 * @param module module to interpret
 	 * @return list of dependent module specifiers.
 	 */
-	public static @NotNull ImmutableList<String> getModuleDependencies(@NotNull Module module) {
+	@Nonnull
+	public static ImmutableList<String> getModuleDependencies(@Nonnull Module module) {
 		return module.items.bind(s -> {
 			if (s instanceof ImportDeclaration) {
 				if (s instanceof Import) {

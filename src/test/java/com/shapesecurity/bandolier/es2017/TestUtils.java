@@ -10,11 +10,10 @@ import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
-import java.nio.file.Paths;
-
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 

@@ -15,14 +15,13 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.nio.file.Path;
 
 public class FileSystemResolver implements IResolver {
-	@NotNull
+	@Nonnull
 	@Override
-	public String resolve(@NotNull Path root, @NotNull String path) {
+	public String resolve(@Nonnull Path root, @Nonnull String path) {
 		if (path.startsWith(".")) {
 			return root.resolve(path).normalize().toString();
 		}

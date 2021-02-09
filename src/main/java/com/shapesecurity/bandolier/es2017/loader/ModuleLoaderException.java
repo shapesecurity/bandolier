@@ -16,8 +16,10 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
 
+import javax.annotation.Nonnull;
+
 public class ModuleLoaderException extends Exception {
-	public ModuleLoaderException(String module, Exception cause) {
+	public ModuleLoaderException(@Nonnull String module, @Nonnull Exception cause) {
 		super("Module Loader Exception: module " + module + " cannot be loaded: " + cause.getMessage(), cause);
 	}
 }

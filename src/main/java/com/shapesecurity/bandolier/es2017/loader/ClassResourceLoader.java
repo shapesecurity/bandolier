@@ -15,9 +15,9 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,15 +33,15 @@ public class ClassResourceLoader extends CachedResourceLoader {
 		this.klass = klass;
 	}
 
-	@NotNull
+	@Nonnull
 	@Override
-	public Boolean existsBackend(@NotNull Path path) {
+	public Boolean existsBackend(@Nonnull Path path) {
 		return this.getStream(path.toString()) != null;
 	}
 
-	@NotNull
+	@Nonnull
 	@Override
-	public String loadResourceBackend(@NotNull Path path) throws IOException {
+	public String loadResourceBackend(@Nonnull Path path) throws IOException {
 		InputStream stream = this.getStream(path.toString());
 		if (stream == null) {
 			throw new IOException("Cannot load resource: " + path.toString());
@@ -51,12 +51,12 @@ public class ClassResourceLoader extends CachedResourceLoader {
 	}
 
 	@Nullable
-	private InputStream getStream(@NotNull String path) {
+	private InputStream getStream(@Nonnull String path) {
 		return this.klass.getResourceAsStream(path);
 	}
 
-	@NotNull
-	private String readFile(@NotNull InputStream stream) throws IOException {
+	@Nonnull
+	private String readFile(@Nonnull InputStream stream) throws IOException {
 		InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
 		BufferedReader bufferedReader = new BufferedReader(reader);
 

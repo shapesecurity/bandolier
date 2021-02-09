@@ -23,16 +23,15 @@ import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
-import com.shapesecurity.shift.es2017.ast.*;
+import com.shapesecurity.functional.Pair;
+import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
-import com.shapesecurity.functional.Pair;
-import com.shapesecurity.functional.data.ImmutableList;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,7 +48,8 @@ public class Bundler {
 	 * @return a bundled script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundle(@NotNull BundlerOptions options, @NotNull Path filePath) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundle(@Nonnull BundlerOptions options, @Nonnull Path filePath) throws ModuleLoaderException {
 		return bundle(options, filePath, new FileSystemResolver(), new FileLoader(), new PiercedModuleBundler());
 	}
 
@@ -59,7 +59,8 @@ public class Bundler {
 	 * @return a bundled script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundle(@NotNull Path filePath) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundle(@Nonnull Path filePath) throws ModuleLoaderException {
 		return bundle(BundlerOptions.DEFAULT_OPTIONS, filePath);
 	}
 
@@ -74,7 +75,8 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	public static @NotNull Script bundle(@NotNull BundlerOptions options, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundle(@Nonnull BundlerOptions options, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundleString(options, loader.loadResource(filePath), filePath, resolver, loader, bundler);
 		} catch (IOException e) {
@@ -92,7 +94,8 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	public static @NotNull Script bundle(@NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundle(@Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundle(BundlerOptions.DEFAULT_OPTIONS, filePath, resolver, loader, bundler);
 	}
 
@@ -108,7 +111,8 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleString(@NotNull BundlerOptions options, @NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundleString(@Nonnull BundlerOptions options, @Nonnull String source, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundler.bundleEntrypoint(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(Parser.parseModule(source), filePath, resolver, loader));
 		} catch (Exception e) {
@@ -127,7 +131,8 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleString(@NotNull String source, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundleString(@Nonnull String source, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundleString(BundlerOptions.DEFAULT_OPTIONS, source, filePath, resolver, loader, bundler);
 	}
 
@@ -143,7 +148,8 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleModule(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundleModule(@Nonnull BundlerOptions options, @Nonnull Module mod, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundler.bundleEntrypoint(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(mod, filePath, resolver, loader));
 		} catch (Exception e) {
@@ -162,7 +168,8 @@ public class Bundler {
 	 * @return the resulting script
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Script bundleModule(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Script bundleModule(@Nonnull Module mod, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundleModule(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
 	}
 
@@ -173,7 +180,8 @@ public class Bundler {
 	 * @return a bundled script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Path filePath) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@Nonnull BundlerOptions options, @Nonnull Path filePath) throws ModuleLoaderException {
 		return bundleWithEarlyErrors(options, filePath, new FileSystemResolver(), new FileLoader(), new PiercedModuleBundler());
 	}
 
@@ -183,7 +191,8 @@ public class Bundler {
 	 * @return a bundled script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull Path filePath) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@Nonnull Path filePath) throws ModuleLoaderException {
 		return bundleWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, filePath);
 	}
 
@@ -198,7 +207,8 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@Nonnull BundlerOptions options, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundleStringWithEarlyErrors(options, loader.loadResource(filePath), filePath, resolver, loader, bundler);
 		} catch (IOException e) {
@@ -216,7 +226,8 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundleWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, filePath, resolver, loader, bundler);
 	}
 
@@ -232,7 +243,8 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@NotNull BundlerOptions options, @NotNull String mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@Nonnull BundlerOptions options, @Nonnull String mod, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(Parser.parseModule(mod), filePath, resolver, loader));
 		} catch (Exception e) {
@@ -251,7 +263,8 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@NotNull String mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleStringWithEarlyErrors(@Nonnull String mod, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundleStringWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
 	}
 
@@ -267,7 +280,8 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull BundlerOptions options, @NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@Nonnull BundlerOptions options, @Nonnull Module mod, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
 			return bundler.bundleEntrypointWithEarlyErrors(options, filePath.toAbsolutePath().normalize().toString(), loadDependencies(mod, filePath, resolver, loader));
 		} catch (Exception e) {
@@ -285,7 +299,8 @@ public class Bundler {
 	 * @return the resulting script with early errors
 	 * @throws ModuleLoaderException
 	 */
-	public static @NotNull Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@NotNull Module mod, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
+	@Nonnull
+	public static Pair<Script, ImmutableList<EarlyError>> bundleModuleWithEarlyErrors(@Nonnull Module mod, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		return bundleModuleWithEarlyErrors(BundlerOptions.DEFAULT_OPTIONS, mod, filePath, resolver, loader, bundler);
 	}
 
@@ -298,7 +313,8 @@ public class Bundler {
 	 * @return is a map from module names (path to modules) to the loaded modules.
 	 * @throws ModuleLoaderException when the module fails to load
 	 */
-	static @NotNull Map<String, Module> loadDependencies(@NotNull Module module, @NotNull Path filePath, @NotNull IResolver resolver, @NotNull IResourceLoader loader)
+	@Nonnull
+	static Map<String, Module> loadDependencies(@Nonnull Module module, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader)
 		throws ModuleLoaderException {
 
 		Map<String, Module> loadedModules = new LinkedHashMap<>();
@@ -336,7 +352,8 @@ public class Bundler {
 		return loadedModules;
 	}
 
-	private static @NotNull String getFileExtension(@NotNull String filename) {
+	@Nonnull
+	private static String getFileExtension(@Nonnull String filename) {
 		int i = filename.lastIndexOf('.');
 		if (i < 0) return "";
 		return filename.substring(i + 1);

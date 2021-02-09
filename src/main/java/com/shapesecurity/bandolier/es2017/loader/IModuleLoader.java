@@ -15,8 +15,7 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.nio.file.Path;
 
 public interface IModuleLoader {
@@ -26,6 +25,6 @@ public interface IModuleLoader {
 	 * @param path is the absolute path to the module to be loaded.
 	 * @return the module
 	 */
-	@NotNull
-	String loadModule(@NotNull Path path) throws ModuleLoaderException;
+	@Nonnull
+	String loadModule(@Nonnull Path path) throws ModuleLoaderException;
 }

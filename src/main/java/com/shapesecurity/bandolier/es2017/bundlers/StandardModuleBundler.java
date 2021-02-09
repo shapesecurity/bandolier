@@ -5,16 +5,54 @@ import com.shapesecurity.bandolier.es2017.ImportMappingRewriter;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2017.ast.*;
-
+import com.shapesecurity.shift.es2017.ast.ArrayExpression;
+import com.shapesecurity.shift.es2017.ast.AssignmentExpression;
+import com.shapesecurity.shift.es2017.ast.AssignmentTarget;
+import com.shapesecurity.shift.es2017.ast.BinaryExpression;
+import com.shapesecurity.shift.es2017.ast.BindingIdentifier;
+import com.shapesecurity.shift.es2017.ast.CallExpression;
+import com.shapesecurity.shift.es2017.ast.ComputedMemberAssignmentTarget;
+import com.shapesecurity.shift.es2017.ast.ComputedMemberExpression;
+import com.shapesecurity.shift.es2017.ast.ConditionalExpression;
+import com.shapesecurity.shift.es2017.ast.DataProperty;
+import com.shapesecurity.shift.es2017.ast.Directive;
+import com.shapesecurity.shift.es2017.ast.Expression;
+import com.shapesecurity.shift.es2017.ast.ExpressionStatement;
+import com.shapesecurity.shift.es2017.ast.FormalParameters;
+import com.shapesecurity.shift.es2017.ast.FunctionBody;
+import com.shapesecurity.shift.es2017.ast.FunctionDeclaration;
+import com.shapesecurity.shift.es2017.ast.FunctionExpression;
+import com.shapesecurity.shift.es2017.ast.IdentifierExpression;
+import com.shapesecurity.shift.es2017.ast.IfStatement;
+import com.shapesecurity.shift.es2017.ast.LiteralBooleanExpression;
+import com.shapesecurity.shift.es2017.ast.LiteralNumericExpression;
+import com.shapesecurity.shift.es2017.ast.LiteralStringExpression;
 import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.ast.NewExpression;
+import com.shapesecurity.shift.es2017.ast.Node;
+import com.shapesecurity.shift.es2017.ast.ObjectExpression;
+import com.shapesecurity.shift.es2017.ast.ObjectProperty;
+import com.shapesecurity.shift.es2017.ast.Parameter;
+import com.shapesecurity.shift.es2017.ast.ReturnStatement;
+import com.shapesecurity.shift.es2017.ast.Script;
+import com.shapesecurity.shift.es2017.ast.SpreadElementExpression;
+import com.shapesecurity.shift.es2017.ast.Statement;
+import com.shapesecurity.shift.es2017.ast.StaticMemberAssignmentTarget;
+import com.shapesecurity.shift.es2017.ast.StaticMemberExpression;
+import com.shapesecurity.shift.es2017.ast.StaticPropertyName;
+import com.shapesecurity.shift.es2017.ast.ThisExpression;
+import com.shapesecurity.shift.es2017.ast.ThrowStatement;
+import com.shapesecurity.shift.es2017.ast.UnaryExpression;
+import com.shapesecurity.shift.es2017.ast.VariableDeclaration;
+import com.shapesecurity.shift.es2017.ast.VariableDeclarationKind;
+import com.shapesecurity.shift.es2017.ast.VariableDeclarationStatement;
+import com.shapesecurity.shift.es2017.ast.VariableDeclarator;
 import com.shapesecurity.shift.es2017.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.es2017.ast.operators.UnaryOperator;
-
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -26,7 +64,7 @@ public class StandardModuleBundler implements IModuleBundler {
 	private final Map<String, String> pathMapping = new HashMap<>();
 
 	// This function is only guaranteed to be deterministic if the provided `modules` map has deterministic ordering
-	@NotNull
+	@Nonnull
 	@Override
 	public Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, Module> modules) {
 		// rather than bundle with absolute paths (a potential information leak) create a mapping
@@ -44,7 +82,8 @@ public class StandardModuleBundler implements IModuleBundler {
 	}
 
 	@Override
-	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, Module> modules) {
+	@Nonnull
+	public Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, Module> modules) {
 		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
 	}
 

@@ -15,14 +15,13 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.nio.file.Path;
 
 public interface IResolver {
 	/**
 	 * Given a root and a (potentially relative) path, resolves the path to an absolute path.
 	 */
-	@NotNull
-	String resolve(@NotNull Path root, @NotNull String path);
+	@Nonnull
+	String resolve(@Nonnull Path root, @Nonnull String path);
 }

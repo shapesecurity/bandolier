@@ -1,11 +1,15 @@
 package com.shapesecurity.bandolier.es2017.transformations;
 
+import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.functional.Pair;
-import com.shapesecurity.functional.data.*;
+import com.shapesecurity.functional.data.HashTable;
+import com.shapesecurity.functional.data.ImmutableList;
+import com.shapesecurity.functional.data.ImmutableSet;
+import com.shapesecurity.functional.data.Maybe;
+import com.shapesecurity.functional.data.MultiHashTable;
 import com.shapesecurity.shift.es2017.ast.AssignmentTargetIdentifier;
 import com.shapesecurity.shift.es2017.ast.IdentifierExpression;
 import com.shapesecurity.shift.es2017.ast.Module;
-import com.shapesecurity.bandolier.es2017.ModuleWrapper;
 import com.shapesecurity.shift.es2017.reducer.Director;
 import com.shapesecurity.shift.es2017.scope.GlobalScope;
 import com.shapesecurity.shift.es2017.scope.Reference;

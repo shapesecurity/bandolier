@@ -1,27 +1,26 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FallbackLoader implements IResourceLoader {
-    @NotNull
+    @Nonnull
     private final Iterable<IResourceLoader> loaders;
 
-    public FallbackLoader(@NotNull IResourceLoader primary, @NotNull IResourceLoader fallback, @NotNull IResourceLoader ...fallbacks) {
+    public FallbackLoader(@Nonnull IResourceLoader primary, @Nonnull IResourceLoader fallback, @Nonnull IResourceLoader ...fallbacks) {
         this.loaders = Stream.concat(Stream.of(primary, fallback), Stream.of(fallbacks)).collect(Collectors.toList());
     }
 
-    public FallbackLoader(@NotNull Iterable<IResourceLoader> loaders) {
+    public FallbackLoader(@Nonnull Iterable<IResourceLoader> loaders) {
         this.loaders = loaders;
     }
 
     @Override
-    @NotNull
-    public Boolean exists(@NotNull Path path) {
+    @Nonnull
+    public Boolean exists(@Nonnull Path path) {
         for (IResourceLoader loader : this.loaders) {
             if (loader.exists(path)) {
                 return true;
@@ -31,8 +30,8 @@ public class FallbackLoader implements IResourceLoader {
     }
 
     @Override
-    @NotNull
-    public String loadResource(@NotNull Path path) throws IOException {
+    @Nonnull
+    public String loadResource(@Nonnull Path path) throws IOException {
         for (IResourceLoader loader : this.loaders) {
             if (loader.exists(path)) {
                 return loader.loadResource(path);

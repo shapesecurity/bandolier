@@ -15,20 +15,18 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
+import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
 import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
 import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
-import com.shapesecurity.bandolier.es2017.loader.IResolver;
-import com.shapesecurity.bandolier.es2017.bundlers.BundlerOptions;
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
+import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
-
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import junit.framework.TestCase;
-
 import org.junit.Test;
 
 import javax.script.ScriptEngine;
