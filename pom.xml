@@ -5,12 +5,12 @@
 
     <groupId>com.shapesecurity.bandolier</groupId>
     <artifactId>es2017</artifactId>
-    <version>3.4.1</version>
+    <version>3.5.0</version>
     <packaging>jar</packaging>
 
 
     <name>Bandolier</name>
-    <description>Bundles es2015 modules</description>
+    <description>Bundles es2015+ modules</description>
     <url>https://github.com/shapesecurity/bandolier</url>
 
     <scm>
