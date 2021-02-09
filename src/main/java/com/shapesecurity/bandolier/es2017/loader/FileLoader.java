@@ -27,7 +27,7 @@ public class FileLoader extends CachedResourceLoader {
 	@NotNull
 	@Override
 	public Boolean existsBackend(@NotNull Path path) {
-		return Files.exists(path);
+		return Files.exists(path) && Files.isRegularFile(path);
 	}
 
 	@NotNull
