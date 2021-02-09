@@ -20,7 +20,6 @@ import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
-
 import junit.framework.TestCase;
 
 import java.nio.file.Paths;

@@ -7,14 +7,25 @@ import com.shapesecurity.bandolier.es2017.transformations.VariableCollisionResol
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.HashTable;
 import com.shapesecurity.functional.data.ImmutableList;
+import com.shapesecurity.functional.data.Maybe;
+import com.shapesecurity.shift.es2017.ast.BindingIdentifier;
+import com.shapesecurity.shift.es2017.ast.CallExpression;
+import com.shapesecurity.shift.es2017.ast.ClassDeclaration;
+import com.shapesecurity.shift.es2017.ast.Directive;
+import com.shapesecurity.shift.es2017.ast.Export;
+import com.shapesecurity.shift.es2017.ast.ExpressionStatement;
+import com.shapesecurity.shift.es2017.ast.FormalParameters;
+import com.shapesecurity.shift.es2017.ast.FunctionBody;
+import com.shapesecurity.shift.es2017.ast.FunctionDeclaration;
+import com.shapesecurity.shift.es2017.ast.FunctionExpression;
 import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.Script;
+import com.shapesecurity.shift.es2017.ast.ThisExpression;
+import com.shapesecurity.shift.es2017.ast.VariableDeclarationStatement;
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
-import com.shapesecurity.shift.es2017.ast.*;
-import com.shapesecurity.functional.data.Maybe;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -22,7 +33,8 @@ import java.util.stream.Collectors;
 public class PiercedModuleBundler implements IModuleBundler {
 
 	@Override
-	public @NotNull Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, Module> modules) {
+	@Nonnull
+	public Script bundleEntrypoint(BundlerOptions options, String entry, Map<String, Module> modules) {
 		HashTable<String, ModuleWrapper> newModules = HashTable.emptyUsingEquality();
 		for (Map.Entry<String, Module> mapEntry : modules.entrySet()) {
 			Module module = mapEntry.getValue();
@@ -58,7 +70,8 @@ public class PiercedModuleBundler implements IModuleBundler {
 
 
 	@Override
-	public @NotNull Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, Module> modules) {
+	@Nonnull
+	public Pair<Script, ImmutableList<EarlyError>> bundleEntrypointWithEarlyErrors(BundlerOptions options, String entry, Map<String, Module> modules) {
 		return Pair.of(bundleEntrypoint(options, entry, modules), ImmutableList.from(modules.values().stream().map(EarlyErrorChecker::validate).collect(Collectors.toList())).foldLeft(ImmutableList::append, ImmutableList.empty()));
 	}
 }

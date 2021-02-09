@@ -16,11 +16,9 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
 import com.google.gson.Gson;
-
 import com.shapesecurity.functional.data.Maybe;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,7 +54,7 @@ import java.nio.file.Paths;
  */
 public class NodeResolver implements IResolver {
 
-	@NotNull
+	@Nonnull
 	private final IResourceLoader loader;
 
 	public NodeResolver() {
@@ -67,14 +65,14 @@ public class NodeResolver implements IResolver {
 	 * Create a new resolver for node modules with the specified resource loader.
 	 * @param loader Used to determine if a resource exists
 	 */
-	public NodeResolver(@NotNull IResourceLoader loader) {
+	public NodeResolver(@Nonnull IResourceLoader loader) {
 		this.loader = loader;
 	}
 
 
-	@NotNull
+	@Nonnull
 	@Override
-	public String resolve(@NotNull Path root, @NotNull String path) {
+	public String resolve(@Nonnull Path root, @Nonnull String path) {
 		if (path.startsWith(".") || path.startsWith("/")) {
 			Path toCheck = path.startsWith(".") ? root.resolve(path).normalize() : Paths.get(path);
 
@@ -91,8 +89,8 @@ public class NodeResolver implements IResolver {
 		return resolveNodeModules(root, path).orJust(path);
 	}
 
-	@NotNull
-	private Maybe<String> resolveNodeModules(Path cwd, @NotNull String path) {
+	@Nonnull
+	private Maybe<String> resolveNodeModules(Path cwd, @Nonnull String path) {
 		if (cwd == null) { return Maybe.empty(); }
 
 		Path toCheck = cwd.resolve("node_modules").resolve(path);
@@ -109,8 +107,8 @@ public class NodeResolver implements IResolver {
 	}
 
 
-	@NotNull
-	private Maybe<String> resolveAsFile(@NotNull Path path) {
+	@Nonnull
+	private Maybe<String> resolveAsFile(@Nonnull Path path) {
 		String pathJs = path.toString() + ".js";
 		String pathJson = path.toString() + ".json";
 
@@ -127,16 +125,16 @@ public class NodeResolver implements IResolver {
 
 	// Since the resolver should support resources that do not have a concept of "directory" (for
 	// example a JAR file), we need to check if a path might have resources inside of it.
-	@NotNull
-	private Boolean hasDirFiles(@NotNull Path path) {
+	@Nonnull
+	private Boolean hasDirFiles(@Nonnull Path path) {
 		return this.loader.exists(path.resolve("package.json")) ||
 				this.loader.exists(path.resolve("index.js")) ||
 				this.loader.exists(path.resolve("index.json"));
 	}
 
 
-	@NotNull
-	private Maybe<String> resolveAsDir(@NotNull Path path) {
+	@Nonnull
+	private Maybe<String> resolveAsDir(@Nonnull Path path) {
 		if (this.loader.exists(path.resolve("package.json"))) {
 			Gson gson = new Gson();
 			try {

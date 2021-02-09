@@ -15,8 +15,7 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,15 +23,15 @@ import java.nio.file.Path;
 
 public class FileLoader extends CachedResourceLoader {
 
-	@NotNull
+	@Nonnull
 	@Override
-	public Boolean existsBackend(@NotNull Path path) {
+	public Boolean existsBackend(@Nonnull Path path) {
 		return Files.exists(path) && Files.isRegularFile(path);
 	}
 
-	@NotNull
+	@Nonnull
 	@Override
-	public String loadResourceBackend(@NotNull Path path) throws IOException {
+	public String loadResourceBackend(@Nonnull Path path) throws IOException {
 		return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 	}
 }

@@ -15,8 +15,7 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -24,9 +23,9 @@ import java.nio.file.Path;
  * Abstracts the concept of checking if a resource exists and loading it as a string.
  */
 public interface IResourceLoader {
-	@NotNull
-	Boolean exists(@NotNull Path path);
+	@Nonnull
+	Boolean exists(@Nonnull Path path);
 
-	@NotNull
-	String loadResource(@NotNull Path path) throws IOException;
+	@Nonnull
+	String loadResource(@Nonnull Path path) throws IOException;
 }

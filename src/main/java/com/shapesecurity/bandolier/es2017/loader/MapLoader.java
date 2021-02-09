@@ -1,7 +1,6 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,17 +9,17 @@ import java.util.Map;
 public class MapLoader implements IResourceLoader {
     private final Map<Path, String> resources;
 
-    public MapLoader(@NotNull Map<Path, String> resources) {
+    public MapLoader(@Nonnull Map<Path, String> resources) {
         this.resources = resources;
     }
 
-    @NotNull
-    public Boolean exists(@NotNull Path path) {
+    @Nonnull
+    public Boolean exists(@Nonnull Path path) {
         return this.resources.containsKey(normalise(path));
     }
 
-    @NotNull
-    public String loadResource(@NotNull Path path) throws IOException {
+    @Nonnull
+    public String loadResource(@Nonnull Path path) throws IOException {
         Path normal = normalise(path);
         if (this.resources.containsKey(normal)) {
             return this.resources.get(normal);
@@ -28,8 +27,8 @@ public class MapLoader implements IResourceLoader {
         throw new IOException("Path not found in Map loader: " + normal.toString());
     }
 
-    @NotNull
-    private Path normalise(@NotNull Path path) {
+    @Nonnull
+    private Path normalise(@Nonnull Path path) {
         return Paths.get("/" + path.normalize().toString()).normalize();
     }
 }

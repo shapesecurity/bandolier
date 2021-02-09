@@ -16,10 +16,10 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,9 +35,9 @@ public class NodeResolverTest {
 
 	class MockPathLoader implements IResourceLoader {
 
-		@NotNull
+		@Nonnull
 		@Override
-		public Boolean exists(@NotNull Path path) {
+		public Boolean exists(@Nonnull Path path) {
 			Map<String, Boolean> fs = new HashMap<>();
 			fs.put("/foo/bar/baz", true);
 			fs.put("/foo/bar/node_modules/f.js", true);
@@ -48,9 +48,9 @@ public class NodeResolverTest {
 			return fs.containsKey(path.toString());
 		}
 
-		@NotNull
+		@Nonnull
 		@Override
-		public String loadResource(@NotNull Path path) throws IOException {
+		public String loadResource(@Nonnull Path path) throws IOException {
 			return "";
 		}
 	}
