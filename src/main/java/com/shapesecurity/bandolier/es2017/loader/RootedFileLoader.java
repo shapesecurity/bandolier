@@ -4,7 +4,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-class RootedFileLoader extends FileLoader {
+public class RootedFileLoader extends FileLoader {
     @Nonnull
     private final Path root;
 
