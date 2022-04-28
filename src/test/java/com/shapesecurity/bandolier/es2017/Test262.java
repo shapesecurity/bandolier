@@ -80,15 +80,23 @@ public class Test262 {
 
 	private static final ImmutableSet<String> xfailExecute = ImmutableList.of(
 
-			// Nashorn does not perform function name inference
+			// function name inference breaks
 			"eval-export-dflt-expr-fn-anon.js",
 			"eval-export-dflt-cls-named.js",
+			"eval-export-dflt-cls-anon.js",
+			"eval-export-dflt-expr-cls-anon.js",
+			"eval-export-dflt-expr-gen-anon.js",
 			"instn-named-bndng-dflt-fun-named.js",
 			"instn-named-bndng-dflt-fun-anon.js",
+			"instn-named-bndng-dflt-gen-named.js",
+			"instn-named-bndng-dflt-gen-anon.js",
 
-			// nothing we can do object.hasownproperty/etc
+			// nothing we can do about property descriptors on the namespace object
+			"namespace/internals/define-own-property.js",
+			"namespace/internals/get-own-property-str-found-uninit.js",
 			"namespace/internals/object-hasOwnProperty-binding-uninit.js",
 			"namespace/internals/object-propertyIsEnumerable-binding-uninit.js",
+			"namespace/internals/set.js",
 
 			// nothing we can do: "in"/enumerable properties
 			"namespace/internals/enumerate-binding-uninit.js",
@@ -120,7 +128,24 @@ public class Test262 {
 			"namespace/internals/get-str-update.js",
 			"namespace/internals/get-own-property-str-not-found.js",
 			"namespace/internals/get-str-not-found.js",
-			"namespace/internals/is-extensible.js",
+			"namespace/internals/delete-exported-init.js",
+			"namespace/internals/delete-exported-uninit.js",
+			"namespace/internals/delete-non-exported.js",
+			"namespace/internals/get-own-property-sym.js",
+			"namespace/internals/get-str-found-uninit.js",
+			"namespace/internals/get-str-initialize.js",
+			"namespace/internals/get-sym-found.js",
+			"namespace/internals/get-sym-not-found.js",
+			"namespace/internals/has-property-str-found-uninit.js",
+			"namespace/internals/has-property-str-not-found.js",
+			"namespace/internals/has-property-str-found-init.js",
+			"namespace/internals/has-property-sym-found.js",
+			"namespace/internals/has-property-sym-not-found.js",
+			"namespace/internals/own-property-keys-binding-types.js",
+			"namespace/internals/own-property-keys-sort.js",
+			"namespace/internals/prevent-extensions.js",
+			"namespace/Symbol.iterator.js",
+			"namespace/Symbol.toStringTag.js",
 			"instn-star-binding.js",
 			"instn-iee-star-cycle.js"
 	).uniqByEquality().union(xfailExecute);
@@ -134,7 +159,9 @@ public class Test262 {
 			"instn-named-bndng-trlng-comma.js",
 			"instn-star-binding.js",
 			"instn-named-bndng-var.js",
-			"instn-iee-bndng-fun.js"
+			"instn-iee-bndng-fun.js",
+			"instn-iee-bndng-gen.js",
+			"instn-named-bndng-gen.js"
 	).uniqByEquality().union(xfailExecuteBalanced);
 
 	private static final String testsDir = "src/test/resources/test262/test/language/module-code/";
@@ -150,7 +177,7 @@ public class Test262 {
 		this.path = path;
 	}
 
-	@Parameterized.Parameters(name = "{2}.toString()")
+	@Parameterized.Parameters(name = "{2}")
 	public static Iterable<Object[]> params() {
 		Path root = Paths.get(testsDir);
 		List<Object[]> params = new ArrayList<>();
