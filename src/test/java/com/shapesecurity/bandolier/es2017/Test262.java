@@ -9,7 +9,6 @@ import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.bandolier.es2017.loader.NodeResolver;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.functional.data.ImmutableSet;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
@@ -25,29 +24,26 @@ import org.yaml.snakeyaml.Yaml;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RunWith(Parameterized.class)
 public class Test262 {
+	private static final Yaml YAML_PARSER = new Yaml();
 
-	private static final Yaml yamlParser = new Yaml();
-
-	private static final ImmutableSet<String> xfailParse = ImmutableList.of(
-
+	private static final Set<String> XFAIL_AT_PARSE = Set.of(
 			// ignored proposal
 			"privatename-valid-no-earlyerr.js"
-	).uniqByEquality();
+	);
 
-	private static final ImmutableSet<String> xfailParseThrowingDangerous = ImmutableList.of(
-
+	private static final Set<String> XFAIL_AT_PARSE_WITH_THROWING_DANGEROUS = Stream.concat(Set.of(
 			// we fail here instead of during execution.
 			"instn-iee-bndng-var.js",
 			"instn-named-bndng-fun.js",
@@ -57,29 +53,27 @@ public class Test262 {
 			"instn-iee-bndng-fun.js",
 			"instn-named-bndng-gen.js",
 			"instn-iee-bndng-gen.js"
-			).uniqByEquality().union(xfailParse);
+	).stream(), XFAIL_AT_PARSE.stream()).collect(Collectors.toSet());
 
-	private static final HashSet<String> xfailParseFeatures = new HashSet<>(Arrays.asList(
+	private static final Set<String> XFAIL_PARSE_FEATURES = Set.of(
 			// ignored proposal
 			"export-star-as-namespace-from-module"
-	));
+	);
 
-	private static final HashSet<String> xpassParseDespiteFeatures = new HashSet<>(Arrays.asList(
+	private static final Set<String> XPASS_PARSE_DESPITE_FEATURES = Set.of(
 			// supposed to fail for a different reason
 			"early-dup-export-as-star-as.js",
 			"parse-err-semi-name-space-export.js",
 			"early-dup-export-star-as-dflt.js",
 			"parse-err-semi-export-star.js"
-	));
+	);
 
-	private static final HashSet<String> xfailEarlyErrors = new HashSet<>(Arrays.asList(
-
+	private static final Set<String> XFAIL_EARLY_ERRORS = Set.of(
 			// unimplemented module early errors
 			"early-lex-and-var.js"
-	));
+	);
 
-	private static final ImmutableSet<String> xfailExecute = ImmutableList.of(
-
+	private static final Set<String> XFAIL_EXECUTE = Set.of(
 			// function name inference breaks
 			"eval-export-dflt-expr-fn-anon.js",
 			"eval-export-dflt-cls-named.js",
@@ -111,13 +105,10 @@ public class Test262 {
 			"instn-named-bndng-dflt-star.js",
 			"instn-named-bndng-dflt-named.js",
 			"instn-named-bndng-dflt-expr.js"
-
-	).uniqByEquality();
-
+	);
 
 	// in union with xFailExecute
-	private static final ImmutableSet<String> xfailExecuteBalanced = ImmutableList.of(
-
+	private static final Set<String> XFAIL_EXECUTE_BALANCED = Stream.concat(XFAIL_EXECUTE.stream(), Set.of(
 			// this is what we give up for DangerLevel.BALANCED
 			"instn-star-id-name.js",
 			"instn-star-iee-cycle.js",
@@ -148,11 +139,9 @@ public class Test262 {
 			"namespace/Symbol.toStringTag.js",
 			"instn-star-binding.js",
 			"instn-iee-star-cycle.js"
-	).uniqByEquality().union(xfailExecute);
+	).stream()).collect(Collectors.toSet());
 
-	// in union with xFailExecute and xfailExecuteBalanced
-	private static final ImmutableSet<String> xfailExecuteDangerous = ImmutableList.of(
-
+	private static final Set<String> XFAIL_EXECUTE_DANGEROUS = Stream.concat(XFAIL_EXECUTE_BALANCED.stream(), Set.of(
 			// this is what we give up for DangerLevel.DANGEROUS in addition to xfailExecuteBalanced
 			"instn-iee-bndng-var.js",
 			"instn-named-bndng-fun.js",
@@ -162,11 +151,11 @@ public class Test262 {
 			"instn-iee-bndng-fun.js",
 			"instn-iee-bndng-gen.js",
 			"instn-named-bndng-gen.js"
-	).uniqByEquality().union(xfailExecuteBalanced);
+	).stream()).collect(Collectors.toSet());
 
-	private static final String testsDir = "src/test/resources/test262/test/language/module-code/";
+	private static final String TESTS_DIR = "src/test/resources/test262/test/language/module-code/";
 
-	private static final String harnessDir = "src/test/resources/test262/harness/";
+	private static final String HARNESS_DIR = "src/test/resources/test262/harness/";
 
 	final Path root;
 	final Path path;
@@ -179,7 +168,7 @@ public class Test262 {
 
 	@Parameterized.Parameters(name = "{2}")
 	public static Iterable<Object[]> params() {
-		Path root = Paths.get(testsDir);
+		Path root = Paths.get(TESTS_DIR);
 		List<Object[]> params = new ArrayList<>();
 		try {
 			Files.walk(root).forEach(path -> {
@@ -243,7 +232,7 @@ public class Test262 {
 			return null;
 		}
 		String yaml = source.substring(test262CommentBegin, test262CommentEnd);
-		Object rawParsedYaml = yamlParser.load(yaml);
+		Object rawParsedYaml = YAML_PARSER.load(yaml);
 		if (!(rawParsedYaml instanceof Map)) {
 			return null;
 		}
@@ -331,15 +320,15 @@ public class Test262 {
 	@Nonnull
 	private final IResourceLoader loader = new FileLoader();
 
-	private Maybe<Script> buildTest262Test(@Nonnull String source, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull IModuleBundler bundler, @Nonnull BundlerOptions options, @Nonnull ImmutableSet<String> xfailParse) {
-		boolean xfailedParse = xfailParse.contains(info.name) || (info.features.exists(xfailParseFeatures::contains) && !xpassParseDespiteFeatures.contains(info.name));
+	private Maybe<Script> buildTest262Test(@Nonnull String source, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull IModuleBundler bundler, @Nonnull BundlerOptions options, @Nonnull Set<String> xfailParse) {
+		boolean xfailedParse = xfailParse.contains(info.name) || (info.features.exists(XFAIL_PARSE_FEATURES::contains) && !XPASS_PARSE_DESPITE_FEATURES.contains(info.name));
 		try {
 			Pair<Script, ImmutableList<EarlyError>> pair = Bundler.bundleStringWithEarlyErrors(options, source, path.toAbsolutePath(), new NodeResolver(loader), loader, bundler);
 			boolean invalidParse = false;
 			if ((info.negative == Test262Negative.PARSERESOLUTION) != xfailedParse) {
 				invalidParse = true;
 			}
-			boolean xfailedEarly = xfailEarlyErrors.contains(info.name);
+			boolean xfailedEarly = XFAIL_EARLY_ERRORS.contains(info.name);
 			ImmutableList<EarlyError> earlyErrors = EarlyErrorChecker.validate(pair.left).append(pair.right);
 			boolean passEarlyError = earlyErrors.length == 0;
 			if (invalidParse) {
@@ -363,20 +352,7 @@ public class Test262 {
 		return Maybe.empty();
 	}
 
-	private Maybe<Script> buildTest262Tests(@Nonnull String source, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull IModuleBundler bundler, @Nonnull BundlerOptions options, @Nonnull ImmutableSet<String> xfailParse) {
-		Maybe<Script> script = buildTest262Test(source, path, info, bundler, options, xfailParse);
-		for (int i = 0; i < 2; ++i) {
-			Maybe<Script> localScript = buildTest262Test(source, path, info, bundler, options, xfailParse);
-			if (!script.equals(localScript)) {
-				String scriptCodegenned = script.map(CodeGen::codeGen).orJust("failure to parse");
-				String localScriptCodegenned = localScript.map(CodeGen::codeGen).orJust("failure to parse");
-				throw new Test262Exception(info.name, "Determinism failure: expected:\n" + scriptCodegenned + "\n\ngot:\n" + localScriptCodegenned + "\nfrom test: " + path.toString());
-			}
-		}
-		return script;
-	}
-
-	private void runTest262Test(@Nonnull String harness, @Nonnull Script script, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull String category, @Nonnull ImmutableSet<String> xfailExecute) {
+	private void runTest262Test(@Nonnull String harness, @Nonnull Script script, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull String category, @Nonnull Set<String> xfailExecute) {
 		boolean xfailedExecute = xfailExecute.contains(info.name);
 
 		PolyglotException exception = null;
@@ -398,7 +374,7 @@ public class Test262 {
 	}
 
 	private void runTest(@Nonnull Path root, @Nonnull Path path) throws IOException {
-		String source = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+		String source = Files.readString(path);
 		Test262Info info = extractTest262Info(root.relativize(path).toString(), source);
 		if (info == null) { // parse failure or not module
 			throw new Test262Exception(path.toString(), "Failed to parse frontmatter");
@@ -407,40 +383,15 @@ public class Test262 {
 		}
 		StringBuilder includes = new StringBuilder();
 		for (String include : info.includes.cons("assert.js").cons("sta.js")) {
-			includes.append(new String(Files.readAllBytes(Paths.get(harnessDir, include)), StandardCharsets.UTF_8)).append("\n");
+			includes.append(Files.readString(Paths.get(HARNESS_DIR, include))).append("\n");
 		}
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.SAFE), xfailParse)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "SAFE", xfailExecute));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), xfailParse)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "BALANCED", xfailExecuteBalanced));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), xfailParse)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "DANGEROUS", xfailExecuteDangerous));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS).withThrowOnImportAssignment(true), xfailParseThrowingDangerous)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "THROWING_DANGEROUS", xfailExecuteDangerous));
+		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.SAFE), XFAIL_AT_PARSE)
+			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "SAFE", XFAIL_EXECUTE));
+		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), XFAIL_AT_PARSE)
+			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "BALANCED", XFAIL_EXECUTE_BALANCED));
+		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), XFAIL_AT_PARSE)
+			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "DANGEROUS", XFAIL_EXECUTE_DANGEROUS));
+		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS).withThrowOnImportAssignment(true), XFAIL_AT_PARSE_WITH_THROWING_DANGEROUS)
+			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "THROWING_DANGEROUS", XFAIL_EXECUTE_DANGEROUS));
 	}
-
-	// @Test
-	// public void testTest262() throws Exception {
-	// 	LinkedList<Test262Exception> exceptions = new LinkedList<>();
-	// 	Path root = Paths.get(testsDir);
-	// 	Files.walk(root).forEach(path -> {
-	// 		try {
-	// 			runTest(root, path);
-	// 		} catch (IOException e) {
-	// 			Assert.fail(e.toString());
-	// 		} catch (Test262Exception e) {
-	// 			exceptions.add(e);
-	// 		}
-	// 	});
-	// 	if (exceptions.size() > 0) {
-	// 		for (Test262Exception exception : exceptions) {
-	// 			exception.printStackTrace();
-	// 		}
-	// 		System.out.println(exceptions.size() + " test262 tests failed:");
-	// 		for (Test262Exception exception : exceptions) {
-	// 			System.out.println("	" + exception.name + ": " + exception.getMessage());
-	// 		}
-	// 		Assert.fail();
-	// 	}
-	// }
 }
