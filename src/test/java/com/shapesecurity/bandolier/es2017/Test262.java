@@ -17,15 +17,13 @@ import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -34,9 +32,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
+@RunWith(Parameterized.class)
 public class Test262 {
 
 	private static final Yaml yamlParser = new Yaml();
@@ -141,6 +140,39 @@ public class Test262 {
 	private static final String testsDir = "src/test/resources/test262/test/language/module-code/";
 
 	private static final String harnessDir = "src/test/resources/test262/harness/";
+
+	final Path root;
+	final Path path;
+
+	public Test262(Path root, Path path, String pathName) {
+		// pathName is ignored, we just need it so JUnit can give tests reasonable names
+		this.root = root;
+		this.path = path;
+	}
+
+	@Parameterized.Parameters(name = "{2}.toString()")
+	public static Iterable<Object[]> params() {
+		Path root = Paths.get(testsDir);
+		List<Object[]> params = new ArrayList<>();
+		try {
+			Files.walk(root).forEach(path -> {
+				if (Files.isDirectory(path) || !path.toString().endsWith(".js") || path.toString().endsWith("_FIXTURE.js")) {
+					return;
+				}
+				params.add(new Object[] { root, path, path.toString() });
+			});
+		} catch (IOException e) {
+			throw new RuntimeException("failed to load tests", e);
+		}
+		return params;
+	}
+
+	@Test
+	public void run() throws Exception {
+		runTest(this.root, this.path);
+	}
+
+
 
 	private enum Test262Negative {
 		PARSERESOLUTION, EARLY, RUNTIME, NONE
@@ -339,9 +371,6 @@ public class Test262 {
 	}
 
 	private void runTest(@Nonnull Path root, @Nonnull Path path) throws IOException {
-		if (Files.isDirectory(path) || !path.toString().endsWith(".js") || path.toString().endsWith("_FIXTURE.js")) {
-			return;
-		}
 		String source = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 		Test262Info info = extractTest262Info(root.relativize(path).toString(), source);
 		if (info == null) { // parse failure or not module
@@ -363,28 +392,28 @@ public class Test262 {
 			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "THROWING_DANGEROUS", xfailExecuteDangerous));
 	}
 
-	@Test
-	public void testTest262() throws Exception {
-		LinkedList<Test262Exception> exceptions = new LinkedList<>();
-		Path root = Paths.get(testsDir);
-		Files.walk(root).forEach(path -> {
-			try {
-				runTest(root, path);
-			} catch (IOException e) {
-				Assert.fail(e.toString());
-			} catch (Test262Exception e) {
-				exceptions.add(e);
-			}
-		});
-		if (exceptions.size() > 0) {
-			for (Test262Exception exception : exceptions) {
-				exception.printStackTrace();
-			}
-			System.out.println(exceptions.size() + " test262 tests failed:");
-			for (Test262Exception exception : exceptions) {
-				System.out.println("	" + exception.name + ": " + exception.getMessage());
-			}
-			Assert.fail();
-		}
-	}
+	// @Test
+	// public void testTest262() throws Exception {
+	// 	LinkedList<Test262Exception> exceptions = new LinkedList<>();
+	// 	Path root = Paths.get(testsDir);
+	// 	Files.walk(root).forEach(path -> {
+	// 		try {
+	// 			runTest(root, path);
+	// 		} catch (IOException e) {
+	// 			Assert.fail(e.toString());
+	// 		} catch (Test262Exception e) {
+	// 			exceptions.add(e);
+	// 		}
+	// 	});
+	// 	if (exceptions.size() > 0) {
+	// 		for (Test262Exception exception : exceptions) {
+	// 			exception.printStackTrace();
+	// 		}
+	// 		System.out.println(exceptions.size() + " test262 tests failed:");
+	// 		for (Test262Exception exception : exceptions) {
+	// 			System.out.println("	" + exception.name + ": " + exception.getMessage());
+	// 		}
+	// 		Assert.fail();
+	// 	}
+	// }
 }
