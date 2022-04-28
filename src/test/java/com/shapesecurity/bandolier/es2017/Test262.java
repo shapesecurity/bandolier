@@ -15,6 +15,8 @@ import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
@@ -79,77 +81,9 @@ public class Test262 {
 
 	private static final ImmutableSet<String> xfailExecute = ImmutableList.of(
 
-			// no generators in Nashorn
-			"instn-local-bndng-gen.js",
-			"eval-export-dflt-gen-named-semi.js",
-			"instn-named-bndng-gen.js",
-			"instn-named-bndng-dflt-gen-anon.js",
-			"instn-iee-bndng-gen.js",
-			"instn-named-bndng-dflt-gen-named.js",
-			"eval-export-dflt-expr-gen-named.js",
-			"eval-export-dflt-gen-anon-semi.js",
-			"instn-local-bndng-export-gen.js",
-			"eval-export-gen-semi.js",
-			"eval-export-dflt-expr-gen-anon.js",
-
-			// no classes in Nashorn
-			"eval-export-dflt-cls-named.js",
-			"eval-export-dflt-cls-anon-semi.js",
-			"eval-gtbndng-local-bndng-cls.js",
-			"eval-export-dflt-expr-cls-named.js",
-			"eval-export-dflt-cls-named-semi.js",
-			"instn-named-bndng-dflt-cls.js",
-			"instn-named-bndng-cls.js",
-			"instn-local-bndng-cls.js",
-			"eval-export-dflt-expr-cls-name-meth.js",
-			"instn-local-bndng-export-cls.js",
-			"eval-export-dflt-cls-name-meth.js",
-			"instn-iee-bndng-cls.js",
-			"eval-export-dflt-expr-cls-anon.js",
-			"eval-export-cls-semi.js",
-			"eval-export-dflt-cls-anon.js",
-
-			// no let in Nashorn
-			"instn-iee-bndng-let.js",
-			"instn-local-bndng-export-let.js",
-			"own-property-keys-binding-types.js",
-			"namespace/internals/get-str-found-uninit.js",
-			"namespace/internals/delete-exported-uninit.js",
-			"namespace/internals/has-property-str-found-uninit.js",
-			"namespace/internals/get-str-initialize.js",
-			"namespace/internals/get-own-property-str-found-uninit.js",
-			"instn-uniq-env-rec.js",
-			"instn-local-bndng-let.js",
-			"eval-gtbndng-local-bndng-let.js",
-			"instn-named-bndng-let.js",
-
-			// no const in Nashorn
-			"instn-local-bndng-const.js",
-			"eval-gtbndng-local-bndng-const.js",
-			"instn-local-bndng-export-const.js",
-			"namespace/internals/set.js",
-			"namespace/internals/define-own-property.js",
-			"instn-iee-bndng-const.js",
-			"instn-named-bndng-const.js",
-
-			// lack of Symbol, Reflect API (they work when implemented, aka not in nashorn)
-			"namespace/internals/has-property-str-found-init.js",
-			"namespace/internals/get-own-property-sym.js",
-			"namespace/internals/delete-non-exported.js",
-			"namespace/internals/prevent-extensions.js",
-			"namespace/internals/get-sym-not-found.js",
-			"namespace/internals/has-property-str-not-found.js",
-			"namespace/internals/get-sym-found.js",
-			"namespace/internals/has-property-sym-not-found.js",
-			"namespace/internals/has-property-sym-found.js",
-			"namespace/Symbol.toStringTag.js",
-			"namespace/Symbol.iterator.js",
-			"namespace/internals/own-property-keys-binding-types.js",
-			"namespace/internals/own-property-keys-sort.js",
-			"namespace/internals/delete-exported-init.js",
-
 			// Nashorn does not perform function name inference
 			"eval-export-dflt-expr-fn-anon.js",
+			"eval-export-dflt-cls-named.js",
 			"instn-named-bndng-dflt-fun-named.js",
 			"instn-named-bndng-dflt-fun-anon.js",
 
@@ -385,16 +319,21 @@ public class Test262 {
 
 	private void runTest262Test(@Nonnull String harness, @Nonnull Script script, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull String category, @Nonnull ImmutableSet<String> xfailExecute) {
 		boolean xfailedExecute = xfailExecute.contains(info.name);
-		ScriptEngine nashorn = new ScriptEngineManager().getEngineByName("nashorn");
-		try {
-			nashorn.eval(harness);
-			nashorn.eval(CodeGen.codeGen(script));
+
+		PolyglotException exception = null;
+		try (Context context = Context.newBuilder("js").option("engine.WarnInterpreterOnly", "false").build()) {
+			context.eval("js", harness);
+			context.eval("js", CodeGen.codeGen(script));
+		} catch (PolyglotException e) {
+			exception = e;
+		}
+		if (exception == null) {
 			if ((info.negative == Test262Negative.RUNTIME) != xfailedExecute) {
 				throw new Test262Exception(info.name, "Executed and should not have<" + category + ">: " + path.toString());
 			}
-		} catch (ScriptException e) {
-			if (info.negative == Test262Negative.RUNTIME == xfailedExecute && info.negative != Test262Negative.RUNTIME) {
-				throw new Test262Exception(info.name, "Did not execute and should have<" + category + ">: " + path.toString() + "\n" + CodeGen.codeGen(script), e);
+		} else {
+			if ((info.negative == Test262Negative.RUNTIME) == xfailedExecute && info.negative != Test262Negative.RUNTIME) {
+				throw new Test262Exception(info.name, "Did not execute and should have<" + category + ">: " + path.toString() + "\n" + CodeGen.codeGen(script), exception);
 			}
 		}
 	}

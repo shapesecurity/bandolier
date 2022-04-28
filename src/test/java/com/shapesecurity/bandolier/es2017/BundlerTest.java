@@ -27,6 +27,8 @@ import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import junit.framework.TestCase;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
 import javax.script.ScriptEngine;
@@ -39,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.shapesecurity.bandolier.es2017.TestUtils.getResultFromGraal;
 import static com.shapesecurity.bandolier.es2017.TestUtils.testResult;
 import static com.shapesecurity.bandolier.es2017.TestUtils.testResultPierced;
 
@@ -373,21 +376,8 @@ public class BundlerTest extends TestCase {
 		Script bundled = Bundler.bundleModule(Parser.parseModule(source), path, resolver, loader, new StandardModuleBundler());
 
 		String newProgramText = TestUtils.toString(bundled);
-		ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-
-		Object result;
-		try {
-			result = engine.eval(newProgramText);
-			result = ((ScriptObjectMirror)result).get("result");
-			// resolving weird nashorn inconsistency
-			if (result instanceof Integer) {
-				result = ((Integer) result).doubleValue();
-			}
-		} catch (ScriptException e) {
-			System.out.println(newProgramText);
-			throw e;
-		}
-		System.out.println(result);
+		Object result = getResultFromGraal(newProgramText);
+		assertEquals(142.0, result);
 	}
 
 	@Test

@@ -8,11 +8,9 @@ import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
@@ -84,19 +82,23 @@ public class TestUtils {
             newProgramText = toString(bundleStandard(options, filePath, resolver, loader));
         }
 
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+        return getResultFromGraal(newProgramText);
+    }
 
-        try {
-            Object returned = engine.eval(newProgramText);
-            returned = ((ScriptObjectMirror)returned).get("result");
-            // resolving weird nashorn inconsistency
-            if (returned instanceof Integer) {
-                returned = ((Integer) returned).doubleValue();
+    static Object getResultFromGraal(String newProgramText) {
+        try (Context context = Context.newBuilder("js").option("engine.WarnInterpreterOnly", "false").build()) {
+            Value result = context.eval("js", newProgramText).getMember("result");
+            if (result == null || result.isNull()) {
+                return null;
+            } else if (result.isNumber()) {
+                return result.asDouble();
+            } else if (result.isString()) {
+                return result.asString();
+            } else if (result.isBoolean()) {
+                return result.asBoolean();
+            } else {
+                throw new RuntimeException("result is of unknown type");
             }
-            return returned;
-        } catch (ScriptException e) {
-            System.out.println(newProgramText);
-            throw e;
         }
     }
 }
