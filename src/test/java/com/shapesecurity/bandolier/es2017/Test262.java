@@ -38,6 +38,8 @@ import java.util.stream.Stream;
 public class Test262 {
 	private static final Yaml YAML_PARSER = new Yaml();
 
+	private static final IResourceLoader LOADER = new FileLoader();
+
 	private static final Set<String> XFAIL_AT_PARSE = Set.of(
 			// ignored proposal
 			"privatename-valid-no-earlyerr.js"
@@ -159,11 +161,23 @@ public class Test262 {
 
 	final Path root;
 	final Path path;
+	final Test262Info info;
+	final String includes;
 
-	public Test262(Path root, Path path, String pathName) {
-		// pathName is ignored, we just need it so JUnit can give tests reasonable names
+	public Test262(Path root, Path path, Test262Info info, String name) {
+		// name is ignored, we just need it so JUnit can give tests reasonable names
 		this.root = root;
 		this.path = path;
+		this.info = info;
+		StringBuilder includes = new StringBuilder();
+		for (String include : info.includes.cons("assert.js").cons("sta.js")) {
+			try {
+				includes.append(Files.readString(Paths.get(HARNESS_DIR, include))).append("\n");
+			} catch (IOException e) {
+				throw new RuntimeException("failed to read include " + include, e);
+			}
+		}
+		this.includes = includes.toString();
 	}
 
 	@Parameterized.Parameters(name = "{2}")
@@ -175,7 +189,20 @@ public class Test262 {
 				if (Files.isDirectory(path) || !path.toString().endsWith(".js") || path.toString().endsWith("_FIXTURE.js")) {
 					return;
 				}
-				params.add(new Object[] { root, path, path.toString() });
+				Path shortName = root.relativize(path);
+				String source;
+				try {
+					source = Files.readString(path);
+				} catch (IOException e) {
+					throw new RuntimeException("failed to load tests", e);
+				}
+				Test262Info info = extractTest262Info(shortName.toString(), source);
+				if (info == null) { // parse failure or not module
+					throw new RuntimeException("Failed to parse frontmatter for " + path);
+				} else if (!info.module) {
+					return; // we are only interested in modules
+				}
+				params.add(new Object[] { root, path, info, shortName.toString() });
 			});
 		} catch (IOException e) {
 			throw new RuntimeException("failed to load tests", e);
@@ -184,11 +211,40 @@ public class Test262 {
 	}
 
 	@Test
-	public void run() throws Exception {
-		runTest(this.root, this.path);
+	public void runSafe() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.SAFE), XFAIL_AT_PARSE);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "SAFE", XFAIL_EXECUTE);
 	}
 
+	@Test
+	public void runBalanced() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), XFAIL_AT_PARSE);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "BALANCED", XFAIL_EXECUTE_BALANCED);
+	}
 
+	@Test
+	public void runDangerous() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), XFAIL_AT_PARSE);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "DANGEROUS", XFAIL_EXECUTE_DANGEROUS);
+	}
+
+	@Test
+	public void runThrowingDangerous() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS).withThrowOnImportAssignment(true), XFAIL_AT_PARSE_WITH_THROWING_DANGEROUS);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "THROWING_DANGEROUS", XFAIL_EXECUTE_DANGEROUS);
+	}
 
 	private enum Test262Negative {
 		PARSERESOLUTION, EARLY, RUNTIME, NONE
@@ -206,8 +262,9 @@ public class Test262 {
 		public final ImmutableList<String> includes;
 		@Nonnull
 		public final ImmutableList<String> features;
+		public final String source;
 
-		public Test262Info(@Nonnull String name, @Nonnull Test262Negative negative, boolean noStrict, boolean onlyStrict, boolean async, boolean module, @Nonnull ImmutableList<String> includes, @Nonnull ImmutableList<String> features) {
+		public Test262Info(@Nonnull String name, @Nonnull Test262Negative negative, boolean noStrict, boolean onlyStrict, boolean async, boolean module, @Nonnull ImmutableList<String> includes, @Nonnull ImmutableList<String> features, @Nonnull String source) {
 			this.name = name;
 			this.negative = negative;
 			this.noStrict = noStrict;
@@ -216,6 +273,7 @@ public class Test262 {
 			this.module = module;
 			this.includes = includes;
 			this.features = features;
+			this.source = source;
 		}
 	}
 
@@ -298,7 +356,7 @@ public class Test262 {
 		if (rawFeatures != null) {
 			features = ImmutableList.from((ArrayList<String>) rawFeatures);
 		}
-		return new Test262Info(path, negativeEnum, noStrict, onlyStrict, async, module, includes, features);
+		return new Test262Info(path, negativeEnum, noStrict, onlyStrict, async, module, includes, features, source);
 	}
 
 	private static final class Test262Exception extends RuntimeException {
@@ -317,13 +375,10 @@ public class Test262 {
 		}
 	}
 
-	@Nonnull
-	private final IResourceLoader loader = new FileLoader();
-
 	private Maybe<Script> buildTest262Test(@Nonnull String source, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull IModuleBundler bundler, @Nonnull BundlerOptions options, @Nonnull Set<String> xfailParse) {
 		boolean xfailedParse = xfailParse.contains(info.name) || (info.features.exists(XFAIL_PARSE_FEATURES::contains) && !XPASS_PARSE_DESPITE_FEATURES.contains(info.name));
 		try {
-			Pair<Script, ImmutableList<EarlyError>> pair = Bundler.bundleStringWithEarlyErrors(options, source, path.toAbsolutePath(), new NodeResolver(loader), loader, bundler);
+			Pair<Script, ImmutableList<EarlyError>> pair = Bundler.bundleStringWithEarlyErrors(options, source, path.toAbsolutePath(), new NodeResolver(LOADER), LOADER, bundler);
 			boolean invalidParse = false;
 			if ((info.negative == Test262Negative.PARSERESOLUTION) != xfailedParse) {
 				invalidParse = true;
@@ -364,34 +419,13 @@ public class Test262 {
 		}
 		if (exception == null) {
 			if ((info.negative == Test262Negative.RUNTIME) != xfailedExecute) {
-				throw new Test262Exception(info.name, "Executed and should not have<" + category + ">: " + path.toString());
+				throw new Test262Exception(info.name, "Executed and should not have<" + category + ">: " + path);
 			}
 		} else {
 			if ((info.negative == Test262Negative.RUNTIME) == xfailedExecute && info.negative != Test262Negative.RUNTIME) {
-				throw new Test262Exception(info.name, "Did not execute and should have<" + category + ">: " + path.toString() + "\n" + CodeGen.codeGen(script), exception);
+				throw new Test262Exception(info.name, "Did not execute and should have<" + category + ">: " + path + "\n" + CodeGen.codeGen(script), exception);
 			}
 		}
 	}
 
-	private void runTest(@Nonnull Path root, @Nonnull Path path) throws IOException {
-		String source = Files.readString(path);
-		Test262Info info = extractTest262Info(root.relativize(path).toString(), source);
-		if (info == null) { // parse failure or not module
-			throw new Test262Exception(path.toString(), "Failed to parse frontmatter");
-		} else if (!info.module) {
-			return; // we are only interested in modules
-		}
-		StringBuilder includes = new StringBuilder();
-		for (String include : info.includes.cons("assert.js").cons("sta.js")) {
-			includes.append(Files.readString(Paths.get(HARNESS_DIR, include))).append("\n");
-		}
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.SAFE), XFAIL_AT_PARSE)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "SAFE", XFAIL_EXECUTE));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), XFAIL_AT_PARSE)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "BALANCED", XFAIL_EXECUTE_BALANCED));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), XFAIL_AT_PARSE)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "DANGEROUS", XFAIL_EXECUTE_DANGEROUS));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS).withThrowOnImportAssignment(true), XFAIL_AT_PARSE_WITH_THROWING_DANGEROUS)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "THROWING_DANGEROUS", XFAIL_EXECUTE_DANGEROUS));
-	}
 }
