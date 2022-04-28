@@ -25,13 +25,9 @@ import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import junit.framework.TestCase;
 import org.junit.Test;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -39,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.shapesecurity.bandolier.es2017.TestUtils.getResultFromGraal;
 import static com.shapesecurity.bandolier.es2017.TestUtils.testResult;
 import static com.shapesecurity.bandolier.es2017.TestUtils.testResultPierced;
 
@@ -182,7 +179,7 @@ public class BundlerTest extends TestCase {
 		modules.put("/export.js", "export default (function SOMETHING (){ return { x: 42 }; });");
 		testResult("/import.js", 42.0, resolver, localLoader);
 
-		// disabled because nashorn lacks support for `class`
+		// disabled due to https://github.com/shapesecurity/bandolier/issues/62
 		// modules.put("/export.js", "export default class { constructor(){ return { x: 42 }; } }");
 		// testResult("/import.js", 42.0, resolver, localLoader);
 
@@ -373,21 +370,8 @@ public class BundlerTest extends TestCase {
 		Script bundled = Bundler.bundleModule(Parser.parseModule(source), path, resolver, loader, new StandardModuleBundler());
 
 		String newProgramText = TestUtils.toString(bundled);
-		ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-
-		Object result;
-		try {
-			result = engine.eval(newProgramText);
-			result = ((ScriptObjectMirror)result).get("result");
-			// resolving weird nashorn inconsistency
-			if (result instanceof Integer) {
-				result = ((Integer) result).doubleValue();
-			}
-		} catch (ScriptException e) {
-			System.out.println(newProgramText);
-			throw e;
-		}
-		System.out.println(result);
+		Object result = getResultFromGraal(newProgramText);
+		assertEquals(142.0, result);
 	}
 
 	@Test

@@ -9,44 +9,43 @@ import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.bandolier.es2017.loader.NodeResolver;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.functional.data.ImmutableSet;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
 import com.shapesecurity.shift.es2017.parser.EarlyError;
 import com.shapesecurity.shift.es2017.parser.EarlyErrorChecker;
-import org.junit.Assert;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@RunWith(Parameterized.class)
 public class Test262 {
+	private static final Yaml YAML_PARSER = new Yaml();
 
-	private static final Yaml yamlParser = new Yaml();
+	private static final IResourceLoader LOADER = new FileLoader();
 
-	private static final ImmutableSet<String> xfailParse = ImmutableList.of(
-
+	private static final Set<String> XFAIL_AT_PARSE = Set.of(
 			// ignored proposal
 			"privatename-valid-no-earlyerr.js"
-	).uniqByEquality();
+	);
 
-	private static final ImmutableSet<String> xfailParseThrowingDangerous = ImmutableList.of(
-
+	private static final Set<String> XFAIL_AT_PARSE_WITH_THROWING_DANGEROUS = Stream.concat(Set.of(
 			// we fail here instead of during execution.
 			"instn-iee-bndng-var.js",
 			"instn-named-bndng-fun.js",
@@ -56,106 +55,44 @@ public class Test262 {
 			"instn-iee-bndng-fun.js",
 			"instn-named-bndng-gen.js",
 			"instn-iee-bndng-gen.js"
-			).uniqByEquality().union(xfailParse);
+	).stream(), XFAIL_AT_PARSE.stream()).collect(Collectors.toSet());
 
-	private static final HashSet<String> xfailParseFeatures = new HashSet<>(Arrays.asList(
+	private static final Set<String> XFAIL_PARSE_FEATURES = Set.of(
 			// ignored proposal
 			"export-star-as-namespace-from-module"
-	));
+	);
 
-	private static final HashSet<String> xpassParseDespiteFeatures = new HashSet<>(Arrays.asList(
+	private static final Set<String> XPASS_PARSE_DESPITE_FEATURES = Set.of(
 			// supposed to fail for a different reason
 			"early-dup-export-as-star-as.js",
 			"parse-err-semi-name-space-export.js",
 			"early-dup-export-star-as-dflt.js",
 			"parse-err-semi-export-star.js"
-	));
+	);
 
-	private static final HashSet<String> xfailEarlyErrors = new HashSet<>(Arrays.asList(
-
+	private static final Set<String> XFAIL_EARLY_ERRORS = Set.of(
 			// unimplemented module early errors
 			"early-lex-and-var.js"
-	));
+	);
 
-	private static final ImmutableSet<String> xfailExecute = ImmutableList.of(
-
-			// no generators in Nashorn
-			"instn-local-bndng-gen.js",
-			"eval-export-dflt-gen-named-semi.js",
-			"instn-named-bndng-gen.js",
-			"instn-named-bndng-dflt-gen-anon.js",
-			"instn-iee-bndng-gen.js",
-			"instn-named-bndng-dflt-gen-named.js",
-			"eval-export-dflt-expr-gen-named.js",
-			"eval-export-dflt-gen-anon-semi.js",
-			"instn-local-bndng-export-gen.js",
-			"eval-export-gen-semi.js",
-			"eval-export-dflt-expr-gen-anon.js",
-
-			// no classes in Nashorn
-			"eval-export-dflt-cls-named.js",
-			"eval-export-dflt-cls-anon-semi.js",
-			"eval-gtbndng-local-bndng-cls.js",
-			"eval-export-dflt-expr-cls-named.js",
-			"eval-export-dflt-cls-named-semi.js",
-			"instn-named-bndng-dflt-cls.js",
-			"instn-named-bndng-cls.js",
-			"instn-local-bndng-cls.js",
-			"eval-export-dflt-expr-cls-name-meth.js",
-			"instn-local-bndng-export-cls.js",
-			"eval-export-dflt-cls-name-meth.js",
-			"instn-iee-bndng-cls.js",
-			"eval-export-dflt-expr-cls-anon.js",
-			"eval-export-cls-semi.js",
-			"eval-export-dflt-cls-anon.js",
-
-			// no let in Nashorn
-			"instn-iee-bndng-let.js",
-			"instn-local-bndng-export-let.js",
-			"own-property-keys-binding-types.js",
-			"namespace/internals/get-str-found-uninit.js",
-			"namespace/internals/delete-exported-uninit.js",
-			"namespace/internals/has-property-str-found-uninit.js",
-			"namespace/internals/get-str-initialize.js",
-			"namespace/internals/get-own-property-str-found-uninit.js",
-			"instn-uniq-env-rec.js",
-			"instn-local-bndng-let.js",
-			"eval-gtbndng-local-bndng-let.js",
-			"instn-named-bndng-let.js",
-
-			// no const in Nashorn
-			"instn-local-bndng-const.js",
-			"eval-gtbndng-local-bndng-const.js",
-			"instn-local-bndng-export-const.js",
-			"namespace/internals/set.js",
-			"namespace/internals/define-own-property.js",
-			"instn-iee-bndng-const.js",
-			"instn-named-bndng-const.js",
-
-			// lack of Symbol, Reflect API (they work when implemented, aka not in nashorn)
-			"namespace/internals/has-property-str-found-init.js",
-			"namespace/internals/get-own-property-sym.js",
-			"namespace/internals/delete-non-exported.js",
-			"namespace/internals/prevent-extensions.js",
-			"namespace/internals/get-sym-not-found.js",
-			"namespace/internals/has-property-str-not-found.js",
-			"namespace/internals/get-sym-found.js",
-			"namespace/internals/has-property-sym-not-found.js",
-			"namespace/internals/has-property-sym-found.js",
-			"namespace/Symbol.toStringTag.js",
-			"namespace/Symbol.iterator.js",
-			"namespace/internals/own-property-keys-binding-types.js",
-			"namespace/internals/own-property-keys-sort.js",
-			"namespace/internals/delete-exported-init.js",
-
-			// Nashorn does not perform function name inference
+	private static final Set<String> XFAIL_EXECUTE = Set.of(
+			// function name inference breaks
 			"eval-export-dflt-expr-fn-anon.js",
+			"eval-export-dflt-cls-named.js",
+			"eval-export-dflt-cls-anon.js",
+			"eval-export-dflt-expr-cls-anon.js",
+			"eval-export-dflt-expr-gen-anon.js",
 			"instn-named-bndng-dflt-fun-named.js",
 			"instn-named-bndng-dflt-fun-anon.js",
+			"instn-named-bndng-dflt-gen-named.js",
+			"instn-named-bndng-dflt-gen-anon.js",
 
-			// nothing we can do object.hasownproperty/etc
+			// nothing we can do about property descriptors on the namespace object
+			"namespace/internals/define-own-property.js",
+			"namespace/internals/get-own-property-str-found-uninit.js",
 			"namespace/internals/object-hasOwnProperty-binding-uninit.js",
 			"namespace/internals/object-propertyIsEnumerable-binding-uninit.js",
+			"namespace/internals/set.js",
 
 			// nothing we can do: "in"/enumerable properties
 			"namespace/internals/enumerate-binding-uninit.js",
@@ -170,13 +107,10 @@ public class Test262 {
 			"instn-named-bndng-dflt-star.js",
 			"instn-named-bndng-dflt-named.js",
 			"instn-named-bndng-dflt-expr.js"
-
-	).uniqByEquality();
-
+	);
 
 	// in union with xFailExecute
-	private static final ImmutableSet<String> xfailExecuteBalanced = ImmutableList.of(
-
+	private static final Set<String> XFAIL_EXECUTE_BALANCED = Stream.concat(XFAIL_EXECUTE.stream(), Set.of(
 			// this is what we give up for DangerLevel.BALANCED
 			"instn-star-id-name.js",
 			"instn-star-iee-cycle.js",
@@ -187,26 +121,130 @@ public class Test262 {
 			"namespace/internals/get-str-update.js",
 			"namespace/internals/get-own-property-str-not-found.js",
 			"namespace/internals/get-str-not-found.js",
-			"namespace/internals/is-extensible.js",
+			"namespace/internals/delete-exported-init.js",
+			"namespace/internals/delete-exported-uninit.js",
+			"namespace/internals/delete-non-exported.js",
+			"namespace/internals/get-own-property-sym.js",
+			"namespace/internals/get-str-found-uninit.js",
+			"namespace/internals/get-str-initialize.js",
+			"namespace/internals/get-sym-found.js",
+			"namespace/internals/get-sym-not-found.js",
+			"namespace/internals/has-property-str-found-uninit.js",
+			"namespace/internals/has-property-str-not-found.js",
+			"namespace/internals/has-property-str-found-init.js",
+			"namespace/internals/has-property-sym-found.js",
+			"namespace/internals/has-property-sym-not-found.js",
+			"namespace/internals/own-property-keys-binding-types.js",
+			"namespace/internals/own-property-keys-sort.js",
+			"namespace/internals/prevent-extensions.js",
+			"namespace/Symbol.iterator.js",
+			"namespace/Symbol.toStringTag.js",
 			"instn-star-binding.js",
 			"instn-iee-star-cycle.js"
-	).uniqByEquality().union(xfailExecute);
+	).stream()).collect(Collectors.toSet());
 
-	// in union with xFailExecute and xfailExecuteBalanced
-	private static final ImmutableSet<String> xfailExecuteDangerous = ImmutableList.of(
-
+	private static final Set<String> XFAIL_EXECUTE_DANGEROUS = Stream.concat(XFAIL_EXECUTE_BALANCED.stream(), Set.of(
 			// this is what we give up for DangerLevel.DANGEROUS in addition to xfailExecuteBalanced
 			"instn-iee-bndng-var.js",
 			"instn-named-bndng-fun.js",
 			"instn-named-bndng-trlng-comma.js",
 			"instn-star-binding.js",
 			"instn-named-bndng-var.js",
-			"instn-iee-bndng-fun.js"
-	).uniqByEquality().union(xfailExecuteBalanced);
+			"instn-iee-bndng-fun.js",
+			"instn-iee-bndng-gen.js",
+			"instn-named-bndng-gen.js"
+	).stream()).collect(Collectors.toSet());
 
-	private static final String testsDir = "src/test/resources/test262/test/language/module-code/";
+	private static final String TESTS_DIR = "src/test/resources/test262/test/language/module-code/";
 
-	private static final String harnessDir = "src/test/resources/test262/harness/";
+	private static final String HARNESS_DIR = "src/test/resources/test262/harness/";
+
+	final Path root;
+	final Path path;
+	final Test262Info info;
+	final String includes;
+
+	public Test262(Path root, Path path, Test262Info info, String name) {
+		// name is ignored, we just need it so JUnit can give tests reasonable names
+		this.root = root;
+		this.path = path;
+		this.info = info;
+		StringBuilder includes = new StringBuilder();
+		for (String include : info.includes.cons("assert.js").cons("sta.js")) {
+			try {
+				includes.append(Files.readString(Paths.get(HARNESS_DIR, include))).append("\n");
+			} catch (IOException e) {
+				throw new RuntimeException("failed to read include " + include, e);
+			}
+		}
+		this.includes = includes.toString();
+	}
+
+	@Parameterized.Parameters(name = "{2}")
+	public static Iterable<Object[]> params() {
+		Path root = Paths.get(TESTS_DIR);
+		List<Object[]> params = new ArrayList<>();
+		try {
+			Files.walk(root).forEach(path -> {
+				if (Files.isDirectory(path) || !path.toString().endsWith(".js") || path.toString().endsWith("_FIXTURE.js")) {
+					return;
+				}
+				Path shortName = root.relativize(path);
+				String source;
+				try {
+					source = Files.readString(path);
+				} catch (IOException e) {
+					throw new RuntimeException("failed to load tests", e);
+				}
+				Test262Info info = extractTest262Info(shortName.toString(), source);
+				if (info == null) { // parse failure or not module
+					throw new RuntimeException("Failed to parse frontmatter for " + path);
+				} else if (!info.module) {
+					return; // we are only interested in modules
+				}
+				params.add(new Object[] { root, path, info, shortName.toString() });
+			});
+		} catch (IOException e) {
+			throw new RuntimeException("failed to load tests", e);
+		}
+		return params;
+	}
+
+	@Test
+	public void runSafe() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.SAFE), XFAIL_AT_PARSE);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "SAFE", XFAIL_EXECUTE);
+	}
+
+	@Test
+	public void runBalanced() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), XFAIL_AT_PARSE);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "BALANCED", XFAIL_EXECUTE_BALANCED);
+	}
+
+	@Test
+	public void runDangerous() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), XFAIL_AT_PARSE);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "DANGEROUS", XFAIL_EXECUTE_DANGEROUS);
+	}
+
+	@Test
+	public void runThrowingDangerous() {
+		var test = buildTest262Test(info.source, this.path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS).withThrowOnImportAssignment(true), XFAIL_AT_PARSE_WITH_THROWING_DANGEROUS);
+		if (test.isNothing()) {
+			return;
+		}
+		runTest262Test(includes, test.fromJust(), this.path, info, "THROWING_DANGEROUS", XFAIL_EXECUTE_DANGEROUS);
+	}
 
 	private enum Test262Negative {
 		PARSERESOLUTION, EARLY, RUNTIME, NONE
@@ -224,8 +262,9 @@ public class Test262 {
 		public final ImmutableList<String> includes;
 		@Nonnull
 		public final ImmutableList<String> features;
+		public final String source;
 
-		public Test262Info(@Nonnull String name, @Nonnull Test262Negative negative, boolean noStrict, boolean onlyStrict, boolean async, boolean module, @Nonnull ImmutableList<String> includes, @Nonnull ImmutableList<String> features) {
+		public Test262Info(@Nonnull String name, @Nonnull Test262Negative negative, boolean noStrict, boolean onlyStrict, boolean async, boolean module, @Nonnull ImmutableList<String> includes, @Nonnull ImmutableList<String> features, @Nonnull String source) {
 			this.name = name;
 			this.negative = negative;
 			this.noStrict = noStrict;
@@ -234,6 +273,7 @@ public class Test262 {
 			this.module = module;
 			this.includes = includes;
 			this.features = features;
+			this.source = source;
 		}
 	}
 
@@ -250,7 +290,7 @@ public class Test262 {
 			return null;
 		}
 		String yaml = source.substring(test262CommentBegin, test262CommentEnd);
-		Object rawParsedYaml = yamlParser.load(yaml);
+		Object rawParsedYaml = YAML_PARSER.load(yaml);
 		if (!(rawParsedYaml instanceof Map)) {
 			return null;
 		}
@@ -316,7 +356,7 @@ public class Test262 {
 		if (rawFeatures != null) {
 			features = ImmutableList.from((ArrayList<String>) rawFeatures);
 		}
-		return new Test262Info(path, negativeEnum, noStrict, onlyStrict, async, module, includes, features);
+		return new Test262Info(path, negativeEnum, noStrict, onlyStrict, async, module, includes, features, source);
 	}
 
 	private static final class Test262Exception extends RuntimeException {
@@ -335,18 +375,15 @@ public class Test262 {
 		}
 	}
 
-	@Nonnull
-	private final IResourceLoader loader = new FileLoader();
-
-	private Maybe<Script> buildTest262Test(@Nonnull String source, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull IModuleBundler bundler, @Nonnull BundlerOptions options, @Nonnull ImmutableSet<String> xfailParse) {
-		boolean xfailedParse = xfailParse.contains(info.name) || (info.features.exists(xfailParseFeatures::contains) && !xpassParseDespiteFeatures.contains(info.name));
+	private Maybe<Script> buildTest262Test(@Nonnull String source, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull IModuleBundler bundler, @Nonnull BundlerOptions options, @Nonnull Set<String> xfailParse) {
+		boolean xfailedParse = xfailParse.contains(info.name) || (info.features.exists(XFAIL_PARSE_FEATURES::contains) && !XPASS_PARSE_DESPITE_FEATURES.contains(info.name));
 		try {
-			Pair<Script, ImmutableList<EarlyError>> pair = Bundler.bundleStringWithEarlyErrors(options, source, path.toAbsolutePath(), new NodeResolver(loader), loader, bundler);
+			Pair<Script, ImmutableList<EarlyError>> pair = Bundler.bundleStringWithEarlyErrors(options, source, path.toAbsolutePath(), new NodeResolver(LOADER), LOADER, bundler);
 			boolean invalidParse = false;
 			if ((info.negative == Test262Negative.PARSERESOLUTION) != xfailedParse) {
 				invalidParse = true;
 			}
-			boolean xfailedEarly = xfailEarlyErrors.contains(info.name);
+			boolean xfailedEarly = XFAIL_EARLY_ERRORS.contains(info.name);
 			ImmutableList<EarlyError> earlyErrors = EarlyErrorChecker.validate(pair.left).append(pair.right);
 			boolean passEarlyError = earlyErrors.length == 0;
 			if (invalidParse) {
@@ -370,82 +407,25 @@ public class Test262 {
 		return Maybe.empty();
 	}
 
-	private Maybe<Script> buildTest262Tests(@Nonnull String source, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull IModuleBundler bundler, @Nonnull BundlerOptions options, @Nonnull ImmutableSet<String> xfailParse) {
-		Maybe<Script> script = buildTest262Test(source, path, info, bundler, options, xfailParse);
-		for (int i = 0; i < 2; ++i) {
-			Maybe<Script> localScript = buildTest262Test(source, path, info, bundler, options, xfailParse);
-			if (!script.equals(localScript)) {
-				String scriptCodegenned = script.map(CodeGen::codeGen).orJust("failure to parse");
-				String localScriptCodegenned = localScript.map(CodeGen::codeGen).orJust("failure to parse");
-				throw new Test262Exception(info.name, "Determinism failure: expected:\n" + scriptCodegenned + "\n\ngot:\n" + localScriptCodegenned + "\nfrom test: " + path.toString());
-			}
-		}
-		return script;
-	}
-
-	private void runTest262Test(@Nonnull String harness, @Nonnull Script script, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull String category, @Nonnull ImmutableSet<String> xfailExecute) {
+	private void runTest262Test(@Nonnull String harness, @Nonnull Script script, @Nonnull Path path, @Nonnull Test262Info info, @Nonnull String category, @Nonnull Set<String> xfailExecute) {
 		boolean xfailedExecute = xfailExecute.contains(info.name);
-		ScriptEngine nashorn = new ScriptEngineManager().getEngineByName("nashorn");
-		try {
-			nashorn.eval(harness);
-			nashorn.eval(CodeGen.codeGen(script));
+
+		PolyglotException exception = null;
+		try (Context context = Context.newBuilder("js").option("engine.WarnInterpreterOnly", "false").build()) {
+			context.eval("js", harness);
+			context.eval("js", CodeGen.codeGen(script));
+		} catch (PolyglotException e) {
+			exception = e;
+		}
+		if (exception == null) {
 			if ((info.negative == Test262Negative.RUNTIME) != xfailedExecute) {
-				throw new Test262Exception(info.name, "Executed and should not have<" + category + ">: " + path.toString());
+				throw new Test262Exception(info.name, "Executed and should not have<" + category + ">: " + path);
 			}
-		} catch (ScriptException e) {
-			if (info.negative == Test262Negative.RUNTIME == xfailedExecute && info.negative != Test262Negative.RUNTIME) {
-				throw new Test262Exception(info.name, "Did not execute and should have<" + category + ">: " + path.toString() + "\n" + CodeGen.codeGen(script), e);
+		} else {
+			if ((info.negative == Test262Negative.RUNTIME) == xfailedExecute && info.negative != Test262Negative.RUNTIME) {
+				throw new Test262Exception(info.name, "Did not execute and should have<" + category + ">: " + path + "\n" + CodeGen.codeGen(script), exception);
 			}
 		}
 	}
 
-	private void runTest(@Nonnull Path root, @Nonnull Path path) throws IOException {
-		if (Files.isDirectory(path) || !path.toString().endsWith(".js") || path.toString().endsWith("_FIXTURE.js")) {
-			return;
-		}
-		String source = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-		Test262Info info = extractTest262Info(root.relativize(path).toString(), source);
-		if (info == null) { // parse failure or not module
-			throw new Test262Exception(path.toString(), "Failed to parse frontmatter");
-		} else if (!info.module) {
-			return; // we are only interested in modules
-		}
-		StringBuilder includes = new StringBuilder();
-		for (String include : info.includes.cons("assert.js").cons("sta.js")) {
-			includes.append(new String(Files.readAllBytes(Paths.get(harnessDir, include)), StandardCharsets.UTF_8)).append("\n");
-		}
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.SAFE), xfailParse)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "SAFE", xfailExecute));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), xfailParse)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "BALANCED", xfailExecuteBalanced));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), xfailParse)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "DANGEROUS", xfailExecuteDangerous));
-		buildTest262Test(source, path, info, new PiercedModuleBundler(), BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS).withThrowOnImportAssignment(true), xfailParseThrowingDangerous)
-			.foreach(script -> runTest262Test(includes.toString(), script, path, info, "THROWING_DANGEROUS", xfailExecuteDangerous));
-	}
-
-	@Test
-	public void testTest262() throws Exception {
-		LinkedList<Test262Exception> exceptions = new LinkedList<>();
-		Path root = Paths.get(testsDir);
-		Files.walk(root).forEach(path -> {
-			try {
-				runTest(root, path);
-			} catch (IOException e) {
-				Assert.fail(e.toString());
-			} catch (Test262Exception e) {
-				exceptions.add(e);
-			}
-		});
-		if (exceptions.size() > 0) {
-			for (Test262Exception exception : exceptions) {
-				exception.printStackTrace();
-			}
-			System.out.println(exceptions.size() + " test262 tests failed:");
-			for (Test262Exception exception : exceptions) {
-				System.out.println("	" + exception.name + ": " + exception.getMessage());
-			}
-			Assert.fail();
-		}
-	}
 }

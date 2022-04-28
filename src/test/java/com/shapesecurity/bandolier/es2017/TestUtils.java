@@ -8,11 +8,9 @@ import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.codegen.CodeGen;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
@@ -20,11 +18,11 @@ import static org.junit.Assert.assertEquals;
 public class TestUtils {
 
     static void testResult(String filePath, Object expected, IResolver resolver, IResourceLoader loader) throws Exception {
-        Object resultStandard = runInNashorn(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, false);
+        Object resultStandard = runInGraal(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, false);
         Object[] piercedResults = new Object[3];
-        piercedResults[0] = runInNashorn(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
-        piercedResults[1] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
-        piercedResults[2] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
+        piercedResults[0] = runInGraal(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
+        piercedResults[1] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
+        piercedResults[2] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
         assertEquals(resultStandard, piercedResults[0]);
         assertEquals(resultStandard, piercedResults[1]);
         assertEquals(resultStandard, piercedResults[2]);
@@ -38,7 +36,7 @@ public class TestUtils {
     }
 
     static void testResultPierced(BundlerOptions options, String filePath, Object expected, IResolver resolver, IResourceLoader loader) throws Exception {
-        Object result = runInNashorn(options, filePath, resolver, loader, true);
+        Object result = runInGraal(options, filePath, resolver, loader, true);
         if (result instanceof Double) {
             assertEquals((Double) expected, (Double) result, 0.0);
         } else if (result instanceof Integer) {
@@ -50,9 +48,9 @@ public class TestUtils {
 
     static void testResultPierced(String filePath, Object expected, IResolver resolver, IResourceLoader loader) throws Exception {
         Object[] piercedResults = new Object[3];
-        piercedResults[0] = runInNashorn(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
-        piercedResults[1] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
-        piercedResults[2] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
+        piercedResults[0] = runInGraal(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
+        piercedResults[1] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
+        piercedResults[2] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
         assertEquals(piercedResults[0], piercedResults[1]);
         assertEquals(piercedResults[0], piercedResults[2]);
         if (piercedResults[0] instanceof Double) {
@@ -76,7 +74,7 @@ public class TestUtils {
         return CodeGen.codeGen(script, true);
     }
 
-    static Object runInNashorn(BundlerOptions options, String filePath, IResolver resolver, IResourceLoader loader, boolean pierced) throws Exception {
+    static Object runInGraal(BundlerOptions options, String filePath, IResolver resolver, IResourceLoader loader, boolean pierced) throws Exception {
         String newProgramText;
         if (pierced) {
             newProgramText = toString(bundlePierced(options, filePath, resolver, loader));
@@ -84,19 +82,23 @@ public class TestUtils {
             newProgramText = toString(bundleStandard(options, filePath, resolver, loader));
         }
 
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+        return getResultFromGraal(newProgramText);
+    }
 
-        try {
-            Object returned = engine.eval(newProgramText);
-            returned = ((ScriptObjectMirror)returned).get("result");
-            // resolving weird nashorn inconsistency
-            if (returned instanceof Integer) {
-                returned = ((Integer) returned).doubleValue();
+    static Object getResultFromGraal(String newProgramText) {
+        try (Context context = Context.newBuilder("js").option("engine.WarnInterpreterOnly", "false").build()) {
+            Value result = context.eval("js", newProgramText).getMember("result");
+            if (result == null || result.isNull()) {
+                return null;
+            } else if (result.isNumber()) {
+                return result.asDouble();
+            } else if (result.isString()) {
+                return result.asString();
+            } else if (result.isBoolean()) {
+                return result.asBoolean();
+            } else {
+                throw new RuntimeException("result is of unknown type");
             }
-            return returned;
-        } catch (ScriptException e) {
-            System.out.println(newProgramText);
-            throw e;
         }
     }
 }
