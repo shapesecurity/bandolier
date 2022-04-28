@@ -18,11 +18,11 @@ import static org.junit.Assert.assertEquals;
 public class TestUtils {
 
     static void testResult(String filePath, Object expected, IResolver resolver, IResourceLoader loader) throws Exception {
-        Object resultStandard = runInNashorn(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, false);
+        Object resultStandard = runInGraal(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, false);
         Object[] piercedResults = new Object[3];
-        piercedResults[0] = runInNashorn(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
-        piercedResults[1] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
-        piercedResults[2] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
+        piercedResults[0] = runInGraal(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
+        piercedResults[1] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
+        piercedResults[2] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
         assertEquals(resultStandard, piercedResults[0]);
         assertEquals(resultStandard, piercedResults[1]);
         assertEquals(resultStandard, piercedResults[2]);
@@ -36,7 +36,7 @@ public class TestUtils {
     }
 
     static void testResultPierced(BundlerOptions options, String filePath, Object expected, IResolver resolver, IResourceLoader loader) throws Exception {
-        Object result = runInNashorn(options, filePath, resolver, loader, true);
+        Object result = runInGraal(options, filePath, resolver, loader, true);
         if (result instanceof Double) {
             assertEquals((Double) expected, (Double) result, 0.0);
         } else if (result instanceof Integer) {
@@ -48,9 +48,9 @@ public class TestUtils {
 
     static void testResultPierced(String filePath, Object expected, IResolver resolver, IResourceLoader loader) throws Exception {
         Object[] piercedResults = new Object[3];
-        piercedResults[0] = runInNashorn(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
-        piercedResults[1] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
-        piercedResults[2] = runInNashorn(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
+        piercedResults[0] = runInGraal(BundlerOptions.SPEC_OPTIONS, filePath, resolver, loader, true);
+        piercedResults[1] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.BALANCED), filePath, resolver, loader, true);
+        piercedResults[2] = runInGraal(BundlerOptions.SPEC_OPTIONS.withDangerLevel(BundlerOptions.DangerLevel.DANGEROUS), filePath, resolver, loader, true);
         assertEquals(piercedResults[0], piercedResults[1]);
         assertEquals(piercedResults[0], piercedResults[2]);
         if (piercedResults[0] instanceof Double) {
@@ -74,7 +74,7 @@ public class TestUtils {
         return CodeGen.codeGen(script, true);
     }
 
-    static Object runInNashorn(BundlerOptions options, String filePath, IResolver resolver, IResourceLoader loader, boolean pierced) throws Exception {
+    static Object runInGraal(BundlerOptions options, String filePath, IResolver resolver, IResourceLoader loader, boolean pierced) throws Exception {
         String newProgramText;
         if (pierced) {
             newProgramText = toString(bundlePierced(options, filePath, resolver, loader));

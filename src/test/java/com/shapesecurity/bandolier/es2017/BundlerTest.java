@@ -25,15 +25,9 @@ import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.Script;
 import com.shapesecurity.shift.es2017.parser.JsError;
 import com.shapesecurity.shift.es2017.parser.Parser;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import junit.framework.TestCase;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -185,7 +179,7 @@ public class BundlerTest extends TestCase {
 		modules.put("/export.js", "export default (function SOMETHING (){ return { x: 42 }; });");
 		testResult("/import.js", 42.0, resolver, localLoader);
 
-		// disabled because nashorn lacks support for `class`
+		// disabled due to https://github.com/shapesecurity/bandolier/issues/62
 		// modules.put("/export.js", "export default class { constructor(){ return { x: 42 }; } }");
 		// testResult("/import.js", 42.0, resolver, localLoader);
 
