@@ -78,8 +78,8 @@ public class Bundler {
 	@Nonnull
 	public static Script bundle(@Nonnull BundlerOptions options, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundleString(options, loader.loadResource(filePath), filePath, resolver, loader, bundler);
-		} catch (IOException e) {
+			return bundleModule(options, loader.loadModule(filePath), filePath, resolver, loader, bundler);
+		} catch (IOException | JsError e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
 	}
@@ -210,8 +210,8 @@ public class Bundler {
 	@Nonnull
 	public static Pair<Script, ImmutableList<EarlyError>> bundleWithEarlyErrors(@Nonnull BundlerOptions options, @Nonnull Path filePath, @Nonnull IResolver resolver, @Nonnull IResourceLoader loader, IModuleBundler bundler) throws ModuleLoaderException {
 		try {
-			return bundleStringWithEarlyErrors(options, loader.loadResource(filePath), filePath, resolver, loader, bundler);
-		} catch (IOException e) {
+			return bundleModuleWithEarlyErrors(options, loader.loadModule(filePath), filePath, resolver, loader, bundler);
+		} catch (IOException | JsError e) {
 			throw new ModuleLoaderException(filePath.toString(), e);
 		}
 	}
@@ -337,7 +337,7 @@ public class Bundler {
 							case "js":
 							case "esm":
 							default:
-								module = Parser.parseModule(loader.loadResource(Paths.get(dependency)));
+								module = loader.loadModule(Paths.get(dependency));
 						}
 					} catch (IOException | JsError e) {
 						throw new ModuleLoaderException(dependency, e);
