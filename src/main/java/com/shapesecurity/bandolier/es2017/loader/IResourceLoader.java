@@ -15,12 +15,16 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
+import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.parser.JsError;
+import com.shapesecurity.shift.es2017.parser.Parser;
+
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Abstracts the concept of checking if a resource exists and loading it as a string.
+ * Abstracts the concept of checking if a resource exists and loading it as a string or module.
  */
 public interface IResourceLoader {
 	@Nonnull
@@ -28,4 +32,9 @@ public interface IResourceLoader {
 
 	@Nonnull
 	String loadResource(@Nonnull Path path) throws IOException;
+
+	@Nonnull
+	default Module loadModule(@Nonnull Path path) throws IOException, JsError {
+		return Parser.parseModule(this.loadResource(path));
+	}
 }

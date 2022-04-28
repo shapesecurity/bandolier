@@ -1,5 +1,8 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
+import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2017.parser.JsError;
+
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,6 +40,17 @@ public class FallbackLoader implements IResourceLoader {
                 return loader.loadResource(path);
             }
         }
-        throw new IOException("Failed to load resource at path " + path.toString());
+        throw new IOException("Failed to load resource at path " + path);
+    }
+
+    @Override
+    @Nonnull
+    public Module loadModule(@Nonnull Path path) throws IOException, JsError {
+        for (IResourceLoader loader : this.loaders) {
+            if (loader.exists(path)) {
+                return loader.loadModule(path);
+            }
+        }
+        throw new IOException("Failed to load resource at path " + path);
     }
 }

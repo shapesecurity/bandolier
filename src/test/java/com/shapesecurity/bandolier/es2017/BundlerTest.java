@@ -20,6 +20,8 @@ import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
 import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
+import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
+import com.shapesecurity.bandolier.es2017.loader.MapModulesLoader;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.shift.es2017.ast.Module;
 import com.shapesecurity.shift.es2017.ast.Script;
@@ -28,6 +30,7 @@ import com.shapesecurity.shift.es2017.parser.Parser;
 import junit.framework.TestCase;
 import org.junit.Test;
 
+import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -374,6 +377,34 @@ public class BundlerTest extends TestCase {
 		assertEquals(142.0, result);
 	}
 
+	public void testLoadModule() throws Exception {
+		class OnlyModuleLoader extends MapModulesLoader {
+			public OnlyModuleLoader(Map<Path, Module> resources) {
+				super(resources);
+			}
+
+			@Nonnull
+			@Override
+			public String loadResource(@Nonnull Path path) {
+				throw new RuntimeException("bundling should not require loading strings");
+			}
+		}
+
+		Map<Path, Module> moduleMap = new HashMap<>();
+		moduleMap.put(Paths.get("/a.js"), Parser.parseModule("import {b} from './b.js'; export var result = 42 + b"));
+		moduleMap.put(Paths.get("/b.js"), Parser.parseModule("export var b = 100"));
+
+		IResourceLoader loader = new OnlyModuleLoader(moduleMap);
+
+		Path root = Paths.get("/root.js");
+		Module rootModule = Parser.parseModule("export { result } from './a.js'");
+		Script bundled = Bundler.bundleModule(rootModule, root, resolver, loader, new StandardModuleBundler());
+
+		String newProgramText = TestUtils.toString(bundled);
+		Object result = getResultFromGraal(newProgramText);
+		assertEquals(142.0, result);
+	}
+
 	@Test
 	public void testLoadDependencies() throws Exception {
 		Path path = Paths.get("/root/normalizing/js1.js");
@@ -426,5 +457,4 @@ public class BundlerTest extends TestCase {
 				"var result=42+b;\n" +
 				"}(this));\n", bundledWithoutExports);
 	}
-
 }
