@@ -5,7 +5,7 @@
 
     <groupId>com.shapesecurity.bandolier</groupId>
     <artifactId>es2017</artifactId>
-    <version>3.5.1</version>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
 
 
