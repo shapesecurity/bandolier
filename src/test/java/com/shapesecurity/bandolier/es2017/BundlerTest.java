@@ -23,10 +23,10 @@ import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.MapModulesLoader;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2017.ast.Module;
-import com.shapesecurity.shift.es2017.ast.Script;
-import com.shapesecurity.shift.es2017.parser.JsError;
-import com.shapesecurity.shift.es2017.parser.Parser;
+import com.shapesecurity.shift.es2018.ast.Module;
+import com.shapesecurity.shift.es2018.ast.Script;
+import com.shapesecurity.shift.es2018.parser.JsError;
+import com.shapesecurity.shift.es2018.parser.Parser;
 import junit.framework.TestCase;
 import org.junit.Test;
 

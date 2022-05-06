@@ -1,7 +1,7 @@
 package com.shapesecurity.bandolier.es2017.loader;
 
-import com.shapesecurity.shift.es2017.ast.Module;
-import com.shapesecurity.shift.es2017.parser.JsError;
+import com.shapesecurity.shift.es2018.ast.Module;
+import com.shapesecurity.shift.es2018.parser.JsError;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;

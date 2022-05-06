@@ -15,8 +15,7 @@
  */
 package com.shapesecurity.bandolier.es2017.loader;
 
-import org.jetbrains.annotations.Nullable;
-
+import javax.annotation.Nullable;
 import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;

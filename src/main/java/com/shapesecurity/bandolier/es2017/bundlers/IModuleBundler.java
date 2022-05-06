@@ -2,9 +2,9 @@ package com.shapesecurity.bandolier.es2017.bundlers;
 
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2017.ast.Module;
-import com.shapesecurity.shift.es2017.ast.Script;
-import com.shapesecurity.shift.es2017.parser.EarlyError;
+import com.shapesecurity.shift.es2018.ast.Module;
+import com.shapesecurity.shift.es2018.ast.Script;
+import com.shapesecurity.shift.es2018.parser.EarlyError;
 
 import javax.annotation.Nonnull;
 import java.util.Map;

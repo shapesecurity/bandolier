@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.shapesecurity.bandolier</groupId>
-    <artifactId>es2017</artifactId>
+    <artifactId>es2018</artifactId>
     <version>3.5.1</version>
     <packaging>jar</packaging>
 
@@ -51,14 +51,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>16.0.3</version>
-        </dependency>
-        <dependency>
             <groupId>com.shapesecurity.shift</groupId>
-            <artifactId>es2017</artifactId>
-            <version>1.2.1</version>
+            <artifactId>es2018</artifactId>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.shapesecurity</groupId>

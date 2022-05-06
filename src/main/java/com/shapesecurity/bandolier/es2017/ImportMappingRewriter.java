@@ -16,14 +16,14 @@
 package com.shapesecurity.bandolier.es2017;
 
 import com.shapesecurity.functional.data.ImmutableList;
-import com.shapesecurity.shift.es2017.ast.ExportAllFrom;
-import com.shapesecurity.shift.es2017.ast.ExportDeclaration;
-import com.shapesecurity.shift.es2017.ast.ExportFrom;
-import com.shapesecurity.shift.es2017.ast.Import;
-import com.shapesecurity.shift.es2017.ast.ImportDeclaration;
-import com.shapesecurity.shift.es2017.ast.ImportDeclarationExportDeclarationStatement;
-import com.shapesecurity.shift.es2017.ast.ImportNamespace;
-import com.shapesecurity.shift.es2017.ast.Module;
+import com.shapesecurity.shift.es2018.ast.ExportAllFrom;
+import com.shapesecurity.shift.es2018.ast.ExportDeclaration;
+import com.shapesecurity.shift.es2018.ast.ExportFrom;
+import com.shapesecurity.shift.es2018.ast.Import;
+import com.shapesecurity.shift.es2018.ast.ImportDeclaration;
+import com.shapesecurity.shift.es2018.ast.ImportDeclarationExportDeclarationStatement;
+import com.shapesecurity.shift.es2018.ast.ImportNamespace;
+import com.shapesecurity.shift.es2018.ast.Module;
 
 import javax.annotation.Nonnull;
 import java.util.Map;

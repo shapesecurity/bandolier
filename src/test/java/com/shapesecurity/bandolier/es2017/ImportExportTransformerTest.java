@@ -15,10 +15,10 @@
  */
 package com.shapesecurity.bandolier.es2017;
 
-import com.shapesecurity.shift.es2017.ast.Module;
-import com.shapesecurity.shift.es2017.codegen.CodeGen;
-import com.shapesecurity.shift.es2017.parser.JsError;
-import com.shapesecurity.shift.es2017.parser.Parser;
+import com.shapesecurity.shift.es2018.ast.Module;
+import com.shapesecurity.shift.es2018.codegen.CodeGen;
+import com.shapesecurity.shift.es2018.parser.JsError;
+import com.shapesecurity.shift.es2018.parser.Parser;
 import junit.framework.TestCase;
 
 public class ImportExportTransformerTest extends TestCase {

@@ -2,8 +2,8 @@ package com.shapesecurity.bandolier.es2017.transformations;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.ImmutableSet;
-import com.shapesecurity.shift.es2017.scope.Scope;
-import com.shapesecurity.shift.es2017.scope.Variable;
+import com.shapesecurity.shift.es2018.scope.Scope;
+import com.shapesecurity.shift.es2018.scope.Variable;
 
 import javax.annotation.Nonnull;
 
