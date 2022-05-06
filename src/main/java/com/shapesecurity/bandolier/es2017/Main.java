@@ -5,8 +5,8 @@ import com.shapesecurity.bandolier.es2017.bundlers.PiercedModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.FileLoader;
 import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.NodeResolver;
-import com.shapesecurity.shift.es2017.ast.Script;
-import com.shapesecurity.shift.es2017.codegen.CodeGen;
+import com.shapesecurity.shift.es2018.ast.Script;
+import com.shapesecurity.shift.es2018.codegen.CodeGen;
 
 import java.nio.file.Paths;
 

@@ -5,8 +5,8 @@ import com.shapesecurity.bandolier.es2017.loader.FileSystemResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
 import com.shapesecurity.bandolier.es2017.transformations.DeadCodeElimination;
-import com.shapesecurity.shift.es2017.codegen.CodeGen;
-import com.shapesecurity.shift.es2017.parser.Parser;
+import com.shapesecurity.shift.es2018.codegen.CodeGen;
+import com.shapesecurity.shift.es2018.parser.Parser;
 import org.junit.Test;
 
 import javax.annotation.Nonnull;

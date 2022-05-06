@@ -6,8 +6,8 @@ import com.shapesecurity.bandolier.es2017.bundlers.StandardModuleBundler;
 import com.shapesecurity.bandolier.es2017.loader.IResolver;
 import com.shapesecurity.bandolier.es2017.loader.IResourceLoader;
 import com.shapesecurity.bandolier.es2017.loader.ModuleLoaderException;
-import com.shapesecurity.shift.es2017.ast.Script;
-import com.shapesecurity.shift.es2017.codegen.CodeGen;
+import com.shapesecurity.shift.es2018.ast.Script;
+import com.shapesecurity.shift.es2018.codegen.CodeGen;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
