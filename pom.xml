@@ -187,7 +187,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.shapesecurity.bandolier.es2017.Main</mainClass>
+                            <mainClass>com.shapesecurity.bandolier.es2018.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
